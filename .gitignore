@@ -1,0 +1,27 @@
+# Local-only planning notes (never commit)
+/*First-Release Plan.md
+/.local/
+
+# Binaries and build output
+/bin/
+/dist/
+*.test
+*.out
+coverage.*
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local evidence store and data
+/data/
+/evidence/
+
+# Editor and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
