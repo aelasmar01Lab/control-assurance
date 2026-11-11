@@ -1,0 +1,17 @@
+# Test fixture. Synthetic; not a real framework.
+framework:
+  key: fixture
+  title: Fixture Framework
+  version: v1
+  license: CC0-1.0
+requirements:
+  - id: "1.1"
+    group: "Group one"
+    title: "First requirement"
+    text: |-
+      - Do the first thing
+  - id: "1.2"
+    group: "Group one"
+    title: "Second requirement"
+    text: |-
+      - Do the second thing
