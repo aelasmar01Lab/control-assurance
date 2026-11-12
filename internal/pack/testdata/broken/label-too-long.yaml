@@ -1,0 +1,26 @@
+# Test fixture. Synthetic; not a real framework.
+framework:
+  key: fixture
+  title: Fixture Framework
+  version: v1
+  text_rights: full
+  license: CC0-1.0
+  source:
+    kind: git
+    url: https://example.com/fixture
+    commit: 0123456789abcdef0123456789abcdef01234567
+    path: catalog.json
+    retrieved: "2026-01-01"
+    sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+requirements:
+  - id: "1.1"
+    group: "Group one"
+    title: "First requirement"
+    label: "one two three four five six seven eight nine ten eleven twelve thirteen"
+    text: |-
+      - Do the first thing
+  - id: "1.2"
+    group: "Group one"
+    title: "Second requirement"
+    text: |-
+      - Do the second thing

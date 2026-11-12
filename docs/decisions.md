@@ -338,3 +338,20 @@ neither sets nor filters by it, so a second workspace's rows would be mixed
 into every page. Creating a second workspace is not offered anywhere, and
 the default comes off when the store takes a workspace.
 
+## 34. A pack records what it may carry, and carries no more
+
+Pack files are now schema version 2. Each states its rights over the
+framework's text: `full` (upstream's titles and text, under a licence
+recorded in the header), `identifiers_only` (identifiers, hierarchy and a
+label of at most twelve words in the project's own words) or
+`own_composition` (requirements the project wrote). The loader refuses an
+`identifiers_only` pack that has a title or text. A source may be a git
+commit, a URL or a document. A baseline that selects from another catalog
+is a profile: it lists identifiers and takes everything else from its
+parent, so the text exists once. Given up: showing the official wording of
+any standard whose publisher does not allow it, which is most commercial
+ones; a reader needs their own copy beside the product. The MVSP pack's
+header was rewritten in the new form with its requirement text unchanged,
+and the migration updates the recorded file hash of the row already
+imported, which is the only update a framework row has ever had.
+

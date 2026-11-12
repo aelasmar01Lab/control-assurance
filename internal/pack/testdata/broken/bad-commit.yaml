@@ -3,9 +3,11 @@ framework:
   key: fixture
   title: Fixture Framework
   version: v1
+  text_rights: full
   license: CC0-1.0
   source:
-    repository: https://example.com/fixture
+    kind: git
+    url: https://example.com/fixture
     commit: main
     path: catalog.json
     retrieved: "2026-01-01"

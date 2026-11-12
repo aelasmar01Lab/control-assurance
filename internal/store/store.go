@@ -85,20 +85,23 @@ func (s *Store) ImportPack(ctx context.Context, p *pack.Pack) (imported bool, er
 		var id int64
 		err = tx.QueryRow(ctx, `
 			INSERT INTO framework_versions
-				(key, title, version, license, source_repository, source_commit,
-				 source_path, source_retrieved, source_sha256, content_sha256)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8::date, $9, $10)
+				(key, title, version, license, source_url, source_commit,
+				 source_path, source_retrieved, source_sha256, content_sha256,
+				 text_rights, attribution, source_kind, profile_of)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8::date, $9, $10, $11, $12, $13, $14)
 			RETURNING id`,
-			f.Key, f.Title, f.Version, f.License, f.Source.Repository, f.Source.Commit,
-			f.Source.Path, f.Source.Retrieved, f.Source.SHA256, p.ContentSHA256).Scan(&id)
+			f.Key, f.Title, f.Version, f.License, f.Source.URL, f.Source.Commit,
+			f.Source.Path, f.Source.Retrieved, f.Source.SHA256, p.ContentSHA256,
+			f.TextRights, f.Attribution, f.Source.Kind, f.ProfileOf).Scan(&id)
 		if err != nil {
 			return err
 		}
 		for i, r := range p.Requirements {
 			_, err := tx.Exec(ctx, `
-				INSERT INTO requirements (framework_version_id, identifier, group_title, title, body, position)
-				VALUES ($1, $2, $3, $4, $5, $6)`,
-				id, r.ID, r.Group, r.Title, r.Text, i+1)
+				INSERT INTO requirements
+					(framework_version_id, identifier, group_title, title, body, position, parent_identifier, label)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+				id, r.ID, r.Group, r.Title, r.Text, i+1, r.Parent, r.Label)
 			if err != nil {
 				return err
 			}

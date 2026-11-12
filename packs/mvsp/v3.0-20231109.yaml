@@ -5,9 +5,11 @@ framework:
   key: mvsp
   title: Minimum Viable Secure Product
   version: v3.0-20231109
+  text_rights: full
   license: CC0-1.0
   source:
-    repository: https://github.com/vendorsec/mvsp
+    kind: git
+    url: https://github.com/vendorsec/mvsp
     commit: 2428bd529bdedec72d47cb3068a174cbfa4ced1a
     path: oscal/mvsp/mvsp_v3.0-20231109-catalog.json
     retrieved: "2026-11-11"

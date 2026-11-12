@@ -3,9 +3,11 @@ framework:
   key: fixture
   title: Fixture Framework
   version: v1
+  text_rights: full
   license: CC0-1.0
   source:
-    repository: https://example.com/fixture
+    kind: git
+    url: https://example.com/fixture
     commit: 0123456789abcdef0123456789abcdef01234567
     path: catalog.json
     retrieved: "2026-01-01"
@@ -18,4 +20,3 @@ requirements:
       - Do the first thing
   - id: "1.2"
     group: "Group one"
-    title: "Second requirement"

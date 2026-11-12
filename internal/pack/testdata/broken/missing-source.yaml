@@ -3,6 +3,7 @@ framework:
   key: fixture
   title: Fixture Framework
   version: v1
+  text_rights: full
   license: CC0-1.0
 requirements:
   - id: "1.1"

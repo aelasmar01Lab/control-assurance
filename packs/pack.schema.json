@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/aelasmar01Lab/control-assurance/packs/pack.schema.json",
   "title": "Framework pack",
-  "description": "One version of one framework: where its text came from and the requirements it contains.",
+  "description": "One version of one framework: where it came from, what may be redistributed, and the requirements it contains. Schema version 2.",
   "type": "object",
   "additionalProperties": false,
   "required": ["framework", "requirements"],
@@ -10,23 +10,34 @@
     "framework": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["key", "title", "version", "license", "source"],
+      "required": ["key", "title", "version", "text_rights", "license", "source"],
       "properties": {
         "key": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
         "title": { "type": "string", "minLength": 1 },
         "version": { "type": "string", "minLength": 1 },
+        "text_rights": {
+          "description": "full: upstream text is included under the stated licence. identifiers_only: identifiers, hierarchy and the project's own labels. own_composition: the project wrote the requirements.",
+          "enum": ["full", "identifiers_only", "own_composition"]
+        },
         "license": { "type": "string", "minLength": 1 },
+        "attribution": { "type": "string" },
         "source": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["repository", "commit", "path", "retrieved", "sha256"],
+          "required": ["kind", "retrieved"],
           "properties": {
-            "repository": { "type": "string", "pattern": "^https://" },
-            "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
-            "path": { "type": "string", "minLength": 1 },
+            "kind": { "enum": ["git", "url", "document"] },
+            "url": { "type": "string", "pattern": "^(https://.*)?$" },
+            "commit": { "type": "string", "pattern": "^([0-9a-f]{40})?$" },
+            "path": { "type": "string" },
             "retrieved": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
-            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+            "sha256": { "type": "string", "pattern": "^([0-9a-f]{64})?$" }
           }
+        },
+        "profile_of": {
+          "description": "Set when this pack selects requirements from another pack: that pack's key and version, as key@version.",
+          "type": "string",
+          "pattern": "^([a-z][a-z0-9-]*@.+)?$"
         }
       }
     },
@@ -36,12 +47,14 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "group", "title", "text"],
+        "required": ["id"],
         "properties": {
-          "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
-          "group": { "type": "string", "minLength": 1 },
-          "title": { "type": "string", "minLength": 1 },
-          "text": { "type": "string", "minLength": 1 }
+          "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:() -]*$" },
+          "parent": { "type": "string" },
+          "group": { "type": "string" },
+          "title": { "type": "string" },
+          "label": { "type": "string" },
+          "text": { "type": "string" }
         }
       }
     }

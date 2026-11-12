@@ -203,8 +203,14 @@ func runRequirements(args []string, stdout io.Writer) error {
 		}
 		f := p.Framework
 		fmt.Fprintf(stdout, "%s %s (%s)\n", f.Title, f.Version, f.License)
-		fmt.Fprintf(stdout, "  source:        %s@%s\n", f.Source.Repository, f.Source.Commit)
-		fmt.Fprintf(stdout, "  source file:   %s\n", f.Source.Path)
+		fmt.Fprintf(stdout, "  text rights:   %s\n", f.TextRights)
+		if f.ProfileOf != "" {
+			fmt.Fprintf(stdout, "  profile of:    %s\n", f.ProfileOf)
+		}
+		fmt.Fprintf(stdout, "  source:        %s\n", f.Source.Ref())
+		if f.Source.Path != "" {
+			fmt.Fprintf(stdout, "  source file:   %s\n", f.Source.Path)
+		}
 		fmt.Fprintf(stdout, "  source sha256: %s\n", f.Source.SHA256)
 		fmt.Fprintf(stdout, "  retrieved:     %s\n", f.Source.Retrieved)
 		fmt.Fprintf(stdout, "  pack sha256:   %s\n\n", p.ContentSHA256)
@@ -212,7 +218,7 @@ func runRequirements(args []string, stdout io.Writer) error {
 		tw := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(tw, "ID\tGROUP\tTITLE")
 		for _, r := range p.Requirements {
-			fmt.Fprintf(tw, "%s\t%s\t%s\n", r.ID, r.Group, r.Title)
+			fmt.Fprintf(tw, "%s\t%s\t%s\n", r.ID, r.Group, r.Name())
 		}
 		if err := tw.Flush(); err != nil {
 			return err

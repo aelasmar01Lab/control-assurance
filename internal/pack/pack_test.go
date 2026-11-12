@@ -49,14 +49,22 @@ func TestMVSPPack(t *testing.T) {
 // that loads despite its defect would let bad catalog data into the product.
 func TestBrokenPacksAreRejected(t *testing.T) {
 	wantErr := map[string]string{
-		"bad-commit.yaml":         "schema",
-		"bad-sha256.yaml":         "schema",
-		"duplicate-id.yaml":       "duplicate requirement id",
-		"empty-requirements.yaml": "schema",
-		"missing-source.yaml":     "schema",
-		"missing-text.yaml":       "schema",
-		"not-yaml.yaml":           "parse yaml",
-		"unknown-field.yaml":      "schema",
+		"bad-commit.yaml":                "schema",
+		"bad-sha256.yaml":                "schema",
+		"duplicate-id.yaml":              "duplicate requirement id",
+		"empty-requirements.yaml":        "schema",
+		"missing-source.yaml":            "schema",
+		"missing-text.yaml":              "neither a title nor text",
+		"identifiers-with-text.yaml":     "carries no title or text",
+		"identifiers-without-label.yaml": "needs a label",
+		"label-too-long.yaml":            "the most is 12",
+		"unknown-parent.yaml":            "is not in this pack",
+		"git-without-commit.yaml":        "a git source needs",
+		"url-with-commit.yaml":           "only a git source has a commit",
+		"profile-with-text.yaml":         "a profile lists identifiers only",
+		"bad-text-rights.yaml":           "schema",
+		"not-yaml.yaml":                  "parse yaml",
+		"unknown-field.yaml":             "schema",
 	}
 	files, err := filepath.Glob("testdata/broken/*.yaml")
 	if err != nil {
@@ -109,5 +117,89 @@ func TestLoadFSRejectsDuplicateFrameworkVersion(t *testing.T) {
 	_, err = LoadFS(fsys)
 	if err == nil || !strings.Contains(err.Error(), "already defined") {
 		t.Errorf("error = %v, want a duplicate framework error", err)
+	}
+}
+
+const identifiersOnlyPack = `
+framework:
+  key: closed
+  title: Closed Standard
+  version: "2022"
+  text_rights: identifiers_only
+  license: Copyright the publisher; identifiers only
+  source:
+    kind: document
+    url: https://example.com/standard
+    retrieved: "2026-01-01"
+requirements:
+  - id: "A.5"
+    group: "Annex A"
+    label: "Organizational measures"
+  - id: "A.5.1"
+    parent: "A.5"
+    group: "Annex A"
+    label: "Policies for security"
+`
+
+func TestIdentifiersOnlyPackParses(t *testing.T) {
+	p, err := Parse([]byte(identifiersOnlyPack))
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	r, ok := p.Lookup("A.5.1")
+	if !ok || r.Parent != "A.5" || r.Name() != "Policies for security" || r.Text != "" {
+		t.Errorf("A.5.1 = %+v", r)
+	}
+}
+
+// A profile selects requirements from another pack and takes their text
+// from it, so the text exists once.
+func TestProfileInheritsFromItsParent(t *testing.T) {
+	valid, err := os.ReadFile("testdata/valid.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	profile := func(id string) string {
+		return `
+framework:
+  key: fixture-low
+  title: Fixture Low Baseline
+  version: v1
+  text_rights: full
+  license: CC0-1.0
+  profile_of: fixture@v1
+  source:
+    kind: document
+    retrieved: "2026-01-01"
+requirements:
+  - id: "` + id + `"
+`
+	}
+	fsys := fstest.MapFS{
+		"fixture/v1.yaml":     {Data: valid},
+		"fixture-low/v1.yaml": {Data: []byte(profile("1.2"))},
+	}
+	all, err := LoadFS(fsys)
+	if err != nil {
+		t.Fatalf("LoadFS: %v", err)
+	}
+	var low *Pack
+	for _, p := range all {
+		if p.Framework.Key == "fixture-low" {
+			low = p
+		}
+	}
+	if low == nil || len(low.Requirements) != 1 || low.Requirements[0].Title != "Second requirement" ||
+		!strings.Contains(low.Requirements[0].Text, "second thing") {
+		t.Fatalf("profile = %+v", low)
+	}
+
+	fsys["fixture-low/v1.yaml"] = &fstest.MapFile{Data: []byte(profile("9.9"))}
+	if _, err := LoadFS(fsys); err == nil || !strings.Contains(err.Error(), "is not in fixture@v1") {
+		t.Errorf("a profile selecting an unknown requirement: err = %v", err)
+	}
+	delete(fsys, "fixture/v1.yaml")
+	if _, err := LoadFS(fsys); err == nil || !strings.Contains(err.Error(), "not a built-in pack") {
+		t.Errorf("a profile without its parent: err = %v", err)
 	}
 }
