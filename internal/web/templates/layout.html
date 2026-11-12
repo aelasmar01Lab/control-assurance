@@ -15,7 +15,7 @@
       <span class="brand-text"><span class="brand-name">Control assurance</span><span class="brand-host">{{.Host}}</span></span>
     </a>
     <nav aria-label="Pages">
-      {{$page := .Page}}
+      {{$page := navKey .Page}}
       {{range .Nav}}
       <div class="nav-group">
         <div class="nav-label">{{.Label}}</div>

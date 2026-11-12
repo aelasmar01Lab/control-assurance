@@ -31,7 +31,14 @@ Commands:
   demo                         Seed a clean database with a labelled synthetic history and serve it
   requirements list            List every requirement in the built-in framework packs
   requirements status          Show every requirement's current state and what it rests on
-  controls guide               Print the control and mapping guide generated from the definitions
+  controls guide               Print the control and mapping guide generated from the content files
+  content validate             Check the files under controls/, mappings/ and tracking/ against their schemas and each other
+  content load                 Record the controls built into this binary as revisions in the database
+  review status                Show how much of the content has been reviewed, by domain and by framework
+  review queue                 Print the review queue: every draft, in the order to review it
+  review sign <file>           Mark entries as reviewed (--requirement, --control, --all for a mappings or tracking file; --as name)
+  review unsign <file>         Set entries back to draft (same options)
+  review verify                Fail if any reviewed entry was edited after it was signed
   self-assessment              Print this project's own MVSP self-assessment
   packs validate [file]...     Validate pack files (the built-in packs when no file is given)
   checks guide                 Print the check guide generated from the check definitions
@@ -69,6 +76,8 @@ Environment:
   CCA_COOKIE_SECURE     Set to 1 when serving over HTTPS
 
 migrate, users, evidence and demo are setup commands and take no CCA_USER.
+content validate and the review commands read the files in the current directory
+(or --root), not the copies built into the binary, and need no database.
 `
 
 // errUsage marks an error caused by how the command was invoked.
@@ -83,8 +92,23 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		fmt.Fprint(stderr, usage)
 		return 2
 	}
+	// Almost every command works with the controls built into the binary.
+	// The commands that check or sign the content files must still run when
+	// those files are broken, so that they can say how.
+	switch args[0] {
+	case "content", "review", "packs", "version", "help", "-h", "--help", "migrate":
+	default:
+		if control.LoadErr != nil {
+			fmt.Fprintf(stderr, "cca %s: the content built into this binary is not valid; run \"cca content validate\":\n%v\n", args[0], control.LoadErr)
+			return 1
+		}
+	}
 	var err error
 	switch args[0] {
+	case "content":
+		err = runContent(ctx, args[1:], stdout)
+	case "review":
+		err = runReview(args[1:], stdout)
 	case "version":
 		fmt.Fprintln(stdout, version)
 	case "help", "-h", "--help":

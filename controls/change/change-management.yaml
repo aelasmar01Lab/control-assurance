@@ -1,0 +1,28 @@
+key: change-management
+title: Change management
+statement: >-
+  Changes to the default branch of each in-scope repository require an
+  approving review and a passing status check.
+risk: >-
+  A change reaches the default branch without review or without passing
+  automated checks.
+owner_role: control-owner
+type: automated
+checks: [GH-01, GH-02]
+evidence_expectation: >-
+  Active branch rules on each in-scope repository, collected at least every 48
+  hours.
+freshness_hours: 48
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: >-
+  This control joins two activities, an approving review (GH-01) and required
+  status checks (GH-02). The writing rules would make it two controls. It is
+  kept whole because its key comes from the first release; split it or keep
+  it.
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

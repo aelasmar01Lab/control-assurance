@@ -127,23 +127,26 @@ func TestManualEvidence(t *testing.T) {
 }
 
 func TestControlDefinitions(t *testing.T) {
+	if LoadErr != nil {
+		t.Fatalf("the built-in content is not valid:\n%v", LoadErr)
+	}
 	seen := map[string]bool{}
 	for _, c := range All {
 		if seen[c.Key] {
 			t.Errorf("control %s defined twice", c.Key)
 		}
 		seen[c.Key] = true
-		if c.Title == "" || c.Risk == "" || c.Owner == "" || c.EvidenceExpectation == "" {
-			t.Errorf("%s: title, risk, owner and evidence expectation are all required", c.Key)
+		if c.Title == "" || c.Statement == "" || c.Risk == "" || c.Owner == "" || c.EvidenceExpectation == "" {
+			t.Errorf("%s: title, statement, risk, owner and evidence expectation are all required", c.Key)
 		}
-		if len(c.Checks) == 0 && c.ManualCheck == "" {
-			t.Errorf("%s: rests on no check", c.Key)
+		if len(c.ContentSHA256) != 64 || c.Path == "" || c.Domain == "" {
+			t.Errorf("%s: revision %q, path %q, domain %q", c.Key, c.ContentSHA256, c.Path, c.Domain)
 		}
 		if len(c.Checks) > 0 && c.Freshness <= 0 {
 			t.Errorf("%s: automated checks need a freshness window", c.Key)
 		}
 		for _, k := range append(append([]string(nil), c.Checks...), c.ManualCheck) {
-			if k == "" {
+			if k == "" || k == manualEvidenceLabel {
 				continue
 			}
 			def, ok := check.Lookup(k, "1")
@@ -155,7 +158,7 @@ func TestControlDefinitions(t *testing.T) {
 			}
 		}
 		for _, m := range c.Mappings {
-			if m.Framework == "" || m.Requirement == "" || m.Rationale == "" || m.Limitation == "" {
+			if m.Framework == "" || m.Version == "" || m.Requirement == "" || m.Rationale == "" || (m.Limitation == "" && m.Strength != "direct") {
 				t.Errorf("%s: mapping %+v is incomplete", c.Key, m)
 			}
 			if m.Strength != "direct" && m.Strength != "partial" && m.Strength != "supporting" {

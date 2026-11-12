@@ -1,0 +1,57 @@
+{{define "content"}}
+<div class="grid-cards">
+  <div class="card"><span class="stat-label">Waiting for review</span><div class="stat"><span class="stat-big">{{.Data.Drafts}}</span><span class="stat-unit">drafts</span></div></div>
+  <div class="card"><span class="stat-label">Reviewed</span><div class="stat"><span class="stat-big">{{.Data.Reviewed}}</span><span class="stat-unit">signed entries</span></div></div>
+</div>
+
+<section class="section">
+  <div class="section-head"><h2>How to review</h2></div>
+  <div class="card body">
+    <p>Entries are files in the repository, not rows edited here. Open the file, change anything that is wrong, then:</p>
+    <p><code>make content</code> checks every file and rebuilds this queue and the control guide.</p>
+    <p><code>go run ./cmd/cca review sign &lt;file&gt;</code> marks what you reviewed, with the options shown beside each entry.</p>
+    <p>An entry with a note carries a doubt the agent recorded. It cannot be signed until its <code>reviewer_note</code> is cleared.</p>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="section-head"><h2>Controls, by domain</h2></div>
+  <div class="card table-card">{{template "counts" (counts "Domain" .Data.Controls)}}</div>
+</section>
+<section class="section">
+  <div class="section-head"><h2>Mappings, by framework</h2></div>
+  <div class="card table-card">{{template "counts" (counts "Framework" .Data.Mappings)}}</div>
+</section>
+<section class="section">
+  <div class="section-head"><h2>Tracking entries, by framework</h2></div>
+  <div class="card table-card">{{template "counts" (counts "Framework" .Data.Tracking)}}</div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Drafts</h2><span class="hint">Controls first, then mappings and tracking entries framework by framework. Entries with a note come first in each group.</span></div>
+  <div class="card table-card">
+    {{if .Data.Items}}
+    <table class="table">
+      <thead><tr><th class="w-22">Entry</th><th>What it says</th><th class="w-30">To sign it</th></tr></thead>
+      <tbody>
+      {{range .Data.Items}}
+      <tr>
+        <td><div class="strong">{{.Entry}}</div><div class="sub">{{.Kind}} · {{.Group}}</div><div class="sub"><span class="tag">draft, not reviewed</span></div></td>
+        <td class="small pretty">{{.Summary}}{{if .Note}}<div class="note-box"><span class="tag">note</span>{{.Note}}</div>{{end}}</td>
+        <td class="small"><code class="wrap">{{.Sign}}</code><div class="sub mono">{{.Path}}</div></td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{else}}<p class="empty">Nothing is waiting.</p>{{end}}
+  </div>
+</section>
+{{end}}
+
+{{define "counts"}}
+<table class="table">
+  <thead><tr><th>{{.Head}}</th><th>Reviewed</th><th>Draft</th><th>Blocked by a note</th></tr></thead>
+  <tbody>{{range .Rows}}<tr><td class="strong">{{.Name}}</td><td>{{.Reviewed}}</td><td>{{.Draft}}</td><td>{{.Noted}}</td></tr>{{end}}</tbody>
+</table>
+{{end}}

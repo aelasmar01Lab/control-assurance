@@ -1,5 +1,5 @@
-// Package control defines the internal controls and derives each control's
-// displayed state. The state is computed on read from evaluations, evidence
+// Package control holds the internal controls, read from the content files,
+// and derives each control's displayed state. The state is computed on read from evaluations, evidence
 // reviews and exceptions; it is never stored.
 package control
 
@@ -8,25 +8,50 @@ import (
 	"sort"
 	"time"
 
+	contentfs "github.com/aelasmar01Lab/control-assurance"
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
+	"github.com/aelasmar01Lab/control-assurance/internal/content"
+	"github.com/aelasmar01Lab/control-assurance/internal/pack"
+	"github.com/aelasmar01Lab/control-assurance/packs"
 )
 
-// Mapping ties a control to a framework requirement.
+// Mapping ties a control to a requirement of one framework version.
 type Mapping struct {
-	Framework   string // pack key, such as "mvsp"
-	Requirement string // requirement identifier in that pack
-	Strength    string // direct, partial or supporting
-	Rationale   string
-	Limitation  string
-	// ReviewedBy is who reviewed the mapping. Empty means unreviewed, and
-	// the mapping is labelled as such wherever it is shown.
-	ReviewedBy string
+	Framework   string `json:"framework"` // pack key, such as "mvsp"
+	Version     string `json:"framework_version"`
+	Requirement string `json:"requirement"` // requirement identifier in that pack
+	// Strength is direct, partial or supporting, as written. Derived states
+	// use EffectiveStrength.
+	Strength   string `json:"strength"`
+	Rationale  string `json:"rationale"`
+	Limitation string `json:"limitation"`
+	// Basis is own_analysis, published_crosswalk or derived.
+	Basis       string `json:"basis"`
+	BasisSource string `json:"basis_source,omitempty"`
+	// Review says whether a person has reviewed the mapping. Until then it
+	// is labelled a draft wherever it is shown.
+	Review content.Review `json:"review"`
+}
+
+// EffectiveStrength is the strength the mapping counts as: a direct mapping
+// that nobody has reviewed counts as partial.
+func (m Mapping) EffectiveStrength() string {
+	if m.Strength == "direct" && !m.Review.IsReviewed() {
+		return "partial"
+	}
+	return m.Strength
 }
 
 // Control is one internal control.
 type Control struct {
 	Key   string
 	Title string
+	// Domain is the area of work the control belongs to, such as access.
+	Domain string
+	// Type is automated, manual, policy or hybrid.
+	Type string
+	// Statement says what is true when the control works.
+	Statement string
 	// Risk is what the control is there to prevent.
 	Risk string
 	// Owner is the username answerable for the control.
@@ -37,136 +62,119 @@ type Control struct {
 	Checks []string
 	// Freshness is how old automated evidence may be before the control is stale.
 	Freshness time.Duration
-	// ManualCheck is the manual-evidence check, if the control has one.
+	// ManualCheck names the control's manual evidence, if it takes any: the
+	// key of its manual-evidence check, or "manual evidence".
 	ManualCheck string
+	// ManualExpectation says what a person submits.
+	ManualExpectation string
 	// ManualValidityMonths is how long accepted manual evidence counts,
 	// measured from the end of the period it covers.
 	ManualValidityMonths int
-	Mappings             []Mapping
+	// AppliesToLab is yes, no or partly, with a reason when it is not yes.
+	AppliesToLab  string
+	AppliesReason string
+	// Review says whether a person has reviewed the control as it now reads.
+	Review content.Review
+	// ContentSHA256 identifies this wording of the control: its revision.
+	ContentSHA256 string
+	// Path is the file the control is defined in.
+	Path     string
+	Mappings []Mapping
 }
 
 // AutomatedFreshness is how old automated evidence may be before a control
-// that rests on it is stale.
+// that rests on it is stale, unless the control says otherwise.
 const AutomatedFreshness = 48 * time.Hour
 
-// All is every internal control defined so far. Controls live in code, so a
-// change to one is a reviewed commit.
-var All = []Control{
-	{
-		Key:                 "change-management",
-		Title:               "Change management",
-		Risk:                "A change reaches the default branch without review or without passing automated checks.",
-		Owner:               "control-owner",
-		EvidenceExpectation: "Active branch rules on each in-scope repository, collected at least every 48 hours.",
-		Checks:              []string{"GH-01", "GH-02"},
-		Freshness:           AutomatedFreshness,
-		Mappings: []Mapping{{
-			Framework: "mvsp", Requirement: "3.5", Strength: "supporting",
-			Rationale:  "Required review and required status checks support a consistent, controlled build and release process.",
-			Limitation: "MVSP 3.5 asks for version control, build provenance and credentials kept out of source. It does not ask for pull-request approval, so this control does not establish 3.5.",
-		}},
-	},
-	{
-		Key:                 "dependency-remediation",
-		Title:               "Dependency remediation",
-		Risk:                "A dependency with a known vulnerability stays in use past the patch deadline.",
-		Owner:               "control-owner",
-		EvidenceExpectation: "Open Dependabot alerts on each in-scope repository, collected at least every 48 hours.",
-		Checks:              []string{"GH-03"},
-		Freshness:           AutomatedFreshness,
-		Mappings: []Mapping{
-			{
-				Framework: "mvsp", Requirement: "2.6", Strength: "partial",
-				Rationale:  "Open alerts within their deadline show that known-vulnerable third-party components are being patched.",
-				Limitation: "It covers only what Dependabot knows about in manifests it can read, and says nothing about keeping components otherwise up to date.",
-			},
-			{
-				Framework: "mvsp", Requirement: "3.4", Strength: "partial",
-				Rationale:  "MVSP 3.4 sets a 90 day limit for patching application vulnerabilities; the medium deadline matches it and the high deadline is shorter.",
-				Limitation: "MVSP 3.4 covers vulnerabilities in the application itself. This control sees only its dependencies.",
-			},
-		},
-	},
-	{
-		Key:                 "vulnerability-disclosure",
-		Title:               "Vulnerability disclosure",
-		Risk:                "Someone who finds a vulnerability has no stated way to report it.",
-		Owner:               "control-owner",
-		EvidenceExpectation: "A security policy file on the default branch of each in-scope repository, checked at least every 48 hours.",
-		Checks:              []string{"GH-04"},
-		Freshness:           AutomatedFreshness,
-		Mappings: []Mapping{{
-			Framework: "mvsp", Requirement: "1.1", Strength: "partial",
-			Rationale:  "A published security policy file is where a repository states how to report a vulnerability.",
-			Limitation: "The file's content is not read, so this shows nothing about a contact, a response time or safe-harbour wording, all of which MVSP 1.1 asks for.",
-		}},
-	},
-	{
-		Key:                 "human-access",
-		Title:               "Human access",
-		Risk:                "A stolen password alone is enough to sign in to the AWS account.",
-		Owner:               "control-owner",
-		EvidenceExpectation: "The IAM credential report and account summary, collected at least every 48 hours.",
-		Checks:              []string{"AWS-01"},
-		Freshness:           AutomatedFreshness,
-		Mappings: []Mapping{{
-			Framework: "mvsp", Requirement: "4.2", Strength: "partial",
-			Rationale:  "MFA on every console password limits what a stolen password allows.",
-			Limitation: "MVSP 4.2 covers logical access more widely: least privilege, access review and removal of unused accounts. Federated users are not seen.",
-		}},
-	},
-	{
-		Key:                 "credential-lifecycle",
-		Title:               "Credential lifecycle",
-		Risk:                "A credential nobody uses stays valid until someone else finds it.",
-		Owner:               "control-owner",
-		EvidenceExpectation: "The IAM credential report and account summary, collected at least every 48 hours.",
-		Checks:              []string{"AWS-02"},
-		Freshness:           AutomatedFreshness,
-		Mappings: []Mapping{{
-			Framework: "mvsp", Requirement: "4.2", Strength: "partial",
-			Rationale:  "Finding passwords and keys that have gone unused supports removing access that is no longer needed.",
-			Limitation: "It shows last use, not whether access is still needed, and it does not see roles or federated sessions.",
-		}},
-	},
-	{
-		Key:                 "audit-logging",
-		Title:               "Audit logging",
-		Risk:                "Actions in the AWS account leave no trustworthy record.",
-		Owner:               "control-owner",
-		EvidenceExpectation: "CloudTrail trail descriptions and status, collected at least every 48 hours.",
-		Checks:              []string{"AWS-03"},
-		Freshness:           AutomatedFreshness,
-		Mappings: []Mapping{{
-			Framework: "mvsp", Requirement: "2.7", Strength: "supporting",
-			Rationale:  "A validated multi-Region trail records management activity in the account that hosts the application.",
-			Limitation: "MVSP 2.7 asks for application logs of user and security events. CloudTrail records AWS API activity, which is a different thing.",
-		}},
-	},
-	{
-		Key:                 "ai-usage-logging",
-		Title:               "AI usage logging",
-		Risk:                "Model invocations in the account cannot be reviewed afterwards.",
-		Owner:               "control-owner",
-		EvidenceExpectation: "The Bedrock model invocation logging configuration in the lab Region, collected at least every 48 hours.",
-		Checks:              []string{"AWS-04"},
-		Freshness:           AutomatedFreshness,
-		// No framework in this release has a requirement this control maps to.
-	},
-	{
-		Key:                  "backup-recovery",
-		Title:                "Backup and recovery",
-		Risk:                 "Data cannot be restored after loss because recovery has never been exercised.",
-		Owner:                "control-owner",
-		EvidenceExpectation:  "A dated recovery exercise record, accepted by a reviewer, covering a period that ended within the last 12 months.",
-		ManualCheck:          check.REC01,
-		ManualValidityMonths: 12,
-		Mappings: []Mapping{{
-			Framework: "mvsp", Requirement: "4.4", Strength: "partial",
-			Rationale:  "A reviewed recovery exercise record shows that recovery is tested periodically.",
-			Limitation: "It does not show a documented disaster recovery plan, backups held in a separate location, or that recovery would succeed today.",
-		}},
-	},
+// manualEvidenceLabel names the manual evidence of a control that has no
+// manual-evidence check of its own.
+const manualEvidenceLabel = "manual evidence"
+
+// All is every control, and Tracked every tracking entry, read from the
+// content files built into the binary. LoadErr is set, and both are empty,
+// when those files are not valid; "cca content validate" says what is wrong.
+var (
+	All     []Control
+	Tracked []Tracking
+	LoadErr error
+)
+
+func init() {
+	packsList, err := pack.LoadFS(packs.FS)
+	if err != nil {
+		LoadErr = err
+		return
+	}
+	set, problems := content.Load(contentfs.FS, content.BuiltInRefs(packsList))
+	if len(problems) > 0 {
+		LoadErr = problems
+		return
+	}
+	All, Tracked = FromSet(set)
+}
+
+// FromSet turns content files into the controls and tracking entries the
+// rest of the product works with.
+func FromSet(set *content.Set) ([]Control, []Tracking) {
+	manual := map[string]bool{}
+	for _, c := range check.All() {
+		manual[c.Key] = c.Manual
+	}
+	var controls []Control
+	for _, f := range set.Controls {
+		c := Control{
+			Key: f.Key, Title: f.Title, Domain: f.Domain, Type: f.Type, Statement: f.Statement,
+			Risk: f.Risk, Owner: f.OwnerRole, EvidenceExpectation: f.EvidenceExpectation,
+			Freshness:    time.Duration(f.FreshnessHours) * time.Hour,
+			AppliesToLab: f.AppliesToLab, AppliesReason: f.AppliesReason,
+			Review: f.Review, ContentSHA256: f.Hash(), Path: f.Path,
+		}
+		for _, k := range f.Checks {
+			if manual[k] {
+				c.ManualCheck = k
+			} else {
+				c.Checks = append(c.Checks, k)
+			}
+		}
+		if f.ManualEvidence != nil {
+			if c.ManualCheck == "" {
+				c.ManualCheck = manualEvidenceLabel
+			}
+			c.ManualExpectation = f.ManualEvidence.Expectation
+			c.ManualValidityMonths = f.ManualEvidence.ValidityMonths
+		}
+		for _, m := range set.Mappings {
+			if m.Control == f.Key {
+				c.Mappings = append(c.Mappings, Mapping{
+					Framework: m.Framework, Version: m.Version, Requirement: m.Requirement,
+					Strength: m.Strength, Rationale: m.Rationale, Limitation: m.Limitation,
+					Basis: m.Basis, BasisSource: m.BasisSource, Review: m.Review,
+				})
+			}
+		}
+		controls = append(controls, c)
+	}
+	// Domain by domain, in the order the domains are listed.
+	order := map[string]int{}
+	for i, d := range content.Domains {
+		order[d] = i
+	}
+	sort.SliceStable(controls, func(i, j int) bool {
+		if controls[i].Domain != controls[j].Domain {
+			return order[controls[i].Domain] < order[controls[j].Domain]
+		}
+		return controls[i].Key < controls[j].Key
+	})
+
+	var tracked []Tracking
+	for _, t := range set.Tracking {
+		tracked = append(tracked, Tracking{
+			Framework: t.Framework, Version: t.Version, Requirement: t.Requirement,
+			Status: TrackingStatus(t.Status), Owner: t.OwnerRole, Applicability: t.Applicability,
+			EvidenceExpectation: t.EvidenceExpectation, Rationale: t.Rationale, Note: t.Note, Review: t.Review,
+		})
+	}
+	return controls, tracked
 }
 
 // Lookup returns the control with the given key.

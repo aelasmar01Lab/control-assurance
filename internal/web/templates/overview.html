@@ -24,7 +24,7 @@
       <tbody>
       {{range .Data.Controls}}
       <tr>
-        <td><a class="row-link" href="/?control={{.Control.Key}}">{{.Control.Title}}</a><div class="sub">Owner: {{.Control.Owner}}</div></td>
+        <td><a class="row-link" href="/?control={{.Control.Key}}">{{.Control.Title}}</a><div class="sub">Owner: {{.Control.Owner}} · <span class="tag{{if .Control.Review.IsReviewed}} tag-ok{{end}}">{{.Control.Review.Label}}</span></div></td>
         <td><span class="pill t-{{tone .State}} state {{.State}}">{{label .State}}</span></td>
         <td class="body">{{range .Reasons}}<div>{{.}}</div>{{end}}</td>
         <td><div class="chips">{{range .Control.Checks}}<code class="chip">{{.}}</code>{{end}}{{if .Control.ManualCheck}}<code class="chip">{{.Control.ManualCheck}} · manual</code>{{end}}</div></td>
@@ -63,11 +63,13 @@
 <a class="scrim" href="/" aria-label="Close details"></a>
 <aside class="drawer" aria-label="Control details">
   <div class="drawer-head">
-    <div class="stack grow"><code class="accent xs">{{.Control.Key}}</code><h2>{{.Control.Title}}</h2><div><span class="pill t-{{tone .State}}">{{label .State}}</span></div></div>
+    <div class="stack grow"><code class="accent xs">{{.Control.Key}}</code><h2>{{.Control.Title}}</h2><div class="row"><span class="pill t-{{tone .State}}">{{label .State}}</span><span class="tag{{if .Control.Review.IsReviewed}} tag-ok{{end}}">{{.Control.Review.Label}}</span></div></div>
     <a class="btn btn-secondary btn-icon" href="/" aria-label="Close"><i class="ph ph-x"></i></a>
   </div>
   <dl class="kv">
+    <dt>Statement</dt><dd>{{.Control.Statement}}</dd>
     <dt>Risk</dt><dd>{{.Control.Risk}}</dd>
+    <dt>Domain</dt><dd>{{.Control.Domain}}, {{.Control.Type}}</dd>
     <dt>Owner</dt><dd>{{.Control.Owner}}</dd>
     <dt>Evidence expected</dt><dd>{{.Control.EvidenceExpectation}}</dd>
     <dt>Evidence window</dt><dd>{{window .Control}}</dd>
@@ -76,8 +78,8 @@
   <section class="section"><h3>Rests on</h3><div class="chips">{{range .Control.Checks}}<code class="chip">{{.}}</code>{{end}}{{if .Control.ManualCheck}}<code class="chip">{{.Control.ManualCheck}} (manual)</code>{{end}}</div></section>
   <section class="section"><h3>Framework mapping</h3>
     {{range .Control.Mappings}}
-    <div class="mapping"><div class="row"><span class="strong">{{upper .Framework}} {{.Requirement}}</span><span class="muted">{{.Strength}} mapping</span>{{if not .ReviewedBy}}<span class="tag">mapping not reviewed</span>{{end}}</div><div class="limit">Limitation: {{.Limitation}}</div></div>
-    {{else}}<p class="small muted">None. No framework in this release has a requirement this control maps to.</p>{{end}}
+    <div class="mapping"><div class="row"><span class="strong">{{upper .Framework}} {{.Requirement}}</span><span class="muted">{{.EffectiveStrength}} mapping{{if ne .EffectiveStrength .Strength}} (written as {{.Strength}}){{end}}</span><span class="tag{{if .Review.IsReviewed}} tag-ok{{end}}">{{.Review.Label}}</span></div>{{if .Limitation}}<div class="limit">Limitation: {{.Limitation}}</div>{{end}}</div>
+    {{else}}<p class="small muted">None yet.</p>{{end}}
   </section>
 </aside>
 {{end}}

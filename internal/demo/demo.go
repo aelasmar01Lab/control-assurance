@@ -119,6 +119,11 @@ func Seed(ctx context.Context, svc *assurance.Service, now time.Time) ([]Step, e
 	if _, err := svc.LoadCatalog(ctx, operator, all); err != nil {
 		return nil, err
 	}
+	// Record the controls as they are worded now, so the history that
+	// follows can say which wording was in force.
+	if _, err := svc.LoadContent(ctx, operator); err != nil {
+		return nil, err
+	}
 
 	// collect gathers everything and evaluates it. The AWS report is
 	// always fresh and its credentials in recent use.

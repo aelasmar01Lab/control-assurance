@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -71,4 +73,160 @@ func TestMigrateRequiresDatabaseURL(t *testing.T) {
 	if !strings.Contains(stderr.String(), "DATABASE_URL is not set") {
 		t.Errorf("stderr = %q", stderr.String())
 	}
+}
+
+const reviewPack = `
+framework:
+  key: fixture
+  title: Fixture Framework
+  version: v1
+  text_rights: own_composition
+  license: Synthetic test data
+  source:
+    kind: document
+    retrieved: "2026-01-01"
+requirements:
+  - {id: "R1", group: "One", title: "First"}
+  - {id: "R2", group: "One", title: "Second"}
+`
+
+const reviewControl = `key: logging-trail
+title: Account activity trail
+statement: A trail records management activity in the account.
+risk: Actions in the account leave no record.
+owner_role: control-owner
+type: automated
+checks: [AWS-03]
+evidence_expectation: Trail descriptions, collected every 48 hours.
+freshness_hours: 48
+applies_to_lab: "yes"
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""
+`
+
+const reviewMappings = `framework: fixture
+version: v1
+mappings:
+  - control: logging-trail
+    requirement: "R1"
+    strength: partial
+    rationale: A trail is one record R1 asks for.
+    limitation: R1 also asks for application logs.
+    basis: own_analysis
+    review: {status: draft, drafted_by: agent, reviewed_by: "", reviewed_on: "", content_sha256: ""}
+`
+
+const reviewTracking = `framework: fixture
+version: v1
+entries:
+  - requirement: "R2"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: A record.
+    rationale: Nothing addresses it.
+    reviewer_note: Is this in scope?
+    review: {status: draft, drafted_by: agent, reviewed_by: "", reviewed_on: "", content_sha256: ""}
+`
+
+// reviewRoot builds a small content root on disk: synthetic controls and a
+// synthetic framework, with the real schemas.
+func reviewRoot(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	write := func(name, data string) {
+		path := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(data), 0o600); err != nil { //nolint:gosec // under the test's temporary directory
+			t.Fatal(err)
+		}
+	}
+	for _, schema := range []string{"controls/control.schema.json", "mappings/mapping.schema.json", "tracking/tracking.schema.json"} {
+		data, err := os.ReadFile("../../" + schema) //nolint:gosec // a fixed list of schema files
+		if err != nil {
+			t.Fatal(err)
+		}
+		write(schema, string(data))
+	}
+	write("packs/fixture/v1.yaml", reviewPack)
+	write("controls/logging/logging-trail.yaml", reviewControl)
+	write("mappings/fixture.yaml", reviewMappings)
+	write("tracking/fixture.yaml", reviewTracking)
+	write("docs/review-queue.md", "stale\n")
+	write("docs/controls.md", "stale\n")
+	return root
+}
+
+// The whole edit-and-sign contract from the command line: validate, sign,
+// see it reviewed, edit it, and have verification fail until it is signed
+// again or set back to draft.
+func TestReviewCommands(t *testing.T) {
+	root := reviewRoot(t)
+	controlFile := filepath.Join(root, "controls", "logging", "logging-trail.yaml")
+	cca := func(wantCode int, args ...string) string {
+		t.Helper()
+		var stdout, stderr bytes.Buffer
+		if got := run(context.Background(), append(args, "--root", root), &stdout, &stderr); got != wantCode {
+			t.Fatalf("cca %v = %d, want %d\nstdout: %s\nstderr: %s", args, got, wantCode, stdout.String(), stderr.String())
+		}
+		return stdout.String() + stderr.String()
+	}
+	contains := func(out string, wants ...string) {
+		t.Helper()
+		for _, want := range wants {
+			if !strings.Contains(out, want) {
+				t.Errorf("output lacks %q:\n%s", want, out)
+			}
+		}
+	}
+
+	contains(cca(0, "content", "validate"), "ok  1 controls, 1 mappings, 1 tracking entries")
+	contains(cca(0, "review", "status"), "0 reviewed, 3 waiting", "(1 blocked by a reviewer note)")
+	contains(cca(0, "review", "verify"), "0 reviewed, 3 draft")
+
+	// Sign the control. The generated documents are rebuilt with it.
+	contains(cca(0, "review", "sign", controlFile), "logging-trail: signed as ali", "rebuilt docs/review-queue.md", "rebuilt docs/controls.md")
+	guide, err := os.ReadFile(filepath.Join(root, "docs", "controls.md")) //nolint:gosec // a file this test wrote
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(guide), "| Review | **reviewed by ali on ") {
+		t.Errorf("the rebuilt guide does not show the control as reviewed:\n%s", guide)
+	}
+	contains(cca(0, "review", "status"), "1 reviewed, 2 waiting")
+	contains(cca(0, "review", "verify"), "1 reviewed, 2 draft")
+
+	// A mapping, by name and under another reviewer's name.
+	contains(cca(0, "review", "sign", filepath.Join(root, "mappings", "fixture.yaml"), "--requirement", "R1", "--as", "sam"), "logging-trail -> R1: signed as sam")
+	// Selecting nothing is refused, and so is an entry with an open note.
+	contains(cca(1, "review", "sign", filepath.Join(root, "mappings", "fixture.yaml")), "say which mappings")
+	contains(cca(1, "review", "sign", filepath.Join(root, "tracking", "fixture.yaml"), "--all"), "open reviewer_note")
+
+	// Edit the signed control: verification fails, and says who signed what.
+	data, err := os.ReadFile(controlFile) //nolint:gosec // a file this test wrote
+	if err != nil {
+		t.Fatal(err)
+	}
+	edited := strings.Replace(string(data), "records management activity", "records all activity", 1)
+	if err := os.WriteFile(controlFile, []byte(edited), 0o600); err != nil { //nolint:gosec // a file this test wrote
+		t.Fatal(err)
+	}
+	contains(cca(1, "review", "verify"), "FAIL controls/logging/logging-trail.yaml: it was edited after ali reviewed it")
+	contains(cca(1, "content", "validate"), "edited after ali reviewed it")
+
+	// Setting it back to draft settles it.
+	contains(cca(0, "review", "unsign", controlFile), "set back to draft")
+	contains(cca(0, "review", "verify"), "1 reviewed, 2 draft")
+
+	// A file that is not valid is not signed.
+	if err := os.WriteFile(controlFile, []byte(strings.Replace(edited, "checks: [AWS-03]", "checks: [AWS-99]", 1)), 0o600); err != nil { //nolint:gosec // a file this test wrote
+		t.Fatal(err)
+	}
+	contains(cca(1, "review", "sign", controlFile), "nothing in it was signed", `check "AWS-99" does not exist`)
 }

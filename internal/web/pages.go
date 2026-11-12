@@ -16,7 +16,9 @@ type pageMeta struct{ Group, Title, Note string }
 
 var pageMetas = map[string]pageMeta{
 	"overview":     {"Monitor", "Overview", "Each control has a state and, beside it, the reasons. Supported always lists the checks it rests on, and says nothing about any framework."},
-	"requirements": {"Monitor", "Framework requirements", "Every requirement of the catalog. A requirement is partly evidenced only when every control mapped to it is supported by current evidence; no mapping in this release is strong enough to say more. A requirement that no control covers shows how it is tracked instead, with the reason."},
+	"frameworks":   {"Monitor", "Frameworks", "Every framework pack built into this release. For each, two numbers are kept apart: the requirements whose mappings and controls the maintainer has reviewed, and the requirements that still rest on a draft. Controls and mappings are drafted by an AI agent, and nothing here has been reviewed by an auditor."},
+	"requirements": {"Monitor", "Framework requirements", "Every requirement of this framework. A requirement is partly evidenced only when every control mapped to it is supported by current evidence. A requirement that no control covers shows how it is tracked instead, with the reason. Each mapping says whether it has been reviewed; a direct mapping that is still a draft counts as partial."},
+	"queue":        {"Audit", "Review queue", "Controls, mappings and tracking entries are drafted by an AI agent. Each is a draft until the maintainer reads it, edits it and signs it, and a signature covers the entry's exact content: an entry edited after signing fails verification until it is signed again. This page lists what is still a draft."},
 	"findings":     {"Monitor", "Findings", "A finding is opened by a failing evaluation and closed only by a later passing one. An exception accepts the risk for a limited time; it never changes an evaluation, and it stops counting when it expires."},
 	"evidence":     {"Evidence", "Manual evidence", "Submitting and accepting are separate actions by separate people. Submitted evidence does not count until a reviewer accepts it, and accepted evidence stops counting after its validity date."},
 	"integrations": {"Evidence", "Integration health", "Whether evidence is arriving. A problem here is a problem with collection: it is never a check result, and it changes none. A failed attempt leaves the previous result in place and lets its evidence age."},
@@ -40,7 +42,7 @@ func navigation(openFindings int) []navGroup {
 	return []navGroup{
 		{"Monitor", []navItem{
 			{Key: "overview", Icon: "ph-squares-four", Label: "Overview", Href: "/"},
-			{Key: "requirements", Icon: "ph-list-checks", Label: "Requirements", Href: "/requirements"},
+			{Key: "frameworks", Icon: "ph-list-checks", Label: "Frameworks", Href: "/requirements"},
 			{Key: "findings", Icon: "ph-warning-diamond", Label: "Findings", Href: "/findings", Badge: openFindings},
 		}},
 		{"Evidence", []navItem{
@@ -50,6 +52,7 @@ func navigation(openFindings int) []navGroup {
 		{"Audit", []navItem{
 			{Key: "log", Icon: "ph-scroll", Label: "Decision log", Href: "/log"},
 			{Key: "package", Icon: "ph-package", Label: "Review package", Href: "/package"},
+			{Key: "queue", Icon: "ph-check", Label: "Review queue", Href: "/review-queue"},
 			{Key: "export", Icon: "ph-download-simple", Label: "Export JSON", Href: "/export.json"},
 		}},
 	}
@@ -196,7 +199,7 @@ func buildOverview(ov *assurance.Overview, reqs []assurance.RequirementView, fin
 	p.Summary = []summaryCard{
 		{"Controls", fmt.Sprint(len(ov.Controls)), "internal controls", "Details", "#controls",
 			countSegs(controls, "supported", "accepted_risk", "stale", "not_evaluated", "needs_attention")},
-		{"MVSP requirements", fmt.Sprint(covered), fmt.Sprintf("of %d covered in part", len(reqs)), "View", "/requirements", reqSegs},
+		{"Framework requirements", fmt.Sprint(covered), fmt.Sprintf("of %d covered in part", len(reqs)), "View", "/requirements", reqSegs},
 		{"Findings", fmt.Sprint(open), "open", "View", "/findings",
 			[]seg{{"open", open, "s-fail"}, {"closed", closed, "s-pass"}}},
 		{"Integration health", fmt.Sprint(len(health.Jobs)), "collection jobs", "View", "/integrations",
@@ -235,26 +238,63 @@ type requirementGroup struct {
 	Rows []assurance.RequirementView
 }
 
-// requirementsPage is the requirements grouped as the catalog groups them.
+// requirementsPage is one framework's requirements, grouped as the
+// framework groups them.
 type requirementsPage struct {
-	Framework, Version string
-	Total              int
-	Segs               []seg
-	Groups             []requirementGroup
+	Framework assurance.FrameworkView
+	Segs      []seg
+	Groups    []requirementGroup
 }
 
-func buildRequirements(reqs []assurance.RequirementView) requirementsPage {
-	p := requirementsPage{Total: len(reqs), Segs: requirementSegs(reqs)}
+func buildRequirements(fw assurance.FrameworkView, all []assurance.RequirementView) requirementsPage {
+	var reqs []assurance.RequirementView
+	for _, r := range all {
+		if r.Framework == fw.Key && r.FrameworkVersion == fw.Version {
+			reqs = append(reqs, r)
+		}
+	}
+	p := requirementsPage{Framework: fw, Segs: requirementSegs(reqs)}
 	for _, r := range reqs {
-		p.Framework, p.Version = strings.ToUpper(r.Framework), r.FrameworkVersion
 		if n := len(p.Groups); n == 0 || p.Groups[n-1].Name != r.Group {
-			number, _, _ := strings.Cut(r.ID, ".")
-			p.Groups = append(p.Groups, requirementGroup{N: number, Name: r.Group})
+			p.Groups = append(p.Groups, requirementGroup{N: fmt.Sprint(len(p.Groups) + 1), Name: r.Group})
 		}
 		g := &p.Groups[len(p.Groups)-1]
 		g.Rows = append(g.Rows, r)
 	}
 	return p
+}
+
+// frameworkCard is one framework on the frameworks page.
+type frameworkCard struct {
+	assurance.FrameworkView
+	Segs []seg
+}
+
+func buildFrameworks(fws []assurance.FrameworkView, all []assurance.RequirementView) []frameworkCard {
+	var out []frameworkCard
+	for _, fw := range fws {
+		var reqs []assurance.RequirementView
+		for _, r := range all {
+			if r.Framework == fw.Key && r.FrameworkVersion == fw.Version {
+				reqs = append(reqs, r)
+			}
+		}
+		out = append(out, frameworkCard{fw, requirementSegs(reqs)})
+	}
+	return out
+}
+
+// textRights says in a few words what a pack carries.
+func textRights(v string) string {
+	switch v {
+	case "full":
+		return "full text"
+	case "identifiers_only":
+		return "identifiers only"
+	case "own_composition":
+		return "written by this project"
+	}
+	return v
 }
 
 // providerCard is the jobs of one resource of one source.

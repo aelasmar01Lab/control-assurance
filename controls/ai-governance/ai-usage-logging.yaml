@@ -1,0 +1,26 @@
+key: ai-usage-logging
+title: AI usage logging
+statement: >-
+  Bedrock model invocation logging delivers to a configured destination in the
+  lab Region.
+risk: >-
+  Model invocations in the account cannot be reviewed afterwards.
+owner_role: control-owner
+type: automated
+checks: [AWS-04]
+evidence_expectation: >-
+  The Bedrock model invocation logging configuration in the lab Region,
+  collected at least every 48 hours.
+freshness_hours: 48
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: >-
+  No framework requirement is mapped to this control yet. The writing rules
+  remove a control that has no mapping after its wave; the AI frameworks
+  arrive in Wave 1.
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

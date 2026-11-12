@@ -338,7 +338,7 @@ func TestAuditorInTheBrowser(t *testing.T) {
 	s.failing()
 	auditor := s.signedIn("auditor")
 
-	for _, path := range []string{"/", "/requirements", "/findings", "/evidence", "/integrations", "/log"} {
+	for _, path := range []string{"/", "/requirements", "/frameworks/mvsp", "/review-queue", "/findings", "/evidence", "/integrations", "/log"} {
 		status, body := auditor.get(path)
 		if status != http.StatusOK {
 			t.Errorf("GET %s = %d", path, status)
@@ -506,17 +506,32 @@ func TestReviewPackageInTheBrowser(t *testing.T) {
 func TestRequirementsInTheBrowser(t *testing.T) {
 	s := newSite(t)
 	s.failing()
-	status, body := s.signedIn("auditor").get("/requirements")
+	auditor := s.signedIn("auditor")
+	status, body := auditor.get("/frameworks/mvsp")
 	if status != http.StatusOK {
-		t.Fatalf("GET /requirements = %d", status)
+		t.Fatalf("GET /frameworks/mvsp = %d", status)
 	}
-	if n := strings.Count(body, `class="mono muted">mvsp `); n != 25 {
+	if n := len(regexp.MustCompile(`class="mono muted">\d\.\d</span> <strong`).FindAllString(body, -1)); n != 25 {
 		t.Errorf("the page lists %d requirements, want 25", n)
 	}
-	for _, want := range []string{"needs attention", "not implemented", "out of scope", "tracked manually", "mapping not reviewed", "source note"} {
+	for _, want := range []string{
+		"needs attention", "not implemented", "out of scope", "tracked manually", "source note",
+		"Resting on reviewed mappings", "Resting on drafts, not reviewed", "full text", "CC0-1.0",
+		`aria-current="page"><i class="ph ph-list-checks"></i><span>Frameworks</span>`,
+	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("the page does not show %q", want)
 		}
+	}
+	// Every mapping and every tracking entry says whether it was reviewed.
+	// Which it says depends on what the maintainer has signed, so either
+	// label is right; having neither is not.
+	reviewLabel := regexp.MustCompile(`(mapping|tracking entry) (draft, not reviewed|reviewed by [a-z]+ on \d{4}-\d\d-\d\d)`)
+	if n := len(reviewLabel.FindAllString(body, -1)); n < 25 {
+		t.Errorf("%d review labels on the page, want one for each of the 25 requirements at least", n)
+	}
+	if status, _ := auditor.get("/frameworks/no-such-framework"); status != http.StatusNotFound {
+		t.Errorf("an unknown framework = %d, want 404", status)
 	}
 	// Change management fails, so nothing that rests on evidence is
 	// positive, and nothing at all reads as met or supported.
@@ -541,7 +556,7 @@ func TestShellDrawerAndFonts(t *testing.T) {
 	for _, want := range []string{
 		`aria-current="page"><i class="ph ph-squares-four"></i><span>Overview</span>`,
 		`<span class="nav-badge" title="open findings">2</span>`,
-		`<span class="who-name">auditor</span>`, `<svg viewBox="0 0 100 6"`, "MVSP requirements",
+		`<span class="who-name">auditor</span>`, `<svg viewBox="0 0 100 6"`, "Framework requirements",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("the overview lacks %q", want)
@@ -556,10 +571,15 @@ func TestShellDrawerAndFonts(t *testing.T) {
 	}
 
 	_, body = auditor.get("/?control=change-management")
-	for _, want := range []string{`class="drawer"`, "A change reaches the default branch", "MVSP 3.5", "mapping not reviewed", "Limitation:", `href="/" aria-label="Close"`} {
+	for _, want := range []string{`class="drawer"`, "A change reaches the default branch", "Changes to the default branch", "MVSP 3.5", "Limitation:", `href="/" aria-label="Close"`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("the control drawer lacks %q", want)
 		}
+	}
+	// The control and its mapping each carry a review label in the drawer.
+	drawer := body[strings.Index(body, `class="drawer"`):]
+	if n := len(regexp.MustCompile(`class="tag[^"]*">(draft, not reviewed|reviewed by )`).FindAllString(drawer, -1)); n < 2 {
+		t.Errorf("the drawer shows %d review labels, want one for the control and one for its mapping", n)
 	}
 	if _, body = auditor.get("/?control=no-such-control"); strings.Contains(body, `class="drawer"`) {
 		t.Error("an unknown control opened a drawer")
@@ -649,5 +669,38 @@ func TestSecurityHeadersAndEscaping(t *testing.T) {
 	}
 	if !found {
 		t.Error("sign-in set no session cookie")
+	}
+}
+
+// The frameworks page keeps two numbers apart for each framework, and the
+// review queue lists what is still a draft.
+func TestFrameworksAndReviewQueueInTheBrowser(t *testing.T) {
+	s := newSite(t)
+	auditor := s.signedIn("auditor")
+
+	status, body := auditor.get("/requirements")
+	if status != http.StatusOK {
+		t.Fatalf("GET /requirements = %d", status)
+	}
+	for _, want := range []string{
+		"Minimum Viable Secure Product", `href="/frameworks/mvsp"`, "Resting on reviewed mappings",
+		"Resting on drafts, not reviewed", "No control; tracked with a reason", "drafted by an AI agent",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("the frameworks page lacks %q", want)
+		}
+	}
+
+	status, body = auditor.get("/review-queue")
+	if status != http.StatusOK {
+		t.Fatalf("GET /review-queue = %d", status)
+	}
+	for _, want := range []string{"Waiting for review", "Controls, by domain", "Mappings, by framework", "cca review sign", "make content"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("the review queue lacks %q", want)
+		}
+	}
+	if strings.Contains(body, "<form") && strings.Count(body, "<form") != 1 {
+		t.Error("the review queue offers an action; reviewing is done in the files")
 	}
 }

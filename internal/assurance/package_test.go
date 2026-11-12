@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/aelasmar01Lab/control-assurance/internal/assurance"
+	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
 	"github.com/aelasmar01Lab/control-assurance/internal/control"
 	"github.com/aelasmar01Lab/control-assurance/internal/github"
@@ -537,5 +538,95 @@ func TestReproduceReportsEvidenceThatChanged(t *testing.T) {
 	}
 	if len(r.Mismatches) == 0 || r.Reproduced == r.Evaluations {
 		t.Errorf("swapped evidence went unnoticed: %+v", r)
+	}
+}
+
+// Loading the content records each control's wording once, and the review
+// package names the wording that was in force at the end of its period.
+func TestControlRevisionsAreRecordedAndNamedInThePackage(t *testing.T) {
+	h := newHarness(t)
+	ctx := context.Background()
+
+	// Only an operator may load content.
+	if _, err := h.svc.LoadContent(ctx, h.auditor); !errors.Is(err, authz.ErrDenied) {
+		t.Fatalf("an auditor loading content: err = %v, want denied", err)
+	}
+
+	// A package for a period before any wording was recorded says so.
+	start := h.clock
+	h.collect()
+	h.advance(time.Hour)
+	early := h.clock
+	h.advance(time.Hour)
+	before := h.pack(start, early)
+	for _, c := range decode[[]assurance.PackageControl](t, before, "controls.json") {
+		if c.RevisionAtPeriodEnd != nil || !c.WordingChangedSince {
+			t.Errorf("%s: revision at period end = %+v, changed since = %v; want none on record", c.Key, c.RevisionAtPeriodEnd, c.WordingChangedSince)
+		}
+		if c.Statement == "" || c.ReviewLabel == "" || len(c.ContentSHA256) != 64 {
+			t.Errorf("%s: statement %q, review %q, hash %q", c.Key, c.Statement, c.ReviewLabel, c.ContentSHA256)
+		}
+	}
+
+	results, err := h.svc.LoadContent(ctx, h.operator)
+	if err != nil {
+		t.Fatalf("LoadContent: %v", err)
+	}
+	if len(results) != len(control.All) {
+		t.Fatalf("loaded %d controls, want %d", len(results), len(control.All))
+	}
+	for _, r := range results {
+		if !r.Recorded {
+			t.Errorf("%s: the first load recorded nothing", r.Key)
+		}
+	}
+	loadedAt := h.clock
+
+	// Loading the same content again adds nothing.
+	h.advance(time.Hour)
+	results, err = h.svc.LoadContent(ctx, h.operator)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range results {
+		if r.Recorded {
+			t.Errorf("%s: loading unchanged content recorded a new revision", r.Key)
+		}
+	}
+	revisions, err := h.st.ControlRevisions(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(revisions) != len(control.All) {
+		t.Errorf("%d revisions on record, want %d", len(revisions), len(control.All))
+	}
+
+	// A package whose period ends after the load names that revision.
+	h.advance(time.Hour)
+	end := h.clock
+	h.advance(time.Hour)
+	after := h.pack(start, end)
+	for _, c := range decode[[]assurance.PackageControl](t, after, "controls.json") {
+		rev := c.RevisionAtPeriodEnd
+		if rev == nil || rev.ContentSHA256 != c.ContentSHA256 || !rev.LoadedAt.Equal(loadedAt) || c.WordingChangedSince {
+			t.Errorf("%s: revision at period end = %+v, changed since = %v", c.Key, rev, c.WordingChangedSince)
+		}
+	}
+	if got := decode[[]store.ControlRevision](t, after, "control_revisions.json"); len(got) != len(control.All) {
+		t.Errorf("control_revisions.json holds %d revisions, want %d", len(got), len(control.All))
+	}
+	// The reading copy labels every control and mapping as reviewed or not.
+	page := string(after.Files["index.html"])
+	if n := strings.Count(page, "draft, not reviewed") + strings.Count(page, "reviewed by "); n < len(control.All) {
+		t.Errorf("index.html carries %d review labels for %d controls", n, len(control.All))
+	}
+
+	// Revisions are history: they cannot be changed or removed.
+	conn := h.rawConn()
+	if _, err := conn.Exec(ctx, `UPDATE control_revisions SET review_status = 'reviewed', reviewed_by = 'x'`); err == nil {
+		t.Error("a control revision was updated")
+	}
+	if _, err := conn.Exec(ctx, `DELETE FROM control_revisions`); err == nil {
+		t.Error("a control revision was deleted")
 	}
 }

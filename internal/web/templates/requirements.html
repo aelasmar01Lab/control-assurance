@@ -1,9 +1,20 @@
 {{define "content"}}
+{{with .Data.Framework}}
 <div class="card">
-  <div class="row baseline"><span class="strong">{{.Data.Framework}}</span><span class="mono muted">{{.Data.Version}} · {{.Data.Total}} requirements</span><span class="grow"></span><span class="small muted">Nothing here says a requirement is met.</span></div>
-  <div class="bar tall">{{bar .Data.Segs}}</div>
-  <div class="legend inline">{{range .Data.Segs}}<div class="legend-row"><span class="sq {{.Fill}}"></span><span class="name">{{.Label}}</span><span class="n">{{.N}}</span></div>{{end}}</div>
+  <div class="row baseline"><span class="strong">{{.Title}}</span><span class="mono muted">{{.Version}} · {{.Requirements}} requirements</span><span class="tag">{{rights .TextRights}}</span><span class="grow"></span><span class="small muted">Nothing here says a requirement is met.</span></div>
+  <div class="bar tall">{{bar $.Data.Segs}}</div>
+  <div class="legend inline">{{range $.Data.Segs}}<div class="legend-row"><span class="sq {{.Fill}}"></span><span class="name">{{.Label}}</span><span class="n">{{.N}}</span></div>{{end}}</div>
+  <dl class="kv compact">
+    <dt>Resting on reviewed mappings</dt><dd class="basis-reviewed">{{.OnReviewed}}</dd>
+    <dt>Resting on drafts, not reviewed</dt><dd class="basis-draft">{{.OnDrafts}}</dd>
+    <dt>No control; tracked with a reason</dt><dd>{{.Tracked}} <span class="muted">({{.TrackedReviewed}} reviewed)</span></dd>
+  </dl>
+  <dl class="kv spaced">
+    <dt>Text</dt><dd>{{if eq .TextRights "full"}}The publisher's text, under: {{.License}}.{{else if eq .TextRights "identifiers_only"}}Identifiers and this project's own labels only. The publisher's titles and text are not reproduced; read them in your own copy. {{.License}}.{{else}}Written by this project. {{.License}}.{{end}}{{if .Attribution}} {{.Attribution}}{{end}}</dd>
+    <dt>Source</dt><dd class="mono small">{{.Source}}</dd>
+  </dl>
 </div>
+{{end}}
 
 {{range .Data.Groups}}
 <section class="section">
@@ -14,13 +25,13 @@
       <tbody>
       {{range .Rows}}
       <tr>
-        <td><div><span class="mono muted">{{.Framework}} {{.ID}}</span> <strong class="strong">{{.Title}}</strong></div><div class="sub">{{.Owner}} · {{.Applicability}}</div>
+        <td><div><span class="mono muted">{{.ID}}</span> <strong class="strong">{{.Title}}</strong></div><div class="sub">{{.Owner}} · {{.Applicability}}</div>
           {{if .Note}}<div class="note-box"><span class="tag">source note</span>{{.Note}}</div>{{end}}</td>
         <td><span class="pill t-{{tone .State}} state {{.State}}">{{label .State}}</span></td>
         <td class="small">
           {{range .Controls}}
-          <div class="stack tight"><div class="row"><span>{{.Title}}</span><span class="pill t-{{tone .State}}">{{label .State}}</span></div><div class="sub">{{.Strength}} mapping{{if not .Reviewed}} · <span class="tag">mapping not reviewed</span>{{end}}</div><div class="sub pretty">{{.Limitation}}</div></div>
-          {{else}}<div class="muted pretty">No control. {{.Rationale}}</div>{{end}}
+          <div class="stack tight"><div class="row"><a class="row-link" href="/?control={{.Key}}">{{.Title}}</a><span class="pill t-{{tone .State}}">{{label .State}}</span></div><div class="sub">{{.Strength}} mapping{{if ne .Strength .WrittenStrength}} (written as {{.WrittenStrength}}){{end}} · <span class="tag{{if .Reviewed}} tag-ok{{end}}">mapping {{.Review}}</span>{{if not .ControlReviewed}} · <span class="tag">control {{.ControlReview}}</span>{{end}}</div><div class="sub pretty">{{.Limitation}}</div></div>
+          {{else}}<div class="muted pretty">No control. {{.Rationale}}</div><div class="sub"><span class="tag{{if eq .Basis "reviewed"}} tag-ok{{end}}">tracking entry {{.TrackingReview}}</span></div>{{end}}
         </td>
         <td class="small muted pretty">{{.EvidenceExpectation}}</td>
       </tr>

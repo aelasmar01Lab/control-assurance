@@ -24,6 +24,7 @@ import (
 
 	"github.com/aelasmar01Lab/control-assurance/internal/assurance"
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
+	"github.com/aelasmar01Lab/control-assurance/internal/content"
 	"github.com/aelasmar01Lab/control-assurance/internal/store"
 )
 
@@ -70,7 +71,18 @@ var funcs = template.FuncMap{
 	"coverage": runCoverage,
 	"window":   evidenceWindow,
 	"upper":    strings.ToUpper,
-	"hours":    func(d time.Duration) int { return int(d.Hours()) },
+	"rights":   textRights,
+	"counts": func(head string, rows []content.Counts) map[string]any {
+		return map[string]any{"Head": head, "Rows": rows}
+	},
+	// navKey is the sidebar entry a page belongs under.
+	"navKey": func(page string) string {
+		if page == "requirements" {
+			return "frameworks"
+		}
+		return page
+	},
+	"hours": func(d time.Duration) int { return int(d.Hours()) },
 	// deref shows what a pointer points at, or nothing for nil.
 	"deref": func(v any) any {
 		rv := reflect.ValueOf(v)
@@ -96,6 +108,8 @@ var pages = map[string]*template.Template{
 	"integrations": mustPage("integrations.html"),
 	"package":      mustPage("package.html"),
 	"requirements": mustPage("requirements.html"),
+	"frameworks":   mustPage("frameworks.html"),
+	"queue":        mustPage("queue.html"),
 	"login":        mustPage("login.html"),
 	"error":        mustPage("error.html"),
 }
@@ -138,7 +152,9 @@ func Handler(svc *assurance.Service, opts Options) http.Handler {
 	mux.HandleFunc("POST /login", s.login)
 	mux.HandleFunc("POST /logout", s.logout)
 	mux.HandleFunc("GET /{$}", s.as(s.overview))
-	mux.HandleFunc("GET /requirements", s.as(s.requirements))
+	mux.HandleFunc("GET /requirements", s.as(s.frameworks))
+	mux.HandleFunc("GET /frameworks/{key}", s.as(s.requirements))
+	mux.HandleFunc("GET /review-queue", s.as(s.reviewQueue))
 	mux.HandleFunc("GET /findings", s.as(s.findings))
 	mux.HandleFunc("POST /findings/{id}/notes", s.as(s.addNote))
 	mux.HandleFunc("POST /findings/{id}/exceptions", s.as(s.requestException))
@@ -480,13 +496,37 @@ func (s *server) evidenceFile(w http.ResponseWriter, r *http.Request, actor auth
 	_, _ = w.Write(data) //nolint:gosec // sent as an octet-stream attachment with nosniff, so never rendered
 }
 
-func (s *server) requirements(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
-	reqs, err := s.svc.Requirements(r.Context(), actor)
+func (s *server) frameworks(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
+	fws, reqs, err := s.svc.Frameworks(r.Context(), actor)
 	if err != nil {
 		s.fail(w, r, &actor, err)
 		return
 	}
-	s.render(w, r, http.StatusOK, "requirements", "Framework requirements", &actor, buildRequirements(reqs))
+	s.render(w, r, http.StatusOK, "frameworks", "Frameworks", &actor, buildFrameworks(fws, reqs))
+}
+
+func (s *server) requirements(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
+	fws, reqs, err := s.svc.Frameworks(r.Context(), actor)
+	if err != nil {
+		s.fail(w, r, &actor, err)
+		return
+	}
+	for _, fw := range fws {
+		if fw.Key == r.PathValue("key") {
+			s.render(w, r, http.StatusOK, "requirements", fw.Title, &actor, buildRequirements(fw, reqs))
+			return
+		}
+	}
+	s.fail(w, r, &actor, store.ErrNotFound)
+}
+
+func (s *server) reviewQueue(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
+	q, err := s.svc.ReviewQueue(r.Context(), actor)
+	if err != nil {
+		s.fail(w, r, &actor, err)
+		return
+	}
+	s.render(w, r, http.StatusOK, "queue", "Review queue", &actor, q)
 }
 
 func (s *server) packageForm(w http.ResponseWriter, r *http.Request, actor authz.Actor) {

@@ -1,0 +1,20 @@
+{{define "content"}}
+<div class="grid-cards wide">
+  {{range .Data}}
+  <div class="card">
+    <div class="row between"><span class="stat-label">{{.Title}}</span><a class="btn btn-ghost link" href="/frameworks/{{.Key}}">Requirements <i class="ph ph-arrow-right"></i></a></div>
+    <div class="row"><span class="mono muted">{{.Version}}</span><span class="tag">{{rights .TextRights}}</span>{{if .ProfileOf}}<span class="tag">profile of {{.ProfileOf}}</span>{{end}}</div>
+    <div class="stat"><span class="stat-big">{{.Requirements}}</span><span class="stat-unit">requirements</span></div>
+    <div class="bar">{{bar .Segs}}</div>
+    <dl class="kv compact">
+      <dt>Resting on reviewed mappings</dt><dd class="basis-reviewed">{{.OnReviewed}}</dd>
+      <dt>Resting on drafts, not reviewed</dt><dd class="basis-draft">{{.OnDrafts}}</dd>
+      <dt>No control; tracked with a reason</dt><dd>{{.Tracked}} <span class="muted">({{.TrackedReviewed}} reviewed)</span></dd>
+    </dl>
+    <div class="legend">
+      {{range .Segs}}<div class="legend-row"><span class="sq {{.Fill}}"></span><span class="name">{{.Label}}</span><span class="n">{{.N}}</span></div>{{end}}
+    </div>
+  </div>
+  {{else}}<p class="empty">No framework pack is built in.</p>{{end}}
+</div>
+{{end}}

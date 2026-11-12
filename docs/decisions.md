@@ -355,3 +355,33 @@ header was rewritten in the new form with its requirement text unchanged,
 and the migration updates the recorded file hash of the row already
 imported, which is the only update a framework row has ever had.
 
+## 35. A review is of specific content, and the file is the record
+
+Each control, mapping and tracking entry ends in a review block. `cca
+review sign` writes the reviewer's name, the date and a SHA-256 of the
+entry's content, taken from the parsed entry with its texts trimmed and
+its review block left out, so reflowing the YAML does not break a
+signature and changing a word does. `cca review verify` recomputes every
+hash and runs in CI. Signing edits only the four values in the block and
+keeps every other byte of the file. A draft `direct` mapping counts as
+partial, and every page, the export and the review package show whether an
+entry is a draft. Given up: a signature that proves who signed. It is a
+name in a file in git, not a cryptographic signature; the commit history
+is the evidence of who wrote it, and anyone with push access can write any
+name. Also given up: reviewing in the browser. Review happens in an editor
+and a terminal, and the review-queue page only lists what is waiting.
+
+## 36. Control revisions are recorded on load and applied by time
+
+`cca content load` writes one row to `control_revisions` for each control
+whose content hash or review differs from its newest row; the table is
+insert-only. Evaluations are of a check on a resource, not of a control,
+so they do not carry a revision. The revision in force for an evaluation
+is the newest one loaded at or before it, and the review package lists
+every revision loaded before the period ended and names, for each control,
+the one in force at the period's end. Given up: deriving a past period's
+control states with that period's wording. A package is still derived with
+the wording built into the binary that makes it, and says so for any
+control reworded since. Also given up: revisions for mappings and tracking
+entries, whose history is in git only.
+

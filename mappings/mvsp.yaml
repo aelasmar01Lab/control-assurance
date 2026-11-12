@@ -1,0 +1,157 @@
+# Mappings from controls to MVSP requirements.
+# Edit freely; sign what you have reviewed with "cca review sign".
+framework: mvsp
+version: v3.0-20231109
+mappings:
+
+  - control: change-management
+    requirement: "3.5"
+    strength: supporting
+    rationale: >-
+      Required review and required status checks support a consistent,
+      controlled build and release process.
+    limitation: >-
+      MVSP 3.5 asks for version control, build provenance and credentials kept
+      out of source. It does not ask for pull-request approval, so this
+      control does not establish 3.5.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: dependency-remediation
+    requirement: "2.6"
+    strength: partial
+    rationale: >-
+      Open alerts within their deadline show that known-vulnerable third-party
+      components are being patched.
+    limitation: >-
+      It covers only what Dependabot knows about in manifests it can read, and
+      says nothing about keeping components otherwise up to date.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: dependency-remediation
+    requirement: "3.4"
+    strength: partial
+    rationale: >-
+      MVSP 3.4 sets a 90 day limit for patching application vulnerabilities;
+      the medium deadline matches it and the high deadline is shorter.
+    limitation: >-
+      MVSP 3.4 covers vulnerabilities in the application itself. This control
+      sees only its dependencies.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: vulnerability-disclosure
+    requirement: "1.1"
+    strength: partial
+    rationale: >-
+      A published security policy file is where a repository states how to
+      report a vulnerability.
+    limitation: >-
+      The file's content is not read, so this shows nothing about a contact, a
+      response time or safe-harbour wording, all of which MVSP 1.1 asks for.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: human-access
+    requirement: "4.2"
+    strength: partial
+    rationale: >-
+      MFA on every console password limits what a stolen password allows.
+    limitation: >-
+      MVSP 4.2 covers logical access more widely: least privilege, access
+      review and removal of unused accounts. Federated users are not seen.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: credential-lifecycle
+    requirement: "4.2"
+    strength: partial
+    rationale: >-
+      Finding passwords and keys that have gone unused supports removing
+      access that is no longer needed.
+    limitation: >-
+      It shows last use, not whether access is still needed, and it does not
+      see roles or federated sessions.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: audit-logging
+    requirement: "2.7"
+    strength: supporting
+    rationale: >-
+      A validated multi-Region trail records management activity in the
+      account that hosts the application.
+    limitation: >-
+      MVSP 2.7 asks for application logs of user and security events.
+      CloudTrail records AWS API activity, which is a different thing.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: backup-recovery
+    requirement: "4.4"
+    strength: partial
+    rationale: >-
+      A reviewed recovery exercise record shows that recovery is tested
+      periodically.
+    limitation: >-
+      It does not show a documented disaster recovery plan, backups held in a
+      separate location, or that recovery would succeed today.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""

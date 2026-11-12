@@ -19,13 +19,14 @@ import (
 
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
+	"github.com/aelasmar01Lab/control-assurance/internal/content"
 	"github.com/aelasmar01Lab/control-assurance/internal/control"
 	"github.com/aelasmar01Lab/control-assurance/internal/store"
 )
 
 // PackageFormat names the layout of a review package. A change to which
 // files exist or what they hold means a new format.
-const PackageFormat = "cca-review-package/2"
+const PackageFormat = "cca-review-package/3"
 
 const packageNotice = "A review package for one past period. Every result describes one check version applied to one stored observation; " +
 	"it is not a statement about any framework. Control states are as they stood at the end of the period."
@@ -74,8 +75,24 @@ func (p *Package) Paths() []string {
 
 // PackageControl is a control and its state at the end of the period.
 type PackageControl struct {
-	Key                 string            `json:"key"`
-	Title               string            `json:"title"`
+	Key       string `json:"key"`
+	Title     string `json:"title"`
+	Domain    string `json:"domain"`
+	Type      string `json:"type"`
+	Statement string `json:"statement"`
+	// Review says whether the maintainer has reviewed the control as worded
+	// here. A draft is labelled as one wherever it appears.
+	Review      content.Review `json:"review"`
+	ReviewLabel string         `json:"review_label"`
+	// ContentSHA256 identifies the wording this package was derived with.
+	ContentSHA256 string `json:"content_sha256"`
+	// RevisionAtPeriodEnd is the newest revision of the control loaded
+	// before the period ended, when one is on record.
+	RevisionAtPeriodEnd *store.ControlRevision `json:"revision_at_period_end"`
+	// WordingChangedSince is true when the control was reworded after the
+	// period ended, or no revision from the period is on record. The state
+	// below is then derived with wording the period did not have.
+	WordingChangedSince bool              `json:"wording_changed_since_period_end"`
 	Risk                string            `json:"risk"`
 	Owner               string            `json:"owner"`
 	EvidenceExpectation string            `json:"evidence_expectation"`
@@ -246,10 +263,26 @@ func (s *Service) BuildPackage(ctx context.Context, actor authz.Actor, from, to 
 	if err != nil {
 		return nil, err
 	}
+	allRevisions, err := s.Store.ControlRevisions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	revisions := []store.ControlRevision{}
+	revisionAtEnd := map[string]*store.ControlRevision{}
+	for _, r := range allRevisions {
+		if r.LoadedAt.Before(to) {
+			revisions = append(revisions, r)
+			revisionAtEnd[r.ControlKey] = &r
+		}
+	}
 	var controls []PackageControl
 	for _, v := range controlViews {
 		c := v.Control
+		rev := revisionAtEnd[c.Key]
 		controls = append(controls, PackageControl{
+			Domain: c.Domain, Type: c.Type, Statement: c.Statement,
+			Review: c.Review, ReviewLabel: c.Review.Label(), ContentSHA256: c.ContentSHA256,
+			RevisionAtPeriodEnd: rev, WordingChangedSince: rev == nil || rev.ContentSHA256 != c.ContentSHA256,
 			Key: c.Key, Title: c.Title, Risk: c.Risk, Owner: c.Owner, EvidenceExpectation: c.EvidenceExpectation,
 			Checks: append([]string{}, c.Checks...), ManualCheck: c.ManualCheck, FreshnessHours: int(c.Freshness.Hours()),
 			Mappings: append([]control.Mapping{}, c.Mappings...), StateAtPeriodEnd: v.State, Reasons: v.Reasons,
@@ -327,7 +360,7 @@ func (s *Service) BuildPackage(ctx context.Context, actor authz.Actor, from, to 
 		return nil
 	}
 	for path, v := range map[string]any{
-		"controls.json": controls, "requirements.json": requirements, "checks.json": checks, "runs.json": runs, "observations.json": observations,
+		"controls.json": controls, "control_revisions.json": revisions, "requirements.json": requirements, "checks.json": checks, "runs.json": runs, "observations.json": observations,
 		"evaluations.json": evaluations, "findings.json": findings, "exceptions.json": exceptions,
 		"remediation_notes.json": notes, "evidence_submissions.json": submissions, "decision_log.json": log,
 	} {
@@ -404,7 +437,8 @@ Format: %s
 | --- | --- |
 | index.html | A reading copy of everything below, for a person. |
 | manifest.json | The period, the resources in scope, and the SHA-256 and size of every other file. The SHA-256 of this file identifies the package. |
-| controls.json | Each control, what it rests on, its framework mappings, and its state at the end of the period with the reasons. |
+| controls.json | Each control, what it rests on, its framework mappings, and its state at the end of the period with the reasons. Each control and each mapping says whether the maintainer has reviewed it; one that has not is a draft. |
+| control_revisions.json | Every wording of every control loaded before the period ended, with when it was loaded. The revision in force for an evaluation is the newest one loaded at or before the evaluation's time. |
 | requirements.json | Every framework requirement and its state at the end of the period: through its mapped controls, or how it is tracked when no control covers it. |
 | checks.json | Each check version that produced a result here: its assertion, and what a pass does and does not establish. |
 | runs.json | Every collection attempt that finished in the period, including failures and retries, with error classes. |

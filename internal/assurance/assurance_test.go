@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+
 	"github.com/aelasmar01Lab/control-assurance/internal/assurance"
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/aws"
@@ -36,15 +38,29 @@ type harness struct {
 
 	// The four lab users.
 	operator, owner, reviewer, auditor authz.Actor
+	dbURL                              string
 }
 
 // advance moves the service's clock forward.
 func (h *harness) advance(d time.Duration) { h.clock = h.clock.Add(d) }
 
+// rawConn is a direct connection to the test's database, for statements the
+// store has no method for because the product never makes them.
+func (h *harness) rawConn() *pgx.Conn {
+	h.t.Helper()
+	conn, err := pgx.Connect(context.Background(), h.dbURL)
+	if err != nil {
+		h.t.Fatal(err)
+	}
+	h.t.Cleanup(func() { _ = conn.Close(context.Background()) })
+	return conn
+}
+
 func newHarness(t *testing.T) *harness {
 	t.Helper()
 	ctx := context.Background()
-	st, err := store.Open(ctx, testdb.New(t))
+	dbURL := testdb.New(t)
+	st, err := store.Open(ctx, dbURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +73,7 @@ func newHarness(t *testing.T) *harness {
 	t.Cleanup(fake.Server.Close)
 	gh := fake.Client()
 	h := &harness{
-		t: t, st: st, fake: fake, gh: gh,
+		t: t, st: st, fake: fake, gh: gh, dbURL: dbURL,
 		repos: []string{githubtest.FakeRepository},
 		clock: time.Date(2026, 11, 12, 9, 0, 0, 0, time.UTC),
 	}

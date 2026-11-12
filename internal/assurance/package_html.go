@@ -80,22 +80,22 @@ th { background: #f3f5f7; } .scroll { overflow-x: auto; } .dim { color: #57606a;
 <div class="scroll"><table>
 <thead><tr><th>Control</th><th>State</th><th>Why</th><th>Rests on</th><th>Framework mapping</th></tr></thead>
 <tbody>{{range .Controls}}<tr>
-<td><strong>{{.Title}}</strong><br><span class="dim">Owner: {{.Owner}}</span></td>
+<td><strong>{{.Title}}</strong> <span class="tag">{{.ReviewLabel}}</span><br>{{.Statement}}<br><span class="dim">Owner: {{.Owner}}. {{if .RevisionAtPeriodEnd}}Wording <code>{{short .RevisionAtPeriodEnd.ContentSHA256}}</code> was in force at the end of the period{{if .WordingChangedSince}}; the control has been reworded since, and this page uses the new wording <code>{{short .ContentSHA256}}</code>{{end}}.{{else}}No wording of this control was on record before the end of the period; this page uses <code>{{short .ContentSHA256}}</code>.{{end}}</span></td>
 <td><span class="tag {{.StateAtPeriodEnd}}">{{label .StateAtPeriodEnd}}</span></td>
 <td>{{range .Reasons}}<div>{{.}}</div>{{end}}</td>
 <td>{{range .Checks}}<code>{{.}}</code> {{end}}{{if .ManualCheck}}<code>{{.ManualCheck}}</code> <span class="dim">manual</span>{{end}}</td>
-<td>{{range .Mappings}}<div>{{.Framework}} {{.Requirement}}, {{.Strength}}{{if not .ReviewedBy}} <span class="tag">mapping not reviewed</span>{{end}}</div><div class="dim">{{.Limitation}}</div>{{else}}<span class="dim">none</span>{{end}}</td>
+<td>{{range .Mappings}}<div>{{.Framework}} {{.Requirement}}, {{.EffectiveStrength}}{{if ne .EffectiveStrength .Strength}} <span class="dim">(written as {{.Strength}})</span>{{end}} <span class="tag">{{.Review.Label}}</span></div><div class="dim">{{.Limitation}}</div>{{else}}<span class="dim">none</span>{{end}}</td>
 </tr>{{end}}</tbody>
 </table></div>
 
 <h2>Framework requirements at the end of the period</h2>
-<p class="dim">Partly evidenced means every control mapped to the requirement was supported by current evidence. It does not mean the requirement is met.</p>
+<p class="dim">Partly evidenced means every control mapped to the requirement was supported by current evidence. It does not mean the requirement is met. Controls and mappings are drafted by an AI agent; each is a draft until the maintainer has reviewed it, and is labelled either way.</p>
 <div class="scroll"><table>
 <thead><tr><th>Requirement</th><th>State</th><th>Rests on</th></tr></thead>
 <tbody>{{range .Requirements}}<tr>
 <td><strong>{{.Framework}} {{.ID}}</strong> {{.Title}}{{if .Note}}<div class="dim">{{.Note}}</div>{{end}}</td>
 <td><span class="tag {{.State}}">{{label .State}}</span></td>
-<td>{{range .Controls}}<div>{{.Title}}: {{label .State}} <span class="dim">({{.Strength}} mapping)</span></div>{{else}}<span class="dim">No control. {{.Rationale}}</span>{{end}}</td>
+<td>{{range .Controls}}<div>{{.Title}}: {{label .State}} <span class="dim">({{.Strength}} mapping, {{.Review}}; control {{.ControlReview}})</span></div>{{else}}<span class="dim">No control. {{.Rationale}} ({{.TrackingReview}})</span>{{end}}</td>
 </tr>{{end}}</tbody>
 </table></div>
 

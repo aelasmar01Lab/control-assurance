@@ -27,6 +27,7 @@ export DATABASE_URL='postgres://cca:cca_local_only@127.0.0.1:5433/cca?sslmode=di
 bin/cca users seed                 # prints four passwords once
 export CCA_USER=operator
 bin/cca packs load
+bin/cca content load               # record the controls' current wording as revisions
 bin/cca collect github owner/name  # registers the repository as in scope
 AWS_PROFILE=cca-collector bin/cca collect aws
 bin/cca evaluate
@@ -96,6 +97,13 @@ never editing it. The old version must stay in the binary: stored
 evaluations name it, and reproduction needs it. After adding a version,
 `cca evaluate` applies it to all stored evidence of its kind, which adds
 evaluations and moves no finding.
+
+A control, mapping or tracking entry is changed by editing its file and
+rebuilding (see "Editing and reviewing content" in the README). After
+deploying a binary with changed controls, run `cca content load`: it adds a
+revision for each control whose wording or review changed, and nothing for
+the rest. Without it the product works, but a review package cannot say
+which wording was in force during its period.
 
 ## Data handled
 

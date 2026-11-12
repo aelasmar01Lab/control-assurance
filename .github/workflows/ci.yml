@@ -41,6 +41,12 @@ jobs:
       - run: go test -race ./...
       - name: Validate framework packs
         run: go run ./cmd/cca packs validate
+      - name: Validate controls, mappings and tracking entries
+        run: go run ./cmd/cca content validate
+      # A review is of specific content: an entry edited after it was signed
+      # fails here until it is signed again or set back to draft.
+      - name: Verify reviewed content
+        run: go run ./cmd/cca review verify
 
   migrations:
     runs-on: ubuntu-latest

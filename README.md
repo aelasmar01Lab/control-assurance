@@ -6,6 +6,13 @@ exceptions, and export a review package for a past period.
 
 This README states only what is implemented.
 
+**Who wrote what.** The framework packs, controls, mappings and tracking
+entries in this repository are drafted by an AI agent and reviewed by the
+maintainer. Each entry is a draft until the maintainer signs it, and the
+product labels it either way wherever it appears.
+[docs/review-queue.md](docs/review-queue.md) lists what has been reviewed
+and what has not. None of it has been reviewed by an auditor.
+
 ## Try it
 
 ```sh
@@ -38,8 +45,9 @@ To run it against a real lab instead, see
 | Area | Status |
 | --- | --- |
 | Repository layout, Go module, `cca` binary | Implemented |
-| CI: tests with Postgres, lint, vulnerability scan, pack validation, migrations | Implemented |
+| CI: tests with Postgres, lint, vulnerability scan, pack and content validation, review verification, migrations | Implemented |
 | MVSP framework pack (25 requirements, pinned source), schema validation, database import | Implemented |
+| Pack format that records text rights (full text, identifiers only, or written by this project), hierarchy, and profiles of another pack | Implemented; MVSP is the only pack |
 | GitHub collector: branch rules, Dependabot alerts, security policy file; classified errors, pagination completeness | Implemented |
 | AWS collector: IAM credential report, CloudTrail trails, Bedrock invocation logging; read-only assumed role | Implemented |
 | Evidence store, content-addressed by SHA-256: local directory, or an S3 bucket with create-only writes under its own role | Implemented |
@@ -50,8 +58,13 @@ To run it against a real lab instead, see
 | Manual evidence submission and review | Implemented |
 | Exceptions with mandatory expiry, remediation notes, decision log | Implemented |
 | Eight internal controls with derived state and a 48 hour evidence window | Implemented |
+| Controls, mappings and tracking entries as YAML files, validated against schemas and each other | Implemented |
+| Review contract: sign an entry, a signature covers its exact content, an edit after signing fails CI | Implemented |
+| Content reviewed by the maintainer | See [docs/review-queue.md](docs/review-queue.md) for the current count |
+| A record of every wording of every control that was loaded (control revisions), named in the review package | Implemented |
+| Workspaces | Schema only: every organization table has a workspace, there is one, and nothing uses it yet |
 | All 25 MVSP requirements, each covered in part by a control or tracked as manual, not implemented or out of scope with a reason | Implemented |
-| Web interface: overview, requirements, findings, manual evidence, integration health, review package, decision log | Implemented |
+| Web interface: overview, frameworks and their requirements, findings, manual evidence, integration health, review package, decision log, review queue | Implemented |
 | Fault table: every injected fault, its error class and retry behaviour, generated and tested | Implemented |
 | Current-state JSON export | Implemented |
 | Review package for a past period, with a manifest hash and an offline verifier | Implemented |
@@ -59,7 +72,7 @@ To run it against a real lab instead, see
 | Deduplication case study on a documented synthetic dataset | Implemented |
 | One-command seeded demo with labelled synthetic data | Implemented |
 | This project's own MVSP self-assessment, generated | Implemented |
-| Framework mappings reviewed by a second person | Not started |
+| Content reviewed by anyone other than the maintainer | Not started |
 | Hosted demo, and a check of its own HTTPS and headers | Not started |
 | A second framework pack | Not started |
 
@@ -68,7 +81,10 @@ To run it against a real lab instead, see
 | Document | What it is |
 | --- | --- |
 | [docs/walkthrough.md](docs/walkthrough.md) | A ten-minute tour of the demo |
-| [docs/controls.md](docs/controls.md) | The eight controls, their mappings and limits, and how each of the 25 requirements is tracked (generated) |
+| [docs/controls.md](docs/controls.md) | Every control, its mappings and limits, and how each requirement is tracked, with what has been reviewed (generated) |
+| [docs/review-queue.md](docs/review-queue.md) | What is waiting for the maintainer's review, and the command that signs each entry (generated) |
+| [docs/drafting-log.md](docs/drafting-log.md) | What the agent drafted in each unit of work, from which sources, and what it is least sure of |
+| [CLAUDE.md](CLAUDE.md) | The standing rules the agent works under |
 | [docs/checks.md](docs/checks.md) | Each check: its assertion, source, and what a pass does and does not establish (generated) |
 | [docs/permissions.md](docs/permissions.md) | Who may do what (generated) |
 | [docs/faults.md](docs/faults.md) | Every injected fault, its error class and how it is retried (generated) |
@@ -176,7 +192,7 @@ the product is called compliant.
 
 ## Requirements
 
-`cca requirements status`, or the Requirements page, lists all 25 MVSP
+`cca requirements status`, or the Frameworks page, lists all 25 MVSP
 requirements. Seven are covered in part by a control and take the worst
 state among their controls; the best a requirement can read is *partly
 evidenced*, because no mapping in this release is stronger than partial.
@@ -188,6 +204,52 @@ One thing in the catalog is wrong at the source: the pinned upstream file
 gives requirement 2.1 (Single sign-on) the statement text of requirement
 1.1. The pack keeps upstream's text unmodified, and the product shows a
 note beside 2.1 saying so.
+
+## Editing and reviewing content
+
+Controls, mappings and tracking entries are files, one control per file:
+
+| Path | Holds |
+| --- | --- |
+| `controls/<domain>/<key>.yaml` | One control: its statement, risk, checks, evidence expectation |
+| `mappings/<framework>.yaml` | Every tie between a control and a requirement of that framework, with its strength, rationale and limitation |
+| `tracking/<framework>.yaml` | Each requirement no control covers, and how it is tracked |
+
+Each entry ends in a `review` block. To review one:
+
+```sh
+$EDITOR controls/logging/audit-logging.yaml   # change anything that is wrong
+make content                                  # validate, rebuild docs/review-queue.md and docs/controls.md
+go run ./cmd/cca review sign controls/logging/audit-logging.yaml
+go run ./cmd/cca review sign mappings/mvsp.yaml --requirement 2.7   # or --control <key>, or --all
+git commit -am "Review audit logging"
+```
+
+Signing sets the entry to `reviewed`, with the reviewer's name (`--as`,
+default `ali`), the date, and a hash of the entry's content without its
+review block. It changes those four values and nothing else in the file,
+and rebuilds the two generated documents. It refuses an entry that still
+has a `reviewer_note`, which is a doubt the agent recorded for the
+reviewer.
+
+A signature is of specific content. `cca review verify`, which CI runs,
+recomputes every reviewed entry's hash; an entry edited after signing fails
+until it is signed again or set back to draft (`cca review unsign`). How
+the YAML is laid out does not matter; what it says does.
+
+What validation enforces, beyond the schemas: every requirement of every
+pack is mapped by a control or tracked, never both; a mapping that is not
+direct states its limitation; a mapping derived through another framework
+is at most supporting; a draft control may not use "compliant", "ensures",
+"guarantees", "robust", "appropriate" or "as needed"; a title has at most
+eight words. A direct mapping that is still a draft counts as partial in
+every derived state.
+
+The content is built into the binary, so the server shows an edit after it
+is rebuilt and restarted (`make serve`). `cca content load` records each
+control's wording in the database as a revision; the review package names
+the wording that was in force at the end of its period, and says when a
+control has been reworded since.
 
 ## History and the review package
 
@@ -269,7 +331,9 @@ collected.
 | `internal/assurance` | The service layer: every entry point goes through it, and it checks permission first |
 | `internal/authz` | Roles, actions and the one permission function |
 | `internal/auth` | Password hashing (argon2id) |
-| `internal/control` | Internal controls and the derivation of their state |
+| `controls/`, `mappings/`, `tracking/` | The content the maintainer edits (YAML) and its JSON Schemas, embedded in the binary |
+| `internal/content` | Reads and validates those files; review signing, verification and the review queue |
+| `internal/control` | Internal controls, built from the content files, and the derivation of their state |
 | `internal/collect` | What collectors share: the snapshot and the classified error |
 | `internal/github` | The only code that talks to GitHub; read-only |
 | `internal/aws` | The only code that talks to AWS; read-only |
@@ -300,7 +364,8 @@ make lint      # needs golangci-lint v2
 make vuln      # govulncheck
 make study     # regenerate docs/dedup-study.md; needs no database
 make demo      # the seeded demo, in Docker
-make guide     # regenerate the generated documents in docs/ after changing a check, control, permission, fault or retry policy
+make content   # after editing controls/, mappings/ or tracking/: validate, and rebuild the review queue and control guide
+make guide     # regenerate the generated documents in docs/ after changing a check, permission, fault or retry policy
 ```
 
 Tests use a synthetic GitHub API (`internal/github/githubtest`) and a
@@ -314,9 +379,15 @@ requirement text, unmodified, from
 [vendorsec/mvsp](https://github.com/vendorsec/mvsp) (CC0-1.0). The pack header
 records the source commit, path, retrieval date and SHA-256 of the source file.
 
-Every pack must satisfy `packs/pack.schema.json`. An invalid pack fails the
-test suite and the pack validation step in CI. Framework rows are immutable in
-the database once written.
+Every pack must satisfy `packs/pack.schema.json`. A pack states its rights
+over the framework's text. `full` carries the publisher's titles and text
+under a licence recorded in the header. `identifiers_only` carries
+identifiers, hierarchy and a short label in this project's own words, and
+the loader refuses one that has a title or text. `own_composition` is a
+requirement list this project wrote. A baseline that selects from another
+catalog is a profile: it lists identifiers and takes everything else from
+its parent. An invalid pack fails the test suite and the pack validation
+step in CI. Framework rows are immutable in the database once written.
 
 ## License
 

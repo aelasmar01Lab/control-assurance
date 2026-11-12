@@ -1,0 +1,25 @@
+key: human-access
+title: Human access
+statement: >-
+  Every IAM user with a console password has multi-factor authentication
+  enabled, and so does the root user.
+risk: >-
+  A stolen password alone is enough to sign in to the AWS account.
+owner_role: control-owner
+type: automated
+checks: [AWS-01]
+evidence_expectation: >-
+  The IAM credential report and account summary, collected at least every 48
+  hours.
+freshness_hours: 48
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: >-
+  The access pilot may draft narrower controls for IAM users and for the root
+  user. If it does, this control overlaps them; decide which to keep.
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

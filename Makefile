@@ -1,4 +1,4 @@
-.PHONY: demo build test lint vuln db-up db-down migrate packs guide study serve
+.PHONY: demo build test lint vuln db-up db-down migrate packs content guide study serve
 
 # Local development database; matches compose.yaml and .env.example.
 DATABASE_URL ?= postgres://cca:cca_local_only@127.0.0.1:5433/cca?sslmode=disable
@@ -37,12 +37,22 @@ migrate:
 packs:
 	go run ./cmd/cca packs validate
 
+# After editing anything under controls/, mappings/ or tracking/: check it,
+# then regenerate the two documents made from it. Sign what you reviewed
+# with "go run ./cmd/cca review sign <file>".
+content:
+	go run ./cmd/cca content validate
+	go run ./cmd/cca review queue > docs/review-queue.md
+	go run ./cmd/cca controls guide > docs/controls.md
+	go run ./cmd/cca review status
+
 # Regenerate the documents that are generated from code.
 guide:
 	go run ./cmd/cca checks guide > docs/checks.md
 	go run ./cmd/cca permissions > docs/permissions.md
 	go run ./cmd/cca faults > docs/faults.md
 	go run ./cmd/cca controls guide > docs/controls.md
+	go run ./cmd/cca review queue > docs/review-queue.md
 	go run ./cmd/cca self-assessment > docs/self-assessment.md
 
 # Regenerate the deduplication case study. Needs no database and no network.

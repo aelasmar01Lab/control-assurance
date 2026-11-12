@@ -173,6 +173,46 @@ func (s *Service) LoadCatalog(ctx context.Context, actor authz.Actor, packs []*p
 	return out, nil
 }
 
+// ContentLoadResult says what loading one control did.
+type ContentLoadResult struct {
+	Key           string
+	ContentSHA256 string
+	Review        string
+	// Recorded is true when the control's wording or review differs from
+	// the newest revision on record, so a new revision was added.
+	Recorded bool
+}
+
+// LoadContent records the controls built into this binary as revisions, so
+// that history can say which wording of a control was in force when. A
+// control that has not changed since it was last loaded adds nothing.
+func (s *Service) LoadContent(ctx context.Context, actor authz.Actor) ([]ContentLoadResult, error) {
+	if err := authz.Can(actor, authz.LoadCatalog, authz.Resource{}); err != nil {
+		return nil, err
+	}
+	if control.LoadErr != nil {
+		return nil, fmt.Errorf("the built-in content is not valid: %w", control.LoadErr)
+	}
+	set, err := builtInContent()
+	if err != nil {
+		return nil, err
+	}
+	now := s.now()
+	var out []ContentLoadResult
+	for _, c := range set.Controls {
+		added, err := s.Store.RecordControlRevision(ctx, store.ControlRevision{
+			ControlKey: c.Key, ContentSHA256: c.Hash(), Content: c.JSON(),
+			ReviewStatus: c.Review.Status, ReviewedBy: c.Review.ReviewedBy, ReviewedOn: c.Review.ReviewedOn,
+			LoadedAt: now,
+		})
+		if err != nil {
+			return out, err
+		}
+		out = append(out, ContentLoadResult{c.Key, c.Hash(), c.Review.Label(), added})
+	}
+	return out, nil
+}
+
 // --- reads ------------------------------------------------------------------
 
 // ControlView is a control with its derived state.

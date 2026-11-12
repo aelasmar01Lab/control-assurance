@@ -1,0 +1,299 @@
+# MVSP requirements that no control covers, and how each is tracked.
+# None of the three statuses is a positive state.
+# Edit freely; sign what you have reviewed with "cca review sign".
+framework: mvsp
+version: v3.0-20231109
+entries:
+
+  - requirement: "1.2"
+    status: out_of_scope
+    owner_role: control-owner
+    applicability: Not applicable.
+    evidence_expectation: "None."
+    rationale: >-
+      The lab offers no application to customers, so there is nothing for a
+      customer to test.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "1.3"
+    status: manual
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: >-
+      A dated self-assessment against the latest MVSP release, repeated at
+      least yearly.
+    rationale: >-
+      The project's own self-assessment is in docs/self-assessment.md. It is
+      not submitted or reviewed as evidence in this system.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "1.4"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: >-
+      A penetration test report from an outside vendor, dated within a year.
+    rationale: No external test has been contracted.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "1.5"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable once the lab has personnel.
+    evidence_expectation: Training records by role.
+    rationale: There is no training programme and no record of any.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "1.6"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: >-
+      A list of the standards and laws that apply, and an assessment against
+      each.
+    rationale: No standard or legal obligation has been assessed.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "1.7"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: >-
+      A documented incident process, and records of its use or exercise.
+    rationale: No incident handling process is documented.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "1.8"
+    status: out_of_scope
+    owner_role: control-owner
+    applicability: Not applicable.
+    evidence_expectation: "None."
+    rationale: >-
+      The lab holds no production data and controls no storage media; all
+      storage is the cloud providers'.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "2.1"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: >-
+      Applicable to any application the lab runs, including this one.
+    evidence_expectation: >-
+      Sign-in configuration showing single sign-on over a standard protocol.
+    rationale: >-
+      This application signs users in with local accounts. No check reads
+      sign-in configuration.
+    note: >-
+      The pinned upstream catalog file gives requirement 2.1 the statement
+      text of requirement 1.1. The text is shown as upstream published it; the
+      title, Single sign-on, is what the requirement is about.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "2.2"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable once an application is hosted.
+    evidence_expectation: >-
+      A redirect from HTTP to HTTPS and a Strict-Transport-Security header,
+      observed from outside.
+    rationale: >-
+      Nothing is hosted. A check for this is planned for when a hosted demo
+      exists.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "2.3"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable once an application is hosted.
+    evidence_expectation: Response headers observed from outside.
+    rationale: >-
+      This application sets a content security policy and related headers, and
+      tests them, but no check collects them as evidence.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "2.4"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: >-
+      Applicable to any application with password sign-in, including this one.
+    evidence_expectation: The password policy in force, and tests of it.
+    rationale: >-
+      No check reads a password policy. This application's own sign-in has no
+      lockout or rate limit.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "2.5"
+    status: manual
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: >-
+      A record of the frameworks and libraries relied on for escaping output
+      and handling input.
+    rationale: >-
+      Judged in code review. No evidence of it is held in this system.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "2.8"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: >-
+      Encryption settings for data in transit and at rest, read from each
+      store.
+    rationale: No check reads encryption settings.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "3.1"
+    status: manual
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: A maintained list of the sensitive data types handled.
+    rationale: >-
+      The data this application handles is listed in docs/operations.md. The
+      list is not submitted or reviewed as evidence in this system.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "3.2"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: A current data flow diagram.
+    rationale: No data flow diagram is maintained.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "3.3"
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: >-
+      Development guidelines and training records covering the listed
+      vulnerability classes.
+    rationale: There are no written guidelines and no training records.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "4.1"
+    status: out_of_scope
+    owner_role: control-owner
+    applicability: Not applicable.
+    evidence_expectation: "None."
+    rationale: >-
+      The lab has no facilities. Physical security of the data centres is the
+      cloud providers'.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: "4.3"
+    status: out_of_scope
+    owner_role: control-owner
+    applicability: Not applicable.
+    evidence_expectation: "None."
+    rationale: >-
+      The lab holds no customer data, so no third party has access to any.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""

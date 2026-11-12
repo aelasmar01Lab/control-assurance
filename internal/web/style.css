@@ -254,6 +254,16 @@ main.page { padding: 28px 36px 72px; max-width: 1260px; width: 100%; display: fl
 .err { font: 12px var(--mono); color: oklch(0.82 0.09 22); }
 .note-box { margin-top: 6px; font-size: 12px; padding: 6px 8px; border-radius: 6px; background: var(--color-neutral-900); color: color-mix(in srgb, var(--color-text) 72%, transparent); }
 .note-box .tag { margin-right: 6px; }
+.tag-ok { background: var(--pass-bg); color: var(--pass-fg); }
+.kv.compact { margin: 12px 0; font-size: 12.5px; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; }
+.kv.compact dd { text-align: right; }
+.kv.spaced { margin-top: 12px; }
+.basis-reviewed { color: var(--pass-fg); font-variant-numeric: tabular-nums; }
+.basis-draft { font-variant-numeric: tabular-nums; }
+.grid-cards.wide { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+code.wrap { white-space: normal; overflow-wrap: anywhere; }
+.card.body p { margin: 0 0 8px; font-size: 13.5px; }
+.card.body p:last-child { margin-bottom: 0; }
 
 /* — tables: row rules fade out at both ends — */
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }

@@ -31,8 +31,8 @@ func TestEveryRequirementIsMappedOrTracked(t *testing.T) {
 			}
 		}
 	}
-	if total != 25 {
-		t.Errorf("catalog has %d requirements, want 25", total)
+	if total < 25 {
+		t.Errorf("catalog has %d requirements, want at least MVSP's 25", total)
 	}
 	// Nothing points at a requirement that does not exist.
 	for _, tr := range Tracked {
@@ -47,8 +47,8 @@ func TestEveryRequirementIsMappedOrTracked(t *testing.T) {
 			}
 		}
 	}
-	if len(All) != 8 {
-		t.Errorf("%d controls are defined, want 8", len(All))
+	if len(All) < 8 {
+		t.Errorf("%d controls are defined, want at least the first release's 8", len(All))
 	}
 }
 
@@ -90,9 +90,9 @@ func TestControlGuideIsInSync(t *testing.T) {
 	const path = "../../docs/controls.md"
 	onDisk, err := os.ReadFile(path)
 	if err != nil {
-		t.Fatalf("read %s: %v (regenerate with `make guide`)", path, err)
+		t.Fatalf("read %s: %v (regenerate with `make content`)", path, err)
 	}
 	if string(onDisk) != Guide(all) {
-		t.Errorf("%s is out of date; regenerate with `make guide`", path)
+		t.Errorf("%s is out of date; regenerate with `make content`", path)
 	}
 }
