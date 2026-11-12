@@ -385,3 +385,20 @@ the wording built into the binary that makes it, and says so for any
 control reworded since. Also given up: revisions for mappings and tracking
 entries, whose history is in git only.
 
+## 37. Not assessed is its own tracking status, and is not reviewed
+
+A tracking entry may say `status: not_assessed`, and then says nothing
+else: no owner, applicability, evidence or rationale, and no review block.
+It means nobody has looked at the requirement yet. The rule that every
+requirement is mapped or tracked still holds, so a pack can be imported
+whole before its requirements are worked through, but the entry is not a
+draft of anything. It is left out of the review queue and the count of
+drafts waiting, `cca review sign` refuses it by name and skips it under
+`--all`, and the pages and the review package read "not assessed" with no
+review label, counted apart from requirements tracked with a reason. The
+100 NIST CSF subcategories outside PR.AA, first written as *not
+implemented* with a placeholder rationale, now use it. Given up: nothing
+stops a framework staying not assessed indefinitely; the count is shown on
+every framework page instead. The review package keeps format 3 although
+its requirement list can now carry the state `not_assessed` and the basis
+`none`, which a reader written against the earlier packages has not seen.

@@ -30,6 +30,10 @@ type Counts struct {
 	// Noted is how many drafts carry a reviewer note: a doubt the agent
 	// recorded, which blocks signing until it is cleared.
 	Noted int
+	// NotAssessed is how many tracking entries say only that nobody has
+	// looked at the requirement. They are neither drafts nor reviewed, and
+	// are not in the queue.
+	NotAssessed int
 }
 
 // Total is every entry in the group.
@@ -71,6 +75,16 @@ func (q Queue) Reviewed() int {
 		for _, c := range list {
 			n += c.Reviewed
 		}
+	}
+	return n
+}
+
+// NotAssessed is how many requirements carry a tracking entry that says
+// only that nobody has looked at them.
+func (q Queue) NotAssessed() int {
+	n := 0
+	for _, c := range q.Tracking {
+		n += c.NotAssessed
 	}
 	return n
 }
@@ -159,6 +173,16 @@ func BuildQueue(s *Set) Queue {
 	})
 	idx = map[string]int{}
 	for _, t := range tracking {
+		if !t.Assessed() {
+			i, ok := idx[t.Framework]
+			if !ok {
+				i = len(q.Tracking)
+				idx[t.Framework] = i
+				q.Tracking = append(q.Tracking, Counts{Name: t.Framework})
+			}
+			q.Tracking[i].NotAssessed++
+			continue
+		}
 		tally(&q.Tracking, idx, t.Framework, t.Review, t.ReviewerNote)
 		if !t.Review.IsReviewed() {
 			q.Items = append(q.Items, QueueItem{
@@ -195,6 +219,9 @@ func (q Queue) StatusText() string {
 			if c.Noted > 0 {
 				fmt.Fprintf(&b, "  (%d blocked by a reviewer note)", c.Noted)
 			}
+			if c.NotAssessed > 0 {
+				fmt.Fprintf(&b, "  %4d not assessed", c.NotAssessed)
+			}
 			b.WriteString("\n")
 		}
 	}
@@ -202,6 +229,9 @@ func (q Queue) StatusText() string {
 	section("Mappings, by framework", q.Mappings)
 	section("Tracking entries, by framework", q.Tracking)
 	fmt.Fprintf(&b, "\n%d reviewed, %d waiting\n", q.Reviewed(), q.Drafts())
+	if n := q.NotAssessed(); n > 0 {
+		fmt.Fprintf(&b, "%d requirements not assessed yet; nothing to review for them\n", n)
+	}
 	return b.String()
 }
 
@@ -214,6 +244,9 @@ func (q Queue) Markdown() string {
 	b.WriteString("To review an entry: read it, edit the YAML until it is right, run `make content`, then run the command shown to sign it. ")
 	b.WriteString("An entry with a **note** carries a doubt the agent recorded; clear the `reviewer_note` once it is settled, or the entry cannot be signed.\n\n")
 	fmt.Fprintf(&b, "**%d reviewed, %d waiting.**\n\n", q.Reviewed(), q.Drafts())
+	if n := q.NotAssessed(); n > 0 {
+		fmt.Fprintf(&b, "%d requirements are marked `not_assessed`: nobody has looked at them yet, so there is nothing to review and they are not listed below.\n\n", n)
+	}
 
 	table := func(title, head string, list []Counts) {
 		if len(list) == 0 {
@@ -227,7 +260,13 @@ func (q Queue) Markdown() string {
 	}
 	table("Controls", "Domain", q.Controls)
 	table("Mappings", "Framework", q.Mappings)
-	table("Tracking entries", "Framework", q.Tracking)
+	if len(q.Tracking) > 0 {
+		b.WriteString("## Tracking entries\n\n| Framework | Reviewed | Draft | Blocked by a note | Not assessed |\n| --- | --- | --- | --- | --- |\n")
+		for _, c := range q.Tracking {
+			fmt.Fprintf(&b, "| %s | %d | %d | %d | %d |\n", c.Name, c.Reviewed, c.Draft, c.Noted, c.NotAssessed)
+		}
+		b.WriteString("\n")
+	}
 
 	heads := map[string]string{"control": "Controls: %s", "mapping": "Mappings: %s", "tracking": "Tracking entries: %s"}
 	last := ""

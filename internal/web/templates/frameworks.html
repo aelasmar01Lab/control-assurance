@@ -9,7 +9,8 @@
     <dl class="kv compact">
       <dt>Resting on reviewed mappings</dt><dd class="basis-reviewed">{{.OnReviewed}}</dd>
       <dt>Resting on drafts, not reviewed</dt><dd class="basis-draft">{{.OnDrafts}}</dd>
-      <dt>No control; tracked with a reason</dt><dd>{{.Tracked}} <span class="muted">({{.TrackedReviewed}} reviewed)</span></dd>
+      <dt>No control; tracked with a reason</dt><dd>{{.Tracked}} <span class="muted">({{.TrackedReviewed}} reviewed)</span></dd>{{if .NotAssessed}}
+      <dt>Not assessed yet</dt><dd>{{.NotAssessed}}</dd>{{end}}
     </dl>
     <div class="legend">
       {{range .Segs}}<div class="legend-row"><span class="sq {{.Fill}}"></span><span class="name">{{.Label}}</span><span class="n">{{.N}}</span></div>{{end}}

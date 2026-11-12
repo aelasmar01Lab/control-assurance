@@ -7,7 +7,8 @@
   <dl class="kv compact">
     <dt>Resting on reviewed mappings</dt><dd class="basis-reviewed">{{.OnReviewed}}</dd>
     <dt>Resting on drafts, not reviewed</dt><dd class="basis-draft">{{.OnDrafts}}</dd>
-    <dt>No control; tracked with a reason</dt><dd>{{.Tracked}} <span class="muted">({{.TrackedReviewed}} reviewed)</span></dd>
+    <dt>No control; tracked with a reason</dt><dd>{{.Tracked}} <span class="muted">({{.TrackedReviewed}} reviewed)</span></dd>{{if .NotAssessed}}
+      <dt>Not assessed yet</dt><dd>{{.NotAssessed}}</dd>{{end}}
   </dl>
   <dl class="kv spaced">
     <dt>Text</dt><dd>{{if eq .TextRights "full"}}The publisher's text, under: {{sentence .License}}{{else if eq .TextRights "identifiers_only"}}Identifiers and this project's own labels only. The publisher's titles and text are not reproduced; read them in your own copy. {{sentence .License}}{{else}}Written by this project. {{sentence .License}}{{end}}{{if .Attribution}} {{.Attribution}}{{end}}</dd>
@@ -25,13 +26,13 @@
       <tbody>
       {{range .Rows}}
       <tr>
-        <td><div><span class="mono muted">{{.ID}}</span> {{if .Title}}<strong class="strong">{{.Title}}</strong>{{else}}<span class="pretty">{{.Text}}</span>{{end}}</div><div class="sub">{{.Owner}} · {{.Applicability}}</div>
+        <td><div><span class="mono muted">{{.ID}}</span> {{if .Title}}<strong class="strong">{{.Title}}</strong>{{else}}<span class="pretty">{{.Text}}</span>{{end}}</div>{{if .Owner}}<div class="sub">{{.Owner}} · {{.Applicability}}</div>{{end}}
           {{if .Note}}<div class="note-box"><span class="tag">source note</span>{{.Note}}</div>{{end}}</td>
         <td><span class="pill t-{{tone .State}} state {{.State}}">{{label .State}}</span></td>
         <td class="small">
           {{range .Controls}}
           <div class="stack tight"><div class="row"><a class="row-link" href="/?control={{.Key}}">{{.Title}}</a><span class="pill t-{{tone .State}}">{{label .State}}</span></div><div class="sub">{{.Strength}} mapping{{if ne .Strength .WrittenStrength}} (written as {{.WrittenStrength}}){{end}} · <span class="tag{{if .Reviewed}} tag-ok{{end}}">mapping {{.Review}}</span>{{if not .ControlReviewed}} · <span class="tag">control {{.ControlReview}}</span>{{end}}</div><div class="sub pretty">{{.Limitation}}</div></div>
-          {{else}}<div class="muted pretty">No control. {{.Rationale}}</div><div class="sub"><span class="tag{{if eq .Basis "reviewed"}} tag-ok{{end}}">tracking entry {{.TrackingReview}}</span></div>{{end}}
+          {{else}}{{if eq .Basis "none"}}<div class="muted pretty">Not assessed yet. No control has been considered for this requirement and nothing is claimed about it.</div>{{else}}<div class="muted pretty">No control. {{.Rationale}}</div><div class="sub"><span class="tag{{if eq .Basis "reviewed"}} tag-ok{{end}}">tracking entry {{.TrackingReview}}</span></div>{{end}}{{end}}
         </td>
         <td class="small muted pretty">{{.EvidenceExpectation}}</td>
       </tr>

@@ -155,6 +155,13 @@ func Sign(data []byte, filePath string, set *Set, sel Selector, reviewer, date s
 			}
 			node := list.Content[i]
 			i++
+			if !t.Assessed() {
+				// Nothing was assessed, so there is nothing to review.
+				if !sel.All && sel.Requirement == t.Requirement {
+					return nil, nil, fmt.Errorf("%s is not assessed; there is nothing to sign until the entry says how the requirement is tracked", t.Requirement)
+				}
+				continue
+			}
 			if sel.All || sel.Requirement == t.Requirement {
 				targets = append(targets, target{node, t.Requirement, t.Hash(), t.ReviewerNote})
 			}

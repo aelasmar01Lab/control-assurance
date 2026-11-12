@@ -95,7 +95,7 @@ th { background: #f3f5f7; } .scroll { overflow-x: auto; } .dim { color: #57606a;
 <tbody>{{range .Requirements}}<tr>
 <td><strong>{{.Framework}} {{.ID}}</strong> {{if .Title}}{{.Title}}{{else}}{{.Text}}{{end}}{{if .Note}}<div class="dim">{{.Note}}</div>{{end}}</td>
 <td><span class="tag {{.State}}">{{label .State}}</span></td>
-<td>{{range .Controls}}<div>{{.Title}}: {{label .State}} <span class="dim">({{.Strength}} mapping, {{.Review}}; control {{.ControlReview}})</span></div>{{else}}<span class="dim">No control. {{.Rationale}} ({{.TrackingReview}})</span>{{end}}</td>
+<td>{{range .Controls}}<div>{{.Title}}: {{label .State}} <span class="dim">({{.Strength}} mapping, {{.Review}}; control {{.ControlReview}})</span></div>{{else}}{{if eq .Basis "none"}}<span class="dim">Not assessed yet. Nothing is claimed about this requirement.</span>{{else}}<span class="dim">No control. {{.Rationale}} ({{.TrackingReview}})</span>{{end}}{{end}}</td>
 </tr>{{end}}</tbody>
 </table></div>
 

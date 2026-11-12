@@ -51,10 +51,14 @@ type RequirementView struct {
 	TrackingReview string `json:"tracking_review,omitempty"`
 	// Basis says what the requirement's state rests on: "reviewed" when
 	// every mapping to it and every control behind them is reviewed (or its
-	// tracking entry is), otherwise "draft".
+	// tracking entry is), "none" when nobody has assessed the requirement,
+	// otherwise "draft".
 	Basis    string               `json:"basis"`
 	Controls []RequirementControl `json:"controls"`
 }
+
+// basisNone is the basis of a requirement nobody has assessed.
+const basisNone = "none"
 
 var builtInPacks = sync.OnceValues(func() ([]*pack.Pack, error) { return pack.LoadFS(packs.FS) })
 
@@ -115,9 +119,15 @@ func deriveRequirements(controls []ControlView) ([]RequirementView, error) {
 					v.Rationale = t.Rationale
 				}
 				v.Note = t.Note
-				v.TrackingReview = t.Review.Label()
-				if t.Review.IsReviewed() && len(states) == 0 {
-					v.Basis = content.Reviewed
+				if t.Status == control.NotAssessed {
+					// Nothing was assessed: there is no draft to label and
+					// nothing a review could rest on.
+					v.Basis = basisNone
+				} else {
+					v.TrackingReview = t.Review.Label()
+					if t.Review.IsReviewed() && len(states) == 0 {
+						v.Basis = content.Reviewed
+					}
 				}
 			}
 			if len(v.Controls) > 0 {
@@ -173,6 +183,9 @@ type FrameworkView struct {
 	// is how many of those tracking entries have been reviewed.
 	Tracked         int `json:"tracked"`
 	TrackedReviewed int `json:"tracked_reviewed"`
+	// NotAssessed is how many requirements nobody has looked at yet. They
+	// are not counted in Tracked.
+	NotAssessed int `json:"not_assessed"`
 	// States counts the requirements by state.
 	States map[string]int `json:"states"`
 }
@@ -201,6 +214,8 @@ func (s *Service) Frameworks(ctx context.Context, actor authz.Actor) ([]Framewor
 			v.Requirements++
 			v.States[string(r.State)]++
 			switch {
+			case r.State == control.ReqNotAssessed:
+				v.NotAssessed++
 			case len(r.Controls) == 0:
 				v.Tracked++
 				if r.Basis == content.Reviewed {

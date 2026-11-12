@@ -27,6 +27,11 @@ func TestEveryRequirementIsMappedOrTracked(t *testing.T) {
 			switch {
 			case mapped == tracked:
 				t.Errorf("%s %s: mapped = %v, tracked = %v; want exactly one", p.Framework.Key, r.ID, mapped, tracked)
+			case tracked && tr.Status == NotAssessed:
+				// Nobody has looked: the entry says nothing else, by rule.
+				if tr.Owner != "" || tr.Applicability != "" || tr.EvidenceExpectation != "" || tr.Rationale != "" || tr.Review.Status != "" {
+					t.Errorf("%s %s: a not assessed entry says more than that: %+v", p.Framework.Key, r.ID, tr)
+				}
 			case tracked && (tr.Owner == "" || tr.Applicability == "" || tr.EvidenceExpectation == "" || tr.Rationale == ""):
 				t.Errorf("%s %s: tracking entry is incomplete: %+v", p.Framework.Key, r.ID, tr)
 			}
@@ -59,6 +64,9 @@ func TestRequirementStateIsNeverPositiveWithoutEvidence(t *testing.T) {
 		if got := DeriveRequirement(nil, &tr); got == ReqPartlyEvidenced || got == ReqAcceptedRisk {
 			t.Errorf("%s is tracked as %s but shows %s", tr.Requirement, tr.Status, got)
 		}
+	}
+	if got := DeriveRequirement(nil, &Tracking{Status: NotAssessed}); got != ReqNotAssessed {
+		t.Errorf("a requirement nobody has assessed shows %s", got)
 	}
 	if got := DeriveRequirement(nil, nil); got != ReqUntracked {
 		t.Errorf("an untracked requirement shows %s", got)

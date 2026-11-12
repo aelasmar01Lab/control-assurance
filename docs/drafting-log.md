@@ -106,11 +106,13 @@ nearby.
 are tracked: PR.AA-04 as not implemented and PR.AA-06 as out of scope.
 106 subcategories in the pack; 4 mapped and 102 tracked.
 
-**Placeholders.** 100 of the 102 tracking entries are placeholders. The
-validator requires every requirement to be mapped or tracked, and the
-pilot assesses PR.AA only. Each placeholder reads not implemented,
-"Not yet assessed", with the rationale "No control has been drafted for
-this subcategory." They are not worth reviewing; Wave 1 replaces them.
+**Not assessed.** 100 of the 102 tracking entries say only
+`status: not_assessed`. The validator requires every requirement to be
+mapped or tracked, and the pilot assesses PR.AA only. These entries have
+no review block, cannot be signed and are not in the review queue; Wave 1
+replaces each. (As first committed they read not implemented, with a
+placeholder rationale, and sat in the queue as 100 drafts. The maintainer
+asked for the separate status on 2026-11-12; see decision 37.)
 
 **Sources opened.** The NIST CSF pack above, for the PR.AA subcategory
 text. No crosswalk was used: every mapping's basis is `own_analysis`.

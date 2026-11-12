@@ -1,845 +1,168 @@
 # NIST CSF 2.0 subcategories that no control covers, and how each is tracked.
 #
-# PILOT: only PR.AA has been assessed. Every entry below that reads
-# "Not yet assessed" is a placeholder, written so that no subcategory is left
-# out of the product. It says only that nothing has been drafted for the
-# subcategory. Wave 1 replaces these with controls and mappings, or with real
-# tracking entries. They are not worth reviewing or signing as they stand.
+# PILOT: only PR.AA has been assessed. Every other subcategory is marked
+# not_assessed: nobody has looked at it yet, nothing is claimed about it, and
+# there is nothing to review. Wave 1 replaces each with controls and
+# mappings, or with a tracking entry that says how it is tracked.
 framework: nist-csf
 version: "2.0"
 entries:
 
   - requirement: GV.OC-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.OC-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.OC-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.OC-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.OC-05
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.RM-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.RM-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.RM-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.RM-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.RM-05
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.RM-06
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.RM-07
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.RR-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.RR-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.RR-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.RR-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.PO-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.PO-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.OV-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.OV-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.OV-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.SC-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.SC-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.SC-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.SC-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.SC-05
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.SC-06
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.SC-07
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.SC-08
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.SC-09
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: GV.SC-10
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.AM-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.AM-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.AM-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.AM-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.AM-05
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.AM-07
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.AM-08
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.RA-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.RA-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.RA-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.RA-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.RA-05
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.RA-06
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.RA-07
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.RA-08
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.RA-09
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.RA-10
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.IM-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.IM-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.IM-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: ID.IM-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.AA-04
     status: not_implemented
@@ -877,769 +200,145 @@ entries:
       content_sha256: ""
 
   - requirement: PR.AT-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.AT-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.DS-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.DS-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.DS-10
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.DS-11
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.PS-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.PS-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.PS-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.PS-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.PS-05
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.PS-06
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.IR-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.IR-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.IR-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.IR-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: DE.AE-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: DE.AE-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: DE.AE-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: DE.AE-06
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: DE.AE-07
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: DE.AE-08
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: DE.CM-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: DE.CM-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: DE.CM-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: DE.CM-06
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: DE.CM-09
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.MA-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.MA-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.MA-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.MA-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.MA-05
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.AN-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.AN-06
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.AN-07
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.AN-08
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.CO-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.CO-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.MI-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RS.MI-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RC.RP-01
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RC.RP-02
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RC.RP-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RC.RP-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RC.RP-05
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RC.RP-06
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RC.CO-03
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: RC.CO-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Not yet assessed.
-    evidence_expectation: Not yet stated.
-    rationale: >-
-      No control has been drafted for this subcategory. The pilot covers PR.AA
-      only; the rest is drafted in Wave 1.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed

@@ -17,7 +17,7 @@ type pageMeta struct{ Group, Title, Note string }
 var pageMetas = map[string]pageMeta{
 	"overview":     {"Monitor", "Overview", "Each control has a state and, beside it, the reasons. Supported always lists the checks it rests on, and says nothing about any framework."},
 	"frameworks":   {"Monitor", "Frameworks", "Every framework pack built into this release. For each, two numbers are kept apart: the requirements whose mappings and controls the maintainer has reviewed, and the requirements that still rest on a draft. Controls and mappings are drafted by an AI agent, and nothing here has been reviewed by an auditor."},
-	"requirements": {"Monitor", "Framework requirements", "Every requirement of this framework. A requirement is partly evidenced only when every control mapped to it is supported by current evidence. A requirement that no control covers shows how it is tracked instead, with the reason. Each mapping says whether it has been reviewed; a direct mapping that is still a draft counts as partial."},
+	"requirements": {"Monitor", "Framework requirements", "Every requirement of this framework. A requirement is partly evidenced only when every control mapped to it is supported by current evidence. A requirement that no control covers shows how it is tracked instead, with the reason, or reads not assessed when nobody has looked at it yet. Each mapping says whether it has been reviewed; a direct mapping that is still a draft counts as partial."},
 	"queue":        {"Audit", "Review queue", "Controls, mappings and tracking entries are drafted by an AI agent. Each is a draft until the maintainer reads it, edits it and signs it, and a signature covers the entry's exact content: an entry edited after signing fails verification until it is signed again. This page lists what is still a draft."},
 	"findings":     {"Monitor", "Findings", "A finding is opened by a failing evaluation and closed only by a later passing one. An exception accepts the risk for a limited time; it never changes an evaluation, and it stops counting when it expires."},
 	"evidence":     {"Evidence", "Manual evidence", "Submitting and accepting are separate actions by separate people. Submitted evidence does not count until a reviewer accepts it, and accepted evidence stops counting after its validity date."},
@@ -80,7 +80,7 @@ func tone(v any) string {
 type seg struct {
 	Label string
 	N     int
-	// Fill is the colour class: s-pass, s-fail, s-warn, s-neutral or s-dim.
+	// Fill is the colour class: s-pass, s-fail, s-warn, s-neutral, s-dim or s-none.
 	Fill string
 }
 
@@ -146,6 +146,9 @@ func requirementSegs(reqs []assurance.RequirementView) []seg {
 	if n := counts["out_of_scope"]; n > 0 {
 		segs = append(segs, seg{"out of scope", n, "s-dim"})
 	}
+	if n := counts["not_assessed"]; n > 0 {
+		segs = append(segs, seg{"not assessed", n, "s-none"})
+	}
 	for i := range segs {
 		if segs[i].Label == "tracked manually" {
 			segs[i].Fill = "s-soft"
@@ -163,19 +166,25 @@ func buildOverview(ov *assurance.Overview, reqs []assurance.RequirementView, fin
 			p.Detail = &ov.Controls[i]
 		}
 	}
-	covered, tracked := 0, 0
+	covered, tracked, notAssessed := 0, 0, 0
 	evidenced := map[string]int{}
 	for _, r := range reqs {
-		if len(r.Controls) > 0 {
+		switch {
+		case len(r.Controls) > 0:
 			covered++
 			evidenced[string(r.State)]++
-		} else {
+		case r.State == control.ReqNotAssessed:
+			notAssessed++
+		default:
 			tracked++
 		}
 	}
 	reqSegs := countSegs(evidenced, "partly_evidenced", "accepted_risk", "not_evaluated", "stale", "needs_attention")
 	if tracked > 0 {
 		reqSegs = append(reqSegs, seg{"tracked, with a reason", tracked, "s-neutral"})
+	}
+	if notAssessed > 0 {
+		reqSegs = append(reqSegs, seg{"not assessed", notAssessed, "s-none"})
 	}
 	open, closed := 0, 0
 	for _, f := range findings {

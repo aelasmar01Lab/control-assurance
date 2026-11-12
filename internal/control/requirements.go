@@ -13,7 +13,7 @@ type Tracking struct {
 	Framework   string
 	Version     string
 	Requirement string
-	// Status is manual, not_implemented or out_of_scope.
+	// Status is manual, not_implemented, out_of_scope or not_assessed.
 	Status TrackingStatus
 	Owner  string
 	// Applicability says whether the requirement applies to the lab, and why.
@@ -40,6 +40,9 @@ const (
 	NotImplemented TrackingStatus = "not_implemented"
 	// OutOfScope means the requirement does not apply to the lab.
 	OutOfScope TrackingStatus = "out_of_scope"
+	// NotAssessed means nobody has looked at the requirement yet. The
+	// entry says nothing else and is not reviewed.
+	NotAssessed TrackingStatus = content.NotAssessed
 )
 
 // LabScope describes what the tracked organization is. Every applicability
@@ -96,6 +99,8 @@ const (
 	ReqManual          RequirementState = "tracked_manually"
 	ReqNotImplemented  RequirementState = "not_implemented"
 	ReqOutOfScope      RequirementState = "out_of_scope"
+	// ReqNotAssessed marks a requirement nobody has looked at yet.
+	ReqNotAssessed RequirementState = "not_assessed"
 	// ReqUntracked marks a requirement with neither a control nor a
 	// tracking entry. The tests keep it from occurring.
 	ReqUntracked RequirementState = "untracked"
@@ -117,6 +122,8 @@ func DeriveRequirement(states []State, tracking *Tracking) RequirementState {
 			return ReqManual
 		case OutOfScope:
 			return ReqOutOfScope
+		case NotAssessed:
+			return ReqNotAssessed
 		default:
 			return ReqNotImplemented
 		}

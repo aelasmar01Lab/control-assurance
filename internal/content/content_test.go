@@ -175,6 +175,8 @@ func TestInvalidContentIsRejected(t *testing.T) {
 		{"bad strength", mappings, "strength: supporting", "strength: strong", "schema"},
 		{"tracked and mapped", tracking, `requirement: "R3"`, `requirement: "R1"`, "needs no tracking entry"},
 		{"out of scope status typo", tracking, "status: not_implemented", "status: done", "schema"},
+		{"not assessed with a rationale", tracking, "status: not_implemented", "status: not_assessed", "schema"},
+		{"assessed without a review block", tracking, "    review:\n      status: draft\n      drafted_by: agent\n      reviewed_by: \"\"\n      reviewed_on: \"\"\n      content_sha256: \"\"\n", "", "schema"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -218,6 +220,44 @@ func sign(t *testing.T, fsys fstest.MapFS, refs content.Refs, file string, sel c
 	}
 	fsys[file] = &fstest.MapFile{Data: out}
 	return signed
+}
+
+// A requirement nobody has looked at is marked not_assessed. The entry
+// satisfies "mapped or tracked", but it is not a draft: it is not in the
+// review queue, not counted as waiting, and cannot be signed.
+func TestNotAssessedIsNotInTheQueueAndCannotBeSigned(t *testing.T) {
+	const file = "tracking/fixture.yaml"
+	fsys, refs := fixture(t)
+	fsys[file] = &fstest.MapFile{Data: []byte("framework: fixture\nversion: v1\nentries:\n  - requirement: \"R3\"\n    status: not_assessed\n")}
+	set, problems := content.Load(fsys, refs)
+	if len(problems) > 0 {
+		t.Fatalf("problems:\n%v", problems)
+	}
+	if len(set.Tracking) != 1 || set.Tracking[0].Assessed() {
+		t.Fatalf("tracking = %+v", set.Tracking)
+	}
+	q := content.BuildQueue(set)
+	if q.NotAssessed() != 1 || q.Tracking[0].Draft != 0 || q.Tracking[0].Reviewed != 0 {
+		t.Errorf("queue tracking = %+v", q.Tracking)
+	}
+	for _, it := range q.Items {
+		if it.Kind == "tracking" {
+			t.Errorf("a not assessed entry is in the queue: %+v", it)
+		}
+	}
+	if q.Drafts() != 3 {
+		t.Errorf("%d drafts waiting, want the control and its two mappings", q.Drafts())
+	}
+	if md := q.Markdown(); strings.Contains(md, "**R3**") || !strings.Contains(md, "1 requirements are marked `not_assessed`") {
+		t.Errorf("the queue document:\n%s", md)
+	}
+	_, _, err := content.Sign(fsys[file].Data, file, set, content.Selector{Requirement: "R3"}, "ali", "2026-11-12", false)
+	if err == nil || !strings.Contains(err.Error(), "is not assessed") {
+		t.Errorf("signing a not assessed entry by name: err = %v", err)
+	}
+	if _, _, err := content.Sign(fsys[file].Data, file, set, content.Selector{All: true}, "ali", "2026-11-12", false); err == nil {
+		t.Error("--all signed a file that holds only not assessed entries")
+	}
 }
 
 // Signing changes four values and nothing else, the signed entry then

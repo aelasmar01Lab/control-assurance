@@ -97,7 +97,7 @@ func GuideFor(packs []*pack.Pack, controls []Control, tracked []Tracking) string
 	for _, p := range packs {
 		fmt.Fprintf(&b, "\n## Every %s requirement (%s)\n\n", p.Framework.Title, p.Framework.Version)
 		b.WriteString("Each requirement is either covered in part by a control, or tracked with a reason. ")
-		b.WriteString("\"Tracked manually\" means the work is done or judged outside this system, with no evidence held here. None of the three tracking statuses is a positive state.\n\n")
+		b.WriteString("\"Tracked manually\" means the work is done or judged outside this system, with no evidence held here. None of the tracking statuses is a positive state. \"Not assessed\" means nobody has looked at the requirement yet; such an entry says nothing else and is not reviewed.\n\n")
 		b.WriteString("| Requirement | Covered by | Tracking | Review | Owner | Applicability | Evidence expected | Rationale |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n")
 		for _, r := range p.Assessed() {
 			var covered []string
@@ -112,6 +112,10 @@ func GuideFor(packs []*pack.Pack, controls []Control, tracked []Tracking) string
 			t, ok := trackingFor(p.Framework.Key, r.ID)
 			if !ok {
 				fmt.Fprintf(&b, "| %s %s | | **untracked** | | | | | |\n", r.ID, requirementName(r))
+				continue
+			}
+			if t.Status == NotAssessed {
+				fmt.Fprintf(&b, "| %s %s | | not assessed | | | | | |\n", r.ID, requirementName(r))
 				continue
 			}
 			rationale := t.Rationale

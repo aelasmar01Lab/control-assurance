@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/aelasmar01Lab/control-assurance/tracking/tracking.schema.json",
   "title": "Tracking entries",
-  "description": "The requirements of one framework version that no control covers, and how each is tracked. One file per framework, at tracking/<framework>.yaml.",
+  "description": "The requirements of one framework version that no control covers, and how each is tracked. One file per framework, at tracking/<framework>.yaml. An entry with status not_assessed says only that nobody has looked at the requirement yet: it carries nothing else, has no review block and is not signed.",
   "type": "object",
   "additionalProperties": false,
   "required": ["framework", "version", "entries"],
@@ -14,10 +14,16 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["requirement", "status", "owner_role", "applicability", "evidence_expectation", "rationale", "review"],
+        "required": ["requirement", "status"],
+        "if": { "properties": { "status": { "const": "not_assessed" } } },
+        "then": {
+          "properties": { "requirement": true, "status": true },
+          "additionalProperties": false
+        },
+        "else": { "required": ["owner_role", "applicability", "evidence_expectation", "rationale", "review"] },
         "properties": {
           "requirement": { "type": "string", "minLength": 1 },
-          "status": { "enum": ["manual", "not_implemented", "out_of_scope"] },
+          "status": { "enum": ["manual", "not_implemented", "out_of_scope", "not_assessed"] },
           "owner_role": { "type": "string", "minLength": 1 },
           "applicability": { "type": "string", "minLength": 1 },
           "evidence_expectation": { "type": "string", "minLength": 1 },

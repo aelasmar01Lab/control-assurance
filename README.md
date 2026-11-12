@@ -60,7 +60,7 @@ To run it against a real lab instead, see
 | Eight internal controls backed by checks or reviewed evidence, with derived state and a 48 hour evidence window | Implemented |
 | Nineteen further controls in the access domain (the pilot), all drafts | Drafted. None has a check yet: the automated ones read *not evaluated*, the manual ones *needs attention* until evidence is submitted |
 | NIST CSF 2.0 pack: 106 subcategories with NIST's text, imported from NIST's reference-data export by a script in `tools/import/nist-csf` | Implemented |
-| NIST CSF 2.0 mappings | Pilot only: PR.AA (6 subcategories) is mapped or tracked. The other 100 subcategories carry a placeholder entry that says nothing has been drafted for them |
+| NIST CSF 2.0 mappings | Pilot only: PR.AA (6 subcategories) is mapped or tracked. The other 100 subcategories are marked *not assessed*: nobody has looked at them, nothing is claimed about them, and they are not in the review queue |
 | Controls, mappings and tracking entries as YAML files, validated against schemas and each other | Implemented |
 | Review contract: sign an entry, a signature covers its exact content, an edit after signing fails CI | Implemented |
 | Content reviewed by the maintainer | See [docs/review-queue.md](docs/review-queue.md) for the current count |
@@ -208,9 +208,9 @@ nothing is shown as met.
 NIST CSF 2.0 is partway in. Its 106 subcategories are all listed, with
 NIST's text. Only the six under PR.AA (identity management, authentication
 and access control) have been assessed: four are mapped by draft controls,
-and two are tracked with a reason. The other 100 read *not implemented*
-with the rationale "No control has been drafted for this subcategory",
-which is a statement about this repository, not about the lab.
+and two are tracked with a reason. The other 100 read *not assessed*:
+nobody has looked at them yet, so nothing is said about the lab and there
+is nothing to review.
 
 One thing in the catalog is wrong at the source: the pinned upstream file
 gives requirement 2.1 (Single sign-on) the statement text of requirement

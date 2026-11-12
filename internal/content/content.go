@@ -134,6 +134,15 @@ func (m Mapping) EffectiveStrength() string {
 	return m.Strength
 }
 
+// NotAssessed is the tracking status of a requirement nobody has looked at
+// yet. Such an entry carries only the requirement and the status: there is
+// nothing in it to review, so it has no review block, is never signed and
+// is left out of the review queue.
+const NotAssessed = "not_assessed"
+
+// Assessed reports whether the entry says anything about the requirement.
+func (t Tracking) Assessed() bool { return t.Status != NotAssessed }
+
 // Tracking says how a requirement that no control covers is tracked.
 type Tracking struct {
 	Requirement         string `yaml:"requirement" json:"requirement"`
@@ -471,7 +480,9 @@ func (s *Set) check(refs Refs) Problems {
 		if mapped[k] {
 			add(t.Path, t.Requirement, "a control maps to this requirement, so it needs no tracking entry")
 		}
-		review(t.Path, t.Requirement, t.Review, t.ReviewerNote, t.Hash())
+		if t.Assessed() {
+			review(t.Path, t.Requirement, t.Review, t.ReviewerNote, t.Hash())
+		}
 	}
 
 	// Every requirement is mapped by a control or tracked with a reason.
