@@ -1,0 +1,22 @@
+{{define "content"}}
+<section>
+  <h2>Decision log</h2>
+  <p class="note">Who did what, to what, and why. Entries are written in the same transaction as the change they describe, and are never edited or removed. The 200 most recent are shown.</p>
+  {{if .Data}}
+  <div class="scroll"><table>
+    <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Object</th><th>Reason</th></tr></thead>
+    <tbody>
+    {{range .Data}}
+    <tr>
+      <td class="nowrap">{{when .At}}</td>
+      <td class="nowrap">{{.Actor}} <span class="dim">({{label .ActorRole}})</span></td>
+      <td class="nowrap"><code>{{.Action}}</code></td>
+      <td class="nowrap">{{label .ObjectType}} {{.ObjectID}}</td>
+      <td>{{.Reason}}</td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}<p class="empty">Nothing has been logged yet.</p>{{end}}
+</section>
+{{end}}

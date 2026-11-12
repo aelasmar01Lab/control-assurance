@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
 	"github.com/aelasmar01Lab/control-assurance/internal/evidence"
 	"github.com/aelasmar01Lab/control-assurance/internal/github"
@@ -54,13 +55,16 @@ type RunSummary struct {
 // CollectGitHub makes one collection attempt per repository and records each
 // as a run. A failed attempt is recorded with its error class and produces no
 // observation. The returned error is for failures to record, not to collect.
-func (s *Service) CollectGitHub(ctx context.Context, repos []string) ([]RunSummary, error) {
+func (s *Service) CollectGitHub(ctx context.Context, actor authz.Actor, repos []string) ([]RunSummary, error) {
+	if err := authz.Can(actor, authz.RunCollection, authz.Resource{}); err != nil {
+		return nil, err
+	}
 	var out []RunSummary
 	for _, repo := range repos {
 		if !github.ValidRepository(repo) {
 			return out, fmt.Errorf("%q is not an owner/name repository", repo)
 		}
-		resourceID, err := s.Store.UpsertResource(ctx, "github", "repository", repo, "operator: named on the command line")
+		resourceID, err := s.Store.UpsertResource(ctx, "github", "repository", repo, actor.Username)
 		if err != nil {
 			return out, fmt.Errorf("record resource %s: %w", repo, err)
 		}
@@ -69,6 +73,9 @@ func (s *Service) CollectGitHub(ctx context.Context, repos []string) ([]RunSumma
 			return out, fmt.Errorf("start run for %s: %w", repo, err)
 		}
 		sum := RunSummary{Repository: repo, RunID: runID}
+		if err := s.Store.LogAction(ctx, actor.UserID, "collection.run", "collection_run", runID, "github "+repo, s.now()); err != nil {
+			return out, fmt.Errorf("log run for %s: %w", repo, err)
+		}
 
 		obs, complete, class, detail := s.collectBranchRules(ctx, repo, resourceID)
 		if class != "" {
@@ -137,9 +144,24 @@ type EvaluationSummary struct {
 
 // Evaluate applies every registered check to each observation it has not
 // yet evaluated, oldest first. Running it again with nothing new does nothing.
-func (s *Service) Evaluate(ctx context.Context) ([]EvaluationSummary, error) {
+func (s *Service) Evaluate(ctx context.Context, actor authz.Actor) ([]EvaluationSummary, error) {
+	if err := authz.Can(actor, authz.RunEvaluation, authz.Resource{}); err != nil {
+		return nil, err
+	}
+	out, err := s.evaluate(ctx)
+	if len(out) > 0 {
+		last := out[len(out)-1].EvaluationID
+		if logErr := s.Store.LogAction(ctx, actor.UserID, "evaluation.run", "evaluation", last,
+			fmt.Sprintf("%d evaluations recorded, ending with this one", len(out)), s.now()); logErr != nil && err == nil {
+			err = logErr
+		}
+	}
+	return out, err
+}
+
+func (s *Service) evaluate(ctx context.Context) ([]EvaluationSummary, error) {
 	var out []EvaluationSummary
-	for _, c := range check.All() {
+	for _, c := range check.Automated() {
 		if err := s.Store.SyncCheckVersion(ctx, c); err != nil {
 			return out, err
 		}

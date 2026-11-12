@@ -28,7 +28,8 @@ content reject `UPDATE` and `DELETE` through database triggers. The plan calls
 for database grants on a separate application role; triggers were chosen first
 because they hold even for the table owner, which is the only role a
 single-user local setup has. Given up: the cleaner "property of grants"
-story until roles arrive with accounts in M2, when grants will be added on top.
+story. A separate, less-privileged database role for the application is
+still not in place; it belongs with a hosted deployment.
 
 ## 4. Findings move only on newer evidence
 
@@ -66,3 +67,54 @@ least-privilege credential, the ability to observe what a read-only token
 sees of ruleset bypass lists, and a real expiring token as the
 expired-credential test (an invalid token is used instead). Switching to a
 fine-grained token later needs no code change, only `GITHUB_TOKEN`.
+
+## 8. One permission function, called in the service layer
+
+Every action goes through `authz.Can(actor, action, resource)`, and it is
+called by the service layer rather than by web middleware. The web handlers,
+the CLI, the export and the collection and evaluation jobs all call the same
+service methods, so none of them can skip it. Given up: the convenience of
+per-route middleware. The permission matrix in `docs/permissions.md` is
+generated from the same table the function reads.
+
+## 9. The CLI names a user; it does not authenticate one
+
+CLI commands act as the user named in `CCA_USER`, with that user's role and
+name in the decision log. There is no password prompt: anyone who can run the
+CLI already holds `DATABASE_URL`, which is the stronger credential. Given up:
+any claim that the CLI proves who ran it. `migrate` and `users` are setup
+commands and take no user.
+
+## 10. Separation of duties is enforced twice
+
+A reviewer cannot review their own submission or decide their own exception
+request. `authz.Can` refuses it, and so do `CHECK` constraints on the tables,
+for anything that reaches the database without the service. Given up: nothing;
+the constraint is one line each.
+
+## 11. Expiry is a comparison made on read
+
+An approved exception is never rewritten when it expires. Its row keeps
+`approved` and its expiry time; the control state and the displayed status
+compare that time with the clock when they are read. The same holds for
+accepted manual evidence and its validity date. Given up: an "expired" status
+you can query for directly, and any notification at the moment of expiry.
+In exchange, expiry needs no job, cannot be missed by one, and cannot touch
+an evaluation.
+
+## 12. Controls are defined in code
+
+The two internal controls, their owners, checks and framework mappings are Go
+values in `internal/control`. The plan stores them as database rows with
+revisions; here a revision is a reviewed commit. Given up: editing a control
+without a release, and a queryable history of control changes inside the
+product. Mappings carry no reviewer yet and are labelled "mapping not
+reviewed" wherever they appear.
+
+## 13. Local accounts, with the limits stated
+
+Sign-in uses local accounts with argon2id hashes and server-side sessions
+(`alexedwards/scs`, stored in PostgreSQL). There is no single sign-on, no
+second factor, no lockout or rate limit on sign-in, and no self-service
+password change. MVSP 2.1 expects single sign-on, so this project's own
+self-assessment will record 2.1 as not met.

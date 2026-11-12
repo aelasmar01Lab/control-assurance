@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aelasmar01Lab/control-assurance/internal/assurance"
+	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
 	"github.com/aelasmar01Lab/control-assurance/internal/evidence"
 	"github.com/aelasmar01Lab/control-assurance/internal/github"
@@ -26,7 +28,14 @@ type harness struct {
 	fake  *githubtest.Fake
 	gh    *github.Client
 	repos []string
+	clock time.Time
+
+	// The four lab users.
+	operator, owner, reviewer, auditor authz.Actor
 }
+
+// advance moves the service's clock forward.
+func (h *harness) advance(d time.Duration) { h.clock = h.clock.Add(d) }
 
 func newHarness(t *testing.T) *harness {
 	t.Helper()
@@ -43,17 +52,30 @@ func newHarness(t *testing.T) *harness {
 	fake := githubtest.NewFake()
 	t.Cleanup(fake.Server.Close)
 	gh := fake.Client()
-	return &harness{
+	h := &harness{
 		t: t, st: st, fake: fake, gh: gh,
-		svc:   &assurance.Service{Store: st, Evidence: ev, GitHub: gh},
 		repos: []string{githubtest.FakeRepository},
+		clock: time.Date(2026, 11, 12, 9, 0, 0, 0, time.UTC),
 	}
+	h.svc = &assurance.Service{Store: st, Evidence: ev, GitHub: gh, Now: func() time.Time { return h.clock }}
+
+	if _, err := h.svc.SeedLabUsers(ctx); err != nil {
+		t.Fatalf("SeedLabUsers: %v", err)
+	}
+	for name, dst := range map[string]*authz.Actor{
+		"operator": &h.operator, "control-owner": &h.owner, "reviewer": &h.reviewer, "auditor": &h.auditor,
+	} {
+		if *dst, err = h.svc.ActorByUsername(ctx, name); err != nil {
+			t.Fatalf("lab user %s: %v", name, err)
+		}
+	}
+	return h
 }
 
 // collect makes one collection attempt and returns its summary.
 func (h *harness) collect() assurance.RunSummary {
 	h.t.Helper()
-	runs, err := h.svc.CollectGitHub(context.Background(), h.repos)
+	runs, err := h.svc.CollectGitHub(context.Background(), h.operator, h.repos)
 	if err != nil {
 		h.t.Fatalf("CollectGitHub: %v", err)
 	}
@@ -65,7 +87,7 @@ func (h *harness) collect() assurance.RunSummary {
 
 func (h *harness) evaluate() []assurance.EvaluationSummary {
 	h.t.Helper()
-	out, err := h.svc.Evaluate(context.Background())
+	out, err := h.svc.Evaluate(context.Background(), h.operator)
 	if err != nil {
 		h.t.Fatalf("Evaluate: %v", err)
 	}

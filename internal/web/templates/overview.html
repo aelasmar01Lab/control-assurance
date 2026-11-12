@@ -1,0 +1,72 @@
+{{define "content"}}
+<section>
+  <h2>Controls</h2>
+  <p class="note">A control's state is worked out each time this page loads, from the results, evidence reviews and exceptions below it. It is never stored or edited.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Control</th><th>State</th><th>Why</th><th>Rests on</th><th>Framework mapping</th></tr></thead>
+    <tbody>
+    {{range .Data.Controls}}
+    <tr>
+      <td><strong>{{.Control.Title}}</strong><br><span class="dim">Owner: {{.Control.Owner}}</span><br><span class="dim">{{.Control.Risk}}</span></td>
+      <td><span class="state {{.State}}">{{label .State}}</span></td>
+      <td>{{range .Reasons}}<div>{{.}}</div>{{end}}</td>
+      <td>
+        {{range .Control.Checks}}<div><code>{{.}}</code></div>{{end}}
+        {{if .Control.ManualCheck}}<div><code>{{.Control.ManualCheck}}</code> <span class="dim">manual</span></div>{{end}}
+        {{if .Control.Freshness}}<div class="dim">Evidence window: {{hours .Control.Freshness}} hours</div>{{end}}
+      </td>
+      <td>{{range .Control.Mappings}}
+        <div>{{.Framework}} {{.Requirement}}, {{.Strength}}{{if not .ReviewedBy}} <span class="tag">mapping not reviewed</span>{{end}}</div>
+        <div class="dim">{{.Limitation}}</div>
+      {{end}}</td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Current results</h2>
+  <p class="note">The newest evaluated observation for each resource and check. A failed collection adds no observation, so it never changes a result.</p>
+  {{if .Data.Results}}
+  <div class="scroll"><table>
+    <thead><tr><th>Resource</th><th>Check</th><th>Result</th><th>Explanation</th><th>Evidence</th><th>Collected</th></tr></thead>
+    <tbody>
+    {{range .Data.Results}}
+    <tr>
+      <td>{{.Resource}}</td>
+      <td class="nowrap">{{.CheckKey}} <span class="dim">v{{.CheckVersion}}</span></td>
+      <td><span class="result {{.Result}}">{{label .Result}}</span></td>
+      <td>{{.Explanation}}</td>
+      <td class="nowrap"><code title="{{.PayloadSHA256}}">{{short .PayloadSHA256}}</code><br><span class="dim">evaluation {{.EvaluationID}}</span></td>
+      <td class="nowrap">{{when .CollectedAt}}</td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}<p class="empty">Not evaluated: no check has produced a result yet.</p>{{end}}
+</section>
+
+<section>
+  <h2>Collection runs</h2>
+  <p class="note">Every collection attempt, including failures. A failure is an integration-health problem, not a check result.</p>
+  {{if .Data.Runs}}
+  <div class="scroll"><table>
+    <thead><tr><th>Run</th><th>Integration</th><th>Resource</th><th>Started</th><th>Outcome</th><th>Coverage</th><th>Error</th></tr></thead>
+    <tbody>
+    {{range .Data.Runs}}
+    <tr>
+      <td>#{{.ID}}</td>
+      <td>{{.Integration}}</td>
+      <td>{{.Resource}}</td>
+      <td class="nowrap">{{when .StartedAt}}</td>
+      <td><span class="run {{.Outcome}}">{{.Outcome}}</span></td>
+      <td>{{if eq .Outcome "succeeded"}}{{if .InventoryComplete}}complete{{else}}<span class="result not_evaluated">incomplete</span>{{end}}{{else}}<span class="dim">none</span>{{end}}</td>
+      <td>{{if .ErrorClass}}<code>{{.ErrorClass}}</code><br><span class="dim">{{.ErrorDetail}}</span>{{end}}</td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}<p class="empty">No collection has been attempted.</p>{{end}}
+</section>
+{{end}}

@@ -40,11 +40,44 @@ type Check struct {
 	Control string
 	// Mapping is the framework requirement and the strength of the mapping.
 	Mapping string
-	// Eval applies the check to an observation's stored payload.
+	// Eval applies the check to an observation's stored payload. It is nil
+	// for a manual check.
 	Eval func(payload []byte) (Result, string, error)
+	// Manual marks a check whose evidence is submitted and reviewed by
+	// people. It has no Eval; its state is derived from the reviewed
+	// submissions of its control.
+	Manual bool
 }
 
-var registry = []Check{gh01, gh02}
+// REC01 is the manual-evidence check for the backup and recovery control.
+const REC01 = "REC-01"
+
+var rec01 = Check{
+	Key:              REC01,
+	Version:          "1",
+	ObservationKind:  "manual.evidence_submission",
+	Assertion:        "A recovery exercise record was accepted within the last 12 months.",
+	Source:           "Manual evidence: a dated recovery exercise record, submitted by the control owner",
+	Permission:       "None. A reviewer who is not the submitter accepts or rejects the record",
+	Establishes:      "A reviewer accepted a dated record of a recovery exercise.",
+	DoesNotEstablish: "That recovery would succeed today.",
+	Control:          "Backup and recovery",
+	Mapping:          "MVSP 4.4, partial.",
+	Manual:           true,
+}
+
+var registry = []Check{gh01, gh02, rec01}
+
+// Automated returns the checks the evaluator runs against observations.
+func Automated() []Check {
+	var out []Check
+	for _, c := range All() {
+		if !c.Manual {
+			out = append(out, c)
+		}
+	}
+	return out
+}
 
 // All returns every registered check, ordered by key then version.
 func All() []Check {

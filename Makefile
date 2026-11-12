@@ -32,9 +32,10 @@ migrate:
 packs:
 	go run ./cmd/cca packs validate
 
-# Regenerate the check guide from the check definitions.
+# Regenerate the documents that are generated from code.
 guide:
 	go run ./cmd/cca checks guide > docs/checks.md
+	go run ./cmd/cca permissions > docs/permissions.md
 
 serve: build
 	bin/cca serve

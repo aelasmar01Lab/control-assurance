@@ -1,0 +1,12 @@
+{{define "content"}}
+<section class="narrow">
+  <h2>Sign in</h2>
+  {{if .Data}}<p class="flash error" role="alert">{{.Data}}</p>{{end}}
+  <form method="post" action="/login" class="stack">
+    <label>Username <input name="username" autocomplete="username" required autofocus></label>
+    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit">Sign in</button>
+  </form>
+  <p class="note">Lab accounts only: operator, control-owner, reviewer and auditor. Passwords are printed once by <code>cca users seed</code>.</p>
+</section>
+{{end}}

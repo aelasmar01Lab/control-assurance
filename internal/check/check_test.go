@@ -77,7 +77,7 @@ func TestGitHubChecks(t *testing.T) {
 }
 
 func TestUnreadablePayloadIsAnErrorNotAResult(t *testing.T) {
-	for _, c := range All() {
+	for _, c := range Automated() {
 		for _, bad := range []string{``, `not json`, `{}`} {
 			if result, _, err := c.Eval([]byte(bad)); err == nil {
 				t.Errorf("%s: Eval(%q) = %s, want an error", c.Key, bad, result)
@@ -103,8 +103,8 @@ func TestRegistry(t *testing.T) {
 				t.Errorf("%s: %s is empty", id, name)
 			}
 		}
-		if c.Eval == nil {
-			t.Errorf("%s: no Eval function", id)
+		if (c.Eval == nil) != c.Manual {
+			t.Errorf("%s: an automated check needs Eval and a manual check must not have one", id)
 		}
 	}
 }

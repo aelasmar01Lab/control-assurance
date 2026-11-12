@@ -1,0 +1,50 @@
+{{define "content"}}
+<section>
+  <h2>Manual evidence</h2>
+  <p class="note">Submitting and accepting are separate actions by separate people. Submitted evidence does not count until a reviewer accepts it, and accepted evidence stops counting after its validity date.</p>
+
+  {{range .Data.SubmitTo}}
+  <article class="card">
+    <h3>Submit evidence for {{.Title}} <code>{{.ManualCheck}}</code></h3>
+    <p class="dim">{{.EvidenceExpectation}}</p>
+    <form method="post" action="/evidence" enctype="multipart/form-data" class="stack">
+      <input type="hidden" name="control" value="{{.Key}}">
+      <label>Period covered, from <input name="period_start" type="date" required></label>
+      <label>Period covered, to <input name="period_end" type="date" required></label>
+      <label>Evidence file (10 MB at most) <input name="file" type="file" required></label>
+      <label>Note <input name="note" maxlength="4000"></label>
+      <button type="submit">Submit evidence</button>
+    </form>
+  </article>
+  {{end}}
+
+  {{if .Data.Submissions}}
+  <div class="scroll"><table>
+    <thead><tr><th>Submission</th><th>Control</th><th>Period covered</th><th>File</th><th>Submitted</th><th>Review</th></tr></thead>
+    <tbody>
+    {{range .Data.Submissions}}
+    <tr>
+      <td>#{{.ID}}</td>
+      <td>{{.ControlKey}}</td>
+      <td class="nowrap">{{date .PeriodStart}} to {{date .PeriodEnd}}</td>
+      <td><a href="/evidence/{{.ID}}/file">{{.Filename}}</a><br><code title="{{.PayloadSHA256}}">{{short .PayloadSHA256}}</code>{{if .Note}}<br><span class="dim">{{.Note}}</span>{{end}}</td>
+      <td>{{.SubmittedBy}}<br><span class="dim">{{when .SubmittedAt}}</span></td>
+      <td>
+        <span class="tag {{.ReviewStatus}}">{{.ReviewStatus}}</span>
+        {{if .ReviewedBy}}<div class="dim">{{.ReviewedBy}}, {{whenPtr .ReviewedAt}}{{if .ReviewReason}}: {{.ReviewReason}}{{end}}</div>{{end}}
+        {{if .ValidUntil}}<div class="dim">Valid until {{datePtr .ValidUntil}}</div>{{end}}
+        {{if .MayReview}}
+        <form method="post" action="/evidence/{{.ID}}/review" class="inline">
+          <label>Reason <input name="reason" maxlength="4000"></label>
+          <button type="submit" name="decision" value="accept">Accept</button>
+          <button type="submit" name="decision" value="reject" class="plain">Reject</button>
+        </form>
+        {{end}}
+      </td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}<p class="empty">No evidence has been submitted.</p>{{end}}
+</section>
+{{end}}

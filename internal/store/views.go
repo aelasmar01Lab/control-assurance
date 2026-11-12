@@ -70,16 +70,18 @@ type FindingRow struct {
 // Open reports whether the finding is still open.
 func (f FindingRow) Open() bool { return f.ClosingEvaluationID == nil }
 
+const findingsQuery = `
+	SELECT f.id, r.external_id, f.check_key, f.opened_at,
+	       f.opening_evaluation_id, eo.explanation,
+	       f.closed_at, f.closing_evaluation_id, ec.explanation
+	FROM findings f
+	JOIN resources r ON r.id = f.resource_id
+	JOIN evaluations eo ON eo.id = f.opening_evaluation_id
+	LEFT JOIN evaluations ec ON ec.id = f.closing_evaluation_id`
+
 // Findings returns every finding, open ones first, then newest first.
 func (s *Store) Findings(ctx context.Context) ([]FindingRow, error) {
-	rows, err := s.pool.Query(ctx, `
-		SELECT f.id, r.external_id, f.check_key, f.opened_at,
-		       f.opening_evaluation_id, eo.explanation,
-		       f.closed_at, f.closing_evaluation_id, ec.explanation
-		FROM findings f
-		JOIN resources r ON r.id = f.resource_id
-		JOIN evaluations eo ON eo.id = f.opening_evaluation_id
-		LEFT JOIN evaluations ec ON ec.id = f.closing_evaluation_id
+	rows, err := s.pool.Query(ctx, findingsQuery+`
 		ORDER BY (f.closing_evaluation_id IS NOT NULL), f.id DESC`)
 	if err != nil {
 		return nil, err

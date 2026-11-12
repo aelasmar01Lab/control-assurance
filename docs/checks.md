@@ -27,3 +27,15 @@ A check result is one of `pass`, `fail` or `not_evaluated`. A collection failure
 | A pass does not establish | That those checks test anything meaningful, or who may bypass the rule. |
 | Internal control | Change management |
 | Framework mapping | MVSP 3.5, supporting. |
+
+## REC-01 (version 1)
+
+| | |
+| --- | --- |
+| Assertion | A recovery exercise record was accepted within the last 12 months. |
+| Evidence source | Manual evidence: a dated recovery exercise record, submitted by the control owner |
+| Read permission | None. A reviewer who is not the submitter accepts or rejects the record |
+| A pass establishes | A reviewer accepted a dated record of a recovery exercise. |
+| A pass does not establish | That recovery would succeed today. |
+| Internal control | Backup and recovery |
+| Framework mapping | MVSP 4.4, partial. |

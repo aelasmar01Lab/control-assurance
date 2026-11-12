@@ -9,6 +9,7 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/db"
 	"github.com/aelasmar01Lab/control-assurance/internal/pack"
 	"github.com/aelasmar01Lab/control-assurance/packs"
@@ -25,22 +26,28 @@ Usage:
 Commands:
   requirements list            List every requirement in the built-in framework packs
   packs validate [file]...     Validate pack files (the built-in packs when no file is given)
-  packs load                   Import the built-in packs into the database
+  checks guide                 Print the check guide generated from the check definitions
+  permissions                  Print the permission matrix generated from the rules in force
   migrate up | status          Apply or show database migrations
+  users seed                   Create the four lab users and print their passwords once
+  users reset-password <user>  Give a user a new generated password
+  packs load                   Import the built-in packs into the database
   collect github [owner/name]  Collect branch-rule evidence (repositories may also come from CCA_GITHUB_REPOS)
   evaluate                     Apply every check to evidence it has not yet evaluated
-  results                      Show the current result for each resource and check
-  findings list                List findings, open first
-  checks guide                 Print the check guide generated from the check definitions
-  serve                        Serve the read-only pages (CCA_ADDR, default 127.0.0.1:8080)
+  results                      Show each control's state and the current result of each check
+  findings list                List findings with their exceptions and notes
+  export                       Write a current-state export as JSON
+  serve                        Serve the web interface (CCA_ADDR, default 127.0.0.1:8080)
   version                      Print the build version
 
 Environment:
-  DATABASE_URL      PostgreSQL connection string (needed by everything that touches the database)
-  CCA_EVIDENCE_DIR  Evidence store directory (default data/evidence)
-  GITHUB_TOKEN      GitHub token; when unset, the GitHub CLI's current login is used
+  DATABASE_URL       PostgreSQL connection string (needed by everything that touches the database)
+  CCA_USER           The user a command acts as; its role decides what the command may do
+  CCA_EVIDENCE_DIR   Evidence store directory (default data/evidence)
+  GITHUB_TOKEN       GitHub token; when unset, the GitHub CLI's current login is used
+  CCA_COOKIE_SECURE  Set to 1 when serving over HTTPS
 
-Not implemented yet: export
+migrate and users are setup commands and take no CCA_USER.
 `
 
 // errUsage marks an error caused by how the command was invoked.
@@ -84,7 +91,11 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	case "serve":
 		err = runServe(ctx, args[1:], stdout)
 	case "export":
-		err = errors.New("not implemented")
+		err = runExport(ctx, args[1:], stdout)
+	case "users":
+		err = runUsers(ctx, args[1:], stdout)
+	case "permissions":
+		fmt.Fprint(stdout, authz.MatrixMarkdown())
 	default:
 		err = fmt.Errorf("%w: unknown command", errUsage)
 	}
