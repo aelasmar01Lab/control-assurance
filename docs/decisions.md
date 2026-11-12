@@ -305,3 +305,20 @@ inline style. Given up: transitions, and opening a panel without a page
 load. The Inter and Phosphor fonts are served from the binary
 (`internal/web/static`, with their licences), so the site still makes no
 request to anyone else.
+
+## 32. Controls move out of code into reviewed content files (reverses 12)
+
+Decision 12 kept the eight controls and their mappings as Go values. The
+revised plan widens the product to many frameworks and a common control
+set of roughly 150 controls, drafted by an AI agent and reviewed by the
+maintainer. That cannot work if a wording change needs a Go edit, or if
+"reviewed" means only "was in a commit". So controls, mappings and tracking
+entries become YAML files under `controls/`, `mappings/` and `tracking/`,
+validated against schemas, embedded in the binary and loaded into the
+database, where each control's content is recorded as an insert-only
+revision. Every entry carries a review block: it is a draft until the
+maintainer signs it, the signature covers a hash of the entry's content,
+and an entry edited after signing fails CI. Given up: the compiler
+checking a control's shape, and a single place to read all controls as
+code. Decision 12's label "mapping not reviewed" stays, now driven by the
+review block instead of an empty field.
