@@ -5,3 +5,5 @@ data
 .env.*
 *First-Release Plan.md
 .local
+UI:UX_template.html
+.playwright-mcp

@@ -303,6 +303,14 @@ func deriveControls(now time.Time, results []store.EvaluationRow, findings []sto
 	return out
 }
 
+// OpenFindings returns how many findings are open.
+func (s *Service) OpenFindings(ctx context.Context, actor authz.Actor) (int, error) {
+	if err := authz.Can(actor, authz.View, authz.Resource{}); err != nil {
+		return 0, err
+	}
+	return s.Store.OpenFindingCount(ctx)
+}
+
 // FindingView is a finding with its notes and exceptions, and what the
 // viewer may do with it.
 type FindingView struct {

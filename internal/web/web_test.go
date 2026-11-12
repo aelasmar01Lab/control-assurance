@@ -207,7 +207,16 @@ func TestDecisionLoopInTheBrowser(t *testing.T) {
 		t.Fatal("overview does not show the control needing attention")
 	}
 
-	_, body = owner.get("/findings")
+	// The findings page shows one finding at a time, beside the list.
+	bothFindings := func(b *browser) string {
+		_, first := b.get("/findings?id=1")
+		_, second := b.get("/findings?id=2")
+		return first + second
+	}
+	if _, list := owner.get("/findings"); strings.Count(list, `class="f-row"`) != 2 || strings.Count(list, `aria-current="true"`) != 1 {
+		t.Error("the findings page does not list both findings with one selected")
+	}
+	body = bothFindings(owner)
 	noteForms, requestForms := actions(body, "/notes"), actions(body, "/exceptions")
 	if len(noteForms) != 2 || len(requestForms) != 2 {
 		t.Fatalf("owner sees %d note forms and %d request forms, want 2 and 2", len(noteForms), len(requestForms))
@@ -239,7 +248,7 @@ func TestDecisionLoopInTheBrowser(t *testing.T) {
 	}
 
 	reviewer := s.signedIn("reviewer")
-	_, body = reviewer.get("/findings")
+	body = bothFindings(reviewer)
 	decisions := actions(body, "/decision")
 	if len(decisions) != 2 {
 		t.Fatalf("reviewer sees %d decision forms, want 2", len(decisions))
@@ -259,7 +268,7 @@ func TestDecisionLoopInTheBrowser(t *testing.T) {
 		t.Error("overview does not show accepted risk after approval")
 	}
 	// The failing results are still shown as failing.
-	if !strings.Contains(body, `<span class="result fail">fail</span>`) {
+	if !strings.Contains(body, `result fail">fail</span>`) {
 		t.Error("the failing result is no longer shown")
 	}
 
@@ -413,7 +422,7 @@ func TestIntegrationHealthInTheBrowser(t *testing.T) {
 	if status != http.StatusOK {
 		t.Fatalf("GET /integrations = %d", status)
 	}
-	for _, want := range []string{"github.branch_rules", "retrying", "<code>server</code>", "retry of #", "Queue collection now"} {
+	for _, want := range []string{"github.branch_rules", "retrying", `<code class="err">server</code>`, "retry of #", "Queue collection now"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("the health page does not show %q", want)
 		}
@@ -501,7 +510,7 @@ func TestRequirementsInTheBrowser(t *testing.T) {
 	if status != http.StatusOK {
 		t.Fatalf("GET /requirements = %d", status)
 	}
-	if n := strings.Count(body, "<strong>mvsp "); n != 25 {
+	if n := strings.Count(body, `class="mono muted">mvsp `); n != 25 {
 		t.Errorf("the page lists %d requirements, want 25", n)
 	}
 	for _, want := range []string{"needs attention", "not implemented", "out of scope", "tracked manually", "mapping not reviewed", "source note"} {
@@ -518,6 +527,67 @@ func TestRequirementsInTheBrowser(t *testing.T) {
 	}
 	if strings.Contains(body, "Every repository, account, user and record shown here is synthetic") {
 		t.Error("the demo banner shows outside demo mode")
+	}
+}
+
+// The shell: sidebar with a count of open findings, the control drawer, and
+// fonts served from the site itself.
+func TestShellDrawerAndFonts(t *testing.T) {
+	s := newSite(t)
+	s.failing()
+	auditor := s.signedIn("auditor")
+
+	_, body := auditor.get("/")
+	for _, want := range []string{
+		`aria-current="page"><i class="ph ph-squares-four"></i><span>Overview</span>`,
+		`<span class="nav-badge" title="open findings">2</span>`,
+		`<span class="who-name">auditor</span>`, `<svg viewBox="0 0 100 6"`, "MVSP requirements",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("the overview lacks %q", want)
+		}
+	}
+	// No inline style or script anywhere: the policy would block them.
+	if strings.Contains(body, "style=") || strings.Contains(body, "<script") || strings.Contains(body, "onclick") {
+		t.Error("the page carries inline style or script")
+	}
+	if strings.Contains(body, `class="drawer"`) {
+		t.Error("the control drawer is open without being asked for")
+	}
+
+	_, body = auditor.get("/?control=change-management")
+	for _, want := range []string{`class="drawer"`, "A change reaches the default branch", "MVSP 3.5", "mapping not reviewed", "Limitation:", `href="/" aria-label="Close"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("the control drawer lacks %q", want)
+		}
+	}
+	if _, body = auditor.get("/?control=no-such-control"); strings.Contains(body, `class="drawer"`) {
+		t.Error("an unknown control opened a drawer")
+	}
+
+	for _, name := range []string{"inter-latin.woff2", "inter-latin-ext.woff2", "phosphor.woff2"} {
+		resp, err := http.Get(s.url + "/static/" + name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		if resp.StatusCode != http.StatusOK || resp.Header.Get("Content-Type") != "font/woff2" || !strings.HasPrefix(string(data), "wOF2") {
+			t.Errorf("%s: status %d, type %q", name, resp.StatusCode, resp.Header.Get("Content-Type"))
+		}
+		if !strings.Contains(resp.Header.Get("Content-Security-Policy"), "font-src 'self'") {
+			t.Error("the policy does not allow the site's own fonts")
+		}
+	}
+	for _, name := range []string{"LICENSE-Inter.txt", "nothing", "..%2fstyle.css"} {
+		resp, err := http.Get(s.url + "/static/" + name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = resp.Body.Close()
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("GET /static/%s = %d, want 404", name, resp.StatusCode)
+		}
 	}
 }
 

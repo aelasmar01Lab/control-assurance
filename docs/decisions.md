@@ -290,3 +290,18 @@ lab. It records two requirements as met, and that there is no single
 sign-on, no TLS, no vulnerability disclosure policy and no backup. Given
 up: nothing but a more flattering page. It is the author's own judgement;
 nobody independent has reviewed it.
+
+## 31. The interface is styled entirely by one stylesheet, with no script
+
+The pages follow the "Nocturne" design: a dark ground, a sidebar, summary
+cards, status pills and tables whose rules fade at the ends. The design
+reference used inline styles and a script runtime; the product uses
+neither. Every rule is a class in `internal/web/style.css`, the content
+security policy still allows no inline style and no script, and the things
+the reference did with script are done with links: the selected finding and
+the control detail panel are query parameters, rendered by the server.
+Proportion bars are inline SVG, because their widths cannot be set by an
+inline style. Given up: transitions, and opening a panel without a page
+load. The Inter and Phosphor fonts are served from the binary
+(`internal/web/static`, with their licences), so the site still makes no
+request to anyone else.

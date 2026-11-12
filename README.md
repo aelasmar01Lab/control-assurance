@@ -279,7 +279,7 @@ collected.
 | `internal/demo` | The seeded demo: a synthetic history played against synthetic sources |
 | `internal/selfassess` | This project's own MVSP self-assessment |
 | `internal/store` | PostgreSQL access |
-| `internal/web` | The web interface: sign-in, pages and forms |
+| `internal/web` | The web interface: sign-in, pages and forms; one stylesheet, no script, fonts served from the binary |
 | `internal/pack` | Pack parsing and validation |
 | `internal/db` | Migrations runner |
 | `migrations/` | SQL migrations (goose format), embedded in the binary |

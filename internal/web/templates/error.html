@@ -1,7 +1,7 @@
 {{define "content"}}
-<section class="narrow">
-  <h2>{{.Title}}</h2>
+<div class="card pad-lg">
+  {{if not .Actor}}<h2>{{.Title}}</h2>{{end}}
   <p>{{.Data}}</p>
-  <p><a href="/">Back to the overview</a></p>
-</section>
+  <div><a class="btn btn-secondary" href="/">Back to the overview</a></div>
+</div>
 {{end}}

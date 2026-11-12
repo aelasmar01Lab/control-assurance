@@ -1,50 +1,70 @@
 {{define "content"}}
-<section>
-  <h2>Findings</h2>
-  <p class="note">A finding is opened by a failing evaluation and closed only by a later passing one. An exception accepts the risk for a limited time; it never changes an evaluation, and it stops counting when it expires.</p>
-  {{range .Data}}
-  <article class="card">
-    <h3>Finding #{{.ID}}: {{.CheckKey}} on {{.Resource}}
-      {{if .Open}}<span class="result fail">open</span>{{else}}<span class="result pass">closed</span>{{end}}</h3>
-    <dl>
-      <dt>Opened</dt><dd>{{when .OpenedAt}} by evaluation {{.OpeningEvaluationID}}<br><span class="dim">{{.OpeningExplanation}}</span></dd>
-      {{if not .Open}}<dt>Closed</dt><dd>{{whenPtr .ClosedAt}} by evaluation {{.ClosingEvaluationID}}<br><span class="dim">{{.ClosingExplanation}}</span></dd>{{end}}
-    </dl>
+{{if .Data.Selected}}
+<div class="split">
+  <div class="f-list">
+    {{$sel := .Data.Selected.ID}}
+    {{range .Data.List}}
+    <a class="f-row" href="/findings?id={{.ID}}"{{if eq .ID $sel}} aria-current="true"{{end}}>
+      <div class="top"><span class="xs faint mono">#{{.ID}}</span><code>{{.CheckKey}}</code><span class="grow"></span>{{if .Open}}<span class="pill t-fail">open</span>{{else}}<span class="pill t-pass">closed</span>{{end}}</div>
+      <div class="small">{{.Resource}}</div>
+      <div class="xs faint">Opened {{date .OpenedAt}}{{if not .Open}} · closed {{datePtr .ClosedAt}}{{end}}</div>
+    </a>
+    {{end}}
+  </div>
+  {{with .Data.Selected}}
+  <article class="card pad-xl">
+    <div class="stack">
+      <div class="row"><span class="kicker">Finding #{{.ID}}</span>{{if .Open}}<span class="pill t-fail result fail">open</span>{{else}}<span class="pill t-pass result pass">closed</span>{{end}}</div>
+      <h2 class="f-title"><code>{{.CheckKey}}</code> on {{.Resource}}</h2>
+    </div>
+    <div class="facts">
+      <div class="fact"><span>Opened</span><div><div class="what">{{when .OpenedAt}} by evaluation {{.OpeningEvaluationID}}</div><div class="why">{{.OpeningExplanation}}</div></div></div>
+      {{if not .Open}}<div class="fact"><span>Closed</span><div><div class="what">{{whenPtr .ClosedAt}} by evaluation {{.ClosingEvaluationID}}</div><div class="why">{{.ClosingExplanation}}</div></div></div>{{end}}
+    </div>
 
-    <h4>Exceptions</h4>
-    {{range .Exceptions}}
-    <div class="item">
-      <div><span class="tag {{.DisplayStatus}}">{{.DisplayStatus}}</span> Requested by {{.RequestedBy}} on {{when .RequestedAt}}, to run until {{when .ExpiresAt}}</div>
-      <div class="dim">Justification: {{.Justification}}</div>
-      {{if .DecidedBy}}<div class="dim">Decided by {{.DecidedBy}} on {{whenPtr .DecidedAt}}: {{.DecisionReason}}</div>{{end}}
-      {{if .MayDecide}}
-      <form method="post" action="/exceptions/{{.ID}}/decision" class="inline">
-        <label>Reason <input name="reason" required maxlength="4000"></label>
-        <button type="submit" name="decision" value="approve">Approve</button>
-        <button type="submit" name="decision" value="reject" class="plain">Reject</button>
+    <section class="section">
+      <h3>Exceptions</h3>
+      {{$finding := .ID}}
+      {{range .Exceptions}}
+      <div class="item">
+        <div class="row"><span class="pill t-{{tone .DisplayStatus}} status-{{.DisplayStatus}}">{{.DisplayStatus}}</span><span class="small">Requested by {{.RequestedBy}} on {{when .RequestedAt}}, to run until {{when .ExpiresAt}}</span></div>
+        <div class="line">Justification: {{.Justification}}</div>
+        {{if .DecidedBy}}<div class="line">Decided by {{.DecidedBy}} on {{whenPtr .DecidedAt}}: {{.DecisionReason}}</div>{{end}}
+        {{if .MayDecide}}
+        <form method="post" action="/exceptions/{{.ID}}/decision" class="form-row">
+          <input type="hidden" name="finding" value="{{$finding}}">
+          <label class="field f-1"><span>Reason</span><input class="input" name="reason" required maxlength="4000"></label>
+          <button type="submit" name="decision" value="approve" class="btn btn-primary">Approve</button>
+          <button type="submit" name="decision" value="reject" class="btn btn-secondary">Reject</button>
+        </form>
+        {{end}}
+      </div>
+      {{else}}<p class="small faint">None requested.</p>{{end}}
+      {{if .MayRequest}}
+      <form method="post" action="/findings/{{.ID}}/exceptions" class="form-row">
+        <label class="field f-2"><span>Justification</span><input class="input" name="justification" required maxlength="4000"></label>
+        <label class="field f-date"><span>Expires</span><input class="input" name="expires" type="date" required></label>
+        <button type="submit" class="btn btn-primary">Request exception</button>
       </form>
       {{end}}
-    </div>
-    {{else}}<p class="dim">None requested.</p>{{end}}
-    {{if .MayRequest}}
-    <form method="post" action="/findings/{{.ID}}/exceptions" class="inline">
-      <label>Justification <input name="justification" required maxlength="4000"></label>
-      <label>Expires <input name="expires" type="date" required></label>
-      <button type="submit">Request exception</button>
-    </form>
-    {{end}}
+    </section>
 
-    <h4>Remediation notes</h4>
-    {{range .Notes}}
-    <div class="item"><div>{{.Body}}</div><div class="dim">{{.Author}}, {{when .CreatedAt}}</div></div>
-    {{else}}<p class="dim">None yet.</p>{{end}}
-    {{if .MayNote}}
-    <form method="post" action="/findings/{{.ID}}/notes" class="inline">
-      <label>Note <input name="body" required maxlength="4000"></label>
-      <button type="submit">Add note</button>
-    </form>
-    {{end}}
+    <section class="section">
+      <h3>Remediation notes</h3>
+      {{range .Notes}}
+      <div class="quote"><div><div class="what">{{.Body}}</div><div class="xs faint">{{.Author}}, {{when .CreatedAt}}</div></div></div>
+      {{else}}<p class="small faint">None yet.</p>{{end}}
+      {{if .MayNote}}
+      <form method="post" action="/findings/{{.ID}}/notes" class="form-row">
+        <label class="field f-1"><span>Note</span><input class="input" name="body" required maxlength="4000"></label>
+        <button type="submit" class="btn btn-primary">Add note</button>
+      </form>
+      {{end}}
+    </section>
   </article>
-  {{else}}<p class="empty">No findings have been opened.</p>{{end}}
-</section>
+  {{end}}
+</div>
+{{else}}
+<div class="card"><p class="empty">No findings have been opened.</p></div>
+{{end}}
 {{end}}

@@ -25,3 +25,7 @@ coverage.*
 .idea/
 .vscode/
 *.swp
+
+# Design reference supplied locally; large, and not part of the product.
+/UI:UX_template.html
+/.playwright-mcp/

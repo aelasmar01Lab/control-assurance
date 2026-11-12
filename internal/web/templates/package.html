@@ -1,12 +1,21 @@
 {{define "content"}}
-<section>
-  <h2>Review package</h2>
-  <p class="note">Everything recorded for one past period, in one archive: the control states as they stood at the end of the period, every collection run, observation and evaluation in it, the findings that were open, their exceptions and notes, the decision log, and the evidence itself. The period must be over. Asking for the same period again gives a package with the same manifest hash.</p>
-  <form method="get" action="/package.zip" class="inline">
-    <label>From <input type="date" name="from" value="{{.Data.From}}" required></label>
-    <label>Up to, not including <input type="date" name="to" value="{{.Data.To}}" required></label>
-    <button type="submit">Download package</button>
+<div class="grid-split">
+  <form method="get" action="/package.zip" class="card pad-lg form-stack">
+    <h3>Period</h3>
+    <div class="grid-fields">
+      <label class="field"><span>From</span><input class="input" type="date" name="from" value="{{.Data.From}}" required></label>
+      <label class="field"><span>Up to, not including</span><input class="input" type="date" name="to" value="{{.Data.To}}" required></label>
+    </div>
+    <div class="row"><button type="submit" class="btn btn-primary"><i class="ph ph-download-simple"></i>Download package</button><span class="small muted">Dates are in UTC. The period must be over.</span></div>
   </form>
-  <p class="note">Dates are in UTC. To check a package, run <code>cca package verify &lt;file.zip&gt;</code>: it recomputes every hash and re-applies each recorded check version to the stored evidence. Each download is recorded in the decision log with the manifest hash.</p>
-</section>
+  <div class="card pad-lg">
+    <h3>What the archive holds</h3>
+    <ul class="checklist">{{range .Data.Items}}<li><i class="ph ph-check"></i><span>{{.}}</span></li>{{end}}</ul>
+  </div>
+</div>
+<div class="card">
+  <div class="row"><i class="ph ph-terminal-window accent"></i><h3>Verify a package</h3></div>
+  <pre class="pre">cca package verify &lt;file.zip&gt;</pre>
+  <p class="small muted pretty">It recomputes every hash and re-applies each recorded check version to the stored evidence. Each download is recorded in the decision log with the manifest hash.</p>
+</div>
 {{end}}

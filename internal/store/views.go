@@ -132,6 +132,13 @@ const findingsQuery = `
 	JOIN evaluations eo ON eo.id = f.opening_evaluation_id
 	LEFT JOIN evaluations ec ON ec.id = f.closing_evaluation_id`
 
+// OpenFindingCount returns how many findings are open.
+func (s *Store) OpenFindingCount(ctx context.Context) (int, error) {
+	var n int
+	err := s.pool.QueryRow(ctx, `SELECT count(*) FROM findings WHERE closing_evaluation_id IS NULL`).Scan(&n)
+	return n, err
+}
+
 // Findings returns every finding, open ones first, then newest first.
 func (s *Store) Findings(ctx context.Context) ([]FindingRow, error) {
 	rows, err := s.pool.Query(ctx, findingsQuery+`

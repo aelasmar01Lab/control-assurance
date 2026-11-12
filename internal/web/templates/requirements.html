@@ -1,26 +1,33 @@
 {{define "content"}}
-<section>
-  <h2>Framework requirements</h2>
-  <p class="note">Every requirement of the catalog. A requirement is shown as <em>partly evidenced</em> only when every control mapped to it is supported by current evidence; no mapping in this release is strong enough to say more. A requirement that no control covers shows how it is tracked instead, with the reason. Nothing here says a requirement is met.</p>
-  <div class="scroll"><table>
-    <thead><tr><th>Requirement</th><th>State</th><th>Rests on</th><th>Owner and applicability</th><th>Evidence expected</th></tr></thead>
-    <tbody>
-    {{range .Data}}
-    <tr>
-      <td><strong>{{.Framework}} {{.ID}}</strong> {{.Title}}<br><span class="dim">{{.Group}} · {{.FrameworkVersion}}</span>
-        {{if .Note}}<div class="tag">source note</div><div class="dim">{{.Note}}</div>{{end}}</td>
-      <td><span class="state {{.State}}">{{label .State}}</span></td>
-      <td>
-        {{range .Controls}}
-        <div>{{.Title}}: <span class="state {{.State}}">{{label .State}}</span></div>
-        <div class="dim">{{.Strength}} mapping{{if not .Reviewed}} <span class="tag">mapping not reviewed</span>{{end}}. {{.Limitation}}</div>
-        {{else}}<div class="dim">No control. {{.Rationale}}</div>{{end}}
-      </td>
-      <td>{{.Owner}}<br><span class="dim">{{.Applicability}}</span></td>
-      <td>{{.EvidenceExpectation}}</td>
-    </tr>
-    {{end}}
-    </tbody>
-  </table></div>
+<div class="card">
+  <div class="row baseline"><span class="strong">{{.Data.Framework}}</span><span class="mono muted">{{.Data.Version}} · {{.Data.Total}} requirements</span><span class="grow"></span><span class="small muted">Nothing here says a requirement is met.</span></div>
+  <div class="bar tall">{{bar .Data.Segs}}</div>
+  <div class="legend inline">{{range .Data.Segs}}<div class="legend-row"><span class="sq {{.Fill}}"></span><span class="name">{{.Label}}</span><span class="n">{{.N}}</span></div>{{end}}</div>
+</div>
+
+{{range .Data.Groups}}
+<section class="section">
+  <div class="group-head"><span class="group-n">{{.N}}</span><h2>{{.Name}}</h2></div>
+  <div class="card table-card">
+    <table class="table">
+      <thead><tr><th class="w-30">Requirement</th><th class="w-state">State</th><th>Rests on</th><th class="w-22">Evidence expected</th></tr></thead>
+      <tbody>
+      {{range .Rows}}
+      <tr>
+        <td><div><span class="mono muted">{{.Framework}} {{.ID}}</span> <strong class="strong">{{.Title}}</strong></div><div class="sub">{{.Owner}} · {{.Applicability}}</div>
+          {{if .Note}}<div class="note-box"><span class="tag">source note</span>{{.Note}}</div>{{end}}</td>
+        <td><span class="pill t-{{tone .State}} state {{.State}}">{{label .State}}</span></td>
+        <td class="small">
+          {{range .Controls}}
+          <div class="stack tight"><div class="row"><span>{{.Title}}</span><span class="pill t-{{tone .State}}">{{label .State}}</span></div><div class="sub">{{.Strength}} mapping{{if not .Reviewed}} · <span class="tag">mapping not reviewed</span>{{end}}</div><div class="sub pretty">{{.Limitation}}</div></div>
+          {{else}}<div class="muted pretty">No control. {{.Rationale}}</div>{{end}}
+        </td>
+        <td class="small muted pretty">{{.EvidenceExpectation}}</td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
 </section>
+{{end}}
 {{end}}

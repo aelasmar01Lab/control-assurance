@@ -7,33 +7,56 @@
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<header>
-  <div class="bar">
-    <h1>Control assurance</h1>
-    {{if .Actor}}
+{{if .Actor}}
+<div class="app">
+  <aside class="side">
+    <a class="brand" href="/">
+      <span class="brand-mark"><i class="ph ph-shield-check i-lg"></i></span>
+      <span class="brand-text"><span class="brand-name">Control assurance</span><span class="brand-host">{{.Host}}</span></span>
+    </a>
+    <nav aria-label="Pages">
+      {{$page := .Page}}
+      {{range .Nav}}
+      <div class="nav-group">
+        <div class="nav-label">{{.Label}}</div>
+        {{range .Items}}
+        <a class="nav-item" href="{{.Href}}"{{if eq .Key $page}} aria-current="page"{{end}}><i class="ph {{.Icon}}"></i><span>{{.Label}}</span>{{if .Badge}}<span class="nav-badge" title="open findings">{{.Badge}}</span>{{end}}</a>
+        {{end}}
+      </div>
+      {{end}}
+    </nav>
     <form method="post" action="/logout" class="who">
-      <span>{{.Actor.Username}} <span class="dim">({{label .Actor.Role}})</span></span>
-      <button type="submit" class="plain">Sign out</button>
+      <span class="avatar">{{initials .Actor.Username}}</span>
+      <span class="who-text"><span class="who-name">{{.Actor.Username}}</span><span class="who-role">{{label .Actor.Role}}</span></span>
+      <button type="submit" class="btn btn-ghost" title="Sign out" aria-label="Sign out"><i class="ph ph-sign-out"></i></button>
     </form>
-    {{end}}
+  </aside>
+  <div class="main-col">
+    {{if .Demo}}<p class="demo" role="note"><i class="ph ph-flask"></i><span><strong>Demo.</strong> Every repository, account, user and record shown here is synthetic. Nothing was collected from a real system.</span></p>{{end}}
+    <main class="page">
+      {{if .Flash}}<p class="flash" role="status"><i class="ph ph-info accent"></i><span>{{.Flash}}</span></p>{{end}}
+      <header class="page-head">
+        {{if .Meta.Group}}<div class="kicker">{{.Meta.Group}}</div>{{end}}
+        <h1>{{.Meta.Title}}</h1>
+        {{if .Meta.Note}}<p class="page-note">{{.Meta.Note}}</p>{{end}}
+      </header>
+      {{template "content" .}}
+    </main>
   </div>
-  {{if .Actor}}
-  <nav>
-    <a href="/">Overview</a>
-    <a href="/requirements">Requirements</a>
-    <a href="/findings">Findings</a>
-    <a href="/evidence">Manual evidence</a>
-    <a href="/integrations">Integration health</a>
-    <a href="/log">Decision log</a>
-    <a href="/package">Review package</a>
-    <a href="/export.json">Export</a>
-  </nav>
-  {{end}}
-</header>
-{{if .Demo}}<p class="demo" role="note"><strong>Demo.</strong> Every repository, account, user and record shown here is synthetic. Nothing was collected from a real system.</p>{{end}}
-<main>
-{{if .Flash}}<p class="flash" role="status">{{.Flash}}</p>{{end}}
-{{template "content" .}}
-</main>
+</div>
+{{else}}
+<div class="signed-out">
+  {{if .Demo}}<p class="demo" role="note"><i class="ph ph-flask"></i><span><strong>Demo.</strong> Every repository, account, user and record shown here is synthetic. Nothing was collected from a real system.</span></p>{{end}}
+  <div class="center">
+    <div class="auth">
+      <div class="brand">
+        <span class="brand-mark"><i class="ph ph-shield-check i-lg"></i></span>
+        <span class="brand-text"><span class="brand-name">Control assurance</span><span class="brand-host">{{.Host}}</span></span>
+      </div>
+      {{template "content" .}}
+    </div>
+  </div>
+</div>
+{{end}}
 </body>
 </html>

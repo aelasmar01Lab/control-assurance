@@ -27,7 +27,7 @@ import (
 	"github.com/aelasmar01Lab/control-assurance/internal/store"
 )
 
-//go:embed templates/*.html style.css
+//go:embed templates/*.html style.css static/*
 var files embed.FS
 
 const (
@@ -58,8 +58,19 @@ var funcs = template.FuncMap{
 		}
 		return sha
 	},
-	"label": func(v any) string { return strings.ReplaceAll(fmt.Sprint(v), "_", " ") },
-	"hours": func(d time.Duration) int { return int(d.Hours()) },
+	"label": label,
+	"tone":  tone,
+	"bar":   bar,
+	"initials": func(name string) string {
+		if len(name) > 2 {
+			return name[:2]
+		}
+		return name
+	},
+	"coverage": runCoverage,
+	"window":   evidenceWindow,
+	"upper":    strings.ToUpper,
+	"hours":    func(d time.Duration) int { return int(d.Hours()) },
 	// deref shows what a pointer points at, or nothing for nil.
 	"deref": func(v any) any {
 		rv := reflect.ValueOf(v)
@@ -122,6 +133,7 @@ func Handler(svc *assurance.Service, opts Options) http.Handler {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /style.css", s.stylesheet)
+	mux.HandleFunc("GET /static/{file}", s.static)
 	mux.HandleFunc("GET /login", s.loginForm)
 	mux.HandleFunc("POST /login", s.login)
 	mux.HandleFunc("POST /logout", s.logout)
@@ -150,7 +162,7 @@ func Handler(svc *assurance.Service, opts Options) http.Handler {
 func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
-		h.Set("Content-Security-Policy", "default-src 'none'; style-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
+		h.Set("Content-Security-Policy", "default-src 'none'; style-src 'self'; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("Referrer-Policy", "no-referrer")
 		h.Set("Cache-Control", "no-store")
@@ -166,13 +178,29 @@ type view struct {
 	Now   time.Time
 	// Demo is true when everything shown is synthetic.
 	Demo bool
+	// Page is the page's key, Meta its heading, Nav the sidebar, and Host
+	// the address the site was reached at.
+	Page string
+	Meta pageMeta
+	Nav  []navGroup
+	Host string
 	Data any
 }
 
 func (s *server) render(w http.ResponseWriter, r *http.Request, status int, page, title string, actor *authz.Actor, data any) {
-	v := view{Title: title, Actor: actor, Now: time.Now(), Demo: s.demo, Data: data}
+	v := view{Title: title, Actor: actor, Now: time.Now(), Demo: s.demo, Page: page, Meta: pageMetas[page], Host: r.Host, Data: data}
+	if v.Meta.Title == "" {
+		v.Meta.Title = title
+	}
 	if actor != nil {
 		v.Flash = s.sessions.PopString(r.Context(), sessionFlashKey)
+		// The sidebar counts open findings. If that cannot be read the
+		// page still renders, without the count.
+		open, err := s.svc.OpenFindings(r.Context(), *actor)
+		if err != nil {
+			open = 0
+		}
+		v.Nav = navigation(open)
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
@@ -210,7 +238,8 @@ func (s *server) done(w http.ResponseWriter, r *http.Request, actor authz.Actor,
 		s.fail(w, r, &actor, err)
 		return
 	}
-	http.Redirect(w, r, back, http.StatusSeeOther)
+	// back is a fixed path, at most with a finding number parsed as an integer.
+	http.Redirect(w, r, back, http.StatusSeeOther) //nolint:gosec // never built from request text
 }
 
 // as wraps a handler that needs a signed-in actor. The actor is loaded from
@@ -243,6 +272,29 @@ func (s *server) stylesheet(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(css)
 }
 
+// staticTypes are the only files served from static/: the fonts.
+var staticTypes = map[string]string{
+	"inter-latin.woff2": "font/woff2", "inter-latin-ext.woff2": "font/woff2", "phosphor.woff2": "font/woff2",
+}
+
+func (s *server) static(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("file")
+	contentType, ok := staticTypes[name]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	data, err := files.ReadFile("static/" + name)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", contentType)
+	// Fonts hold nothing private and never change within a build.
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	_, _ = w.Write(data) //nolint:gosec // a font embedded in the binary, chosen from a fixed list
+}
+
 func (s *server) loginForm(w http.ResponseWriter, r *http.Request) {
 	s.render(w, r, http.StatusOK, "login", "Sign in", nil, "")
 }
@@ -273,12 +325,29 @@ func (s *server) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) overview(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
-	data, err := s.svc.Overview(r.Context(), actor)
+	ctx := r.Context()
+	ov, err := s.svc.Overview(ctx, actor)
 	if err != nil {
 		s.fail(w, r, &actor, err)
 		return
 	}
-	s.render(w, r, http.StatusOK, "overview", "Overview", &actor, data)
+	reqs, err := s.svc.Requirements(ctx, actor)
+	if err != nil {
+		s.fail(w, r, &actor, err)
+		return
+	}
+	findings, err := s.svc.Findings(ctx, actor)
+	if err != nil {
+		s.fail(w, r, &actor, err)
+		return
+	}
+	health, err := s.svc.Health(ctx, actor)
+	if err != nil {
+		s.fail(w, r, &actor, err)
+		return
+	}
+	s.render(w, r, http.StatusOK, "overview", "Overview", &actor,
+		buildOverview(ov, reqs, findings, health, r.URL.Query().Get("control")))
 }
 
 func (s *server) findings(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
@@ -287,7 +356,8 @@ func (s *server) findings(w http.ResponseWriter, r *http.Request, actor authz.Ac
 		s.fail(w, r, &actor, err)
 		return
 	}
-	s.render(w, r, http.StatusOK, "findings", "Findings", &actor, data)
+	selected, _ := strconv.ParseInt(r.URL.Query().Get("id"), 10, 64)
+	s.render(w, r, http.StatusOK, "findings", "Findings", &actor, buildFindings(data, selected))
 }
 
 func (s *server) addNote(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
@@ -298,7 +368,7 @@ func (s *server) addNote(w http.ResponseWriter, r *http.Request, actor authz.Act
 		return
 	}
 	_, err := s.svc.AddRemediationNote(r.Context(), actor, id, r.PostFormValue("body"))
-	s.done(w, r, actor, "/findings", "Remediation note added.", err)
+	s.done(w, r, actor, fmt.Sprintf("/findings?id=%d", id), "Remediation note added.", err)
 }
 
 func (s *server) requestException(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
@@ -314,7 +384,7 @@ func (s *server) requestException(w http.ResponseWriter, r *http.Request, actor 
 		expires = d.Add(24*time.Hour - time.Second)
 	}
 	_, err := s.svc.RequestException(r.Context(), actor, id, r.PostFormValue("justification"), expires)
-	s.done(w, r, actor, "/findings", "Exception requested. It has no effect until someone else approves it.", err)
+	s.done(w, r, actor, fmt.Sprintf("/findings?id=%d", id), "Exception requested. It has no effect until someone else approves it.", err)
 }
 
 func (s *server) decideException(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
@@ -324,17 +394,22 @@ func (s *server) decideException(w http.ResponseWriter, r *http.Request, actor a
 		s.fail(w, r, &actor, store.ErrNotFound)
 		return
 	}
+	// Return to the finding the exception belongs to.
+	back := "/findings"
+	if finding, err := strconv.ParseInt(r.PostFormValue("finding"), 10, 64); err == nil && finding > 0 {
+		back = fmt.Sprintf("/findings?id=%d", finding)
+	}
 	var approve bool
 	switch r.PostFormValue("decision") {
 	case "approve":
 		approve = true
 	case "reject":
 	default:
-		s.done(w, r, actor, "/findings", "", fmt.Errorf("%w: choose approve or reject", assurance.ErrInvalid))
+		s.done(w, r, actor, back, "", fmt.Errorf("%w: choose approve or reject", assurance.ErrInvalid))
 		return
 	}
 	err := s.svc.DecideException(r.Context(), actor, id, approve, r.PostFormValue("reason"))
-	s.done(w, r, actor, "/findings", "Decision recorded.", err)
+	s.done(w, r, actor, back, "Decision recorded.", err)
 }
 
 func (s *server) evidence(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
@@ -411,14 +486,14 @@ func (s *server) requirements(w http.ResponseWriter, r *http.Request, actor auth
 		s.fail(w, r, &actor, err)
 		return
 	}
-	s.render(w, r, http.StatusOK, "requirements", "Framework requirements", &actor, reqs)
+	s.render(w, r, http.StatusOK, "requirements", "Framework requirements", &actor, buildRequirements(reqs))
 }
 
 func (s *server) packageForm(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
 	// Offer the last complete week, ending today (UTC).
 	today := time.Now().UTC().Truncate(24 * time.Hour)
-	s.render(w, r, http.StatusOK, "package", "Review package", &actor, map[string]string{
-		"From": today.AddDate(0, 0, -7).Format("2006-01-02"), "To": today.Format("2006-01-02"),
+	s.render(w, r, http.StatusOK, "package", "Review package", &actor, map[string]any{
+		"From": today.AddDate(0, 0, -7).Format("2006-01-02"), "To": today.Format("2006-01-02"), "Items": packageItems,
 	})
 }
 
@@ -462,7 +537,7 @@ func (s *server) integrations(w http.ResponseWriter, r *http.Request, actor auth
 		s.fail(w, r, &actor, err)
 		return
 	}
-	s.render(w, r, http.StatusOK, "integrations", "Integration health", &actor, health)
+	s.render(w, r, http.StatusOK, "integrations", "Integration health", &actor, buildHealth(health))
 }
 
 func (s *server) queueCollection(w http.ResponseWriter, r *http.Request, actor authz.Actor) {

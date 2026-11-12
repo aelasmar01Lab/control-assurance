@@ -1,52 +1,84 @@
 {{define "content"}}
 {{if .Data.IntegrationProblems}}
-<p class="health" role="status"><strong>Integration health:</strong> {{.Data.IntegrationProblems}} collection job(s) are failing, retrying or stale. The results below are the last ones collected; a collection problem never changes a result. <a href="/integrations">See integration health</a>.</p>
+<p class="health" role="status"><i class="ph ph-warning"></i><span><strong>Integration health:</strong> {{.Data.IntegrationProblems}} collection job(s) are failing, retrying or stale. The results below are the last ones collected; a collection problem never changes a result.</span><a href="/integrations">See integration health</a></p>
 {{end}}
-<section>
-  <h2>Controls</h2>
-  <p class="note">A control's state is worked out each time this page loads, from the results, evidence reviews and exceptions below it. It is never stored or edited.</p>
-  <div class="scroll"><table>
-    <thead><tr><th>Control</th><th>State</th><th>Why</th><th>Rests on</th><th>Framework mapping</th></tr></thead>
-    <tbody>
-    {{range .Data.Controls}}
-    <tr>
-      <td><strong>{{.Control.Title}}</strong><br><span class="dim">Owner: {{.Control.Owner}}</span><br><span class="dim">{{.Control.Risk}}</span></td>
-      <td><span class="state {{.State}}">{{label .State}}</span></td>
-      <td>{{range .Reasons}}<div>{{.}}</div>{{end}}</td>
-      <td>
-        {{range .Control.Checks}}<div><code>{{.}}</code></div>{{end}}
-        {{if .Control.ManualCheck}}<div><code>{{.Control.ManualCheck}}</code> <span class="dim">manual</span></div>{{end}}
-        {{if .Control.Freshness}}<div class="dim">Evidence window: {{hours .Control.Freshness}} hours</div>{{end}}
-      </td>
-      <td>{{range .Control.Mappings}}
-        <div>{{.Framework}} {{.Requirement}}, {{.Strength}}{{if not .ReviewedBy}} <span class="tag">mapping not reviewed</span>{{end}}</div>
-        <div class="dim">{{.Limitation}}</div>
-      {{end}}</td>
-    </tr>
-    {{end}}
-    </tbody>
-  </table></div>
+
+<div class="grid-cards">
+  {{range .Data.Summary}}
+  <div class="card">
+    <div class="row between"><span class="stat-label">{{.Label}}</span><a class="btn btn-ghost link" href="{{.Href}}">{{.Link}} <i class="ph ph-arrow-right"></i></a></div>
+    <div class="stat"><span class="stat-big">{{.Big}}</span><span class="stat-unit">{{.Unit}}</span></div>
+    <div class="bar">{{bar .Segs}}</div>
+    <div class="legend">
+      {{range .Segs}}<div class="legend-row"><span class="sq {{.Fill}}"></span><span class="name">{{.Label}}</span><span class="n">{{.N}}</span></div>{{end}}
+    </div>
+  </div>
+  {{end}}
+</div>
+
+<section class="section" id="controls">
+  <div class="section-head"><h2>Controls</h2><span class="hint">A control's state is worked out each time this page loads, from the results, evidence reviews and exceptions below it. It is never stored or edited.</span></div>
+  <div class="card table-card">
+    <table class="table">
+      <thead><tr><th>Control</th><th>State</th><th>Why</th><th>Rests on</th><th class="w-caret"></th></tr></thead>
+      <tbody>
+      {{range .Data.Controls}}
+      <tr>
+        <td><a class="row-link" href="/?control={{.Control.Key}}">{{.Control.Title}}</a><div class="sub">Owner: {{.Control.Owner}}</div></td>
+        <td><span class="pill t-{{tone .State}} state {{.State}}">{{label .State}}</span></td>
+        <td class="body">{{range .Reasons}}<div>{{.}}</div>{{end}}</td>
+        <td><div class="chips">{{range .Control.Checks}}<code class="chip">{{.}}</code>{{end}}{{if .Control.ManualCheck}}<code class="chip">{{.Control.ManualCheck}} · manual</code>{{end}}</div></td>
+        <td><a class="caret" href="/?control={{.Control.Key}}" aria-label="Details of {{.Control.Title}}"><i class="ph ph-caret-right"></i></a></td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
 </section>
 
-<section>
-  <h2>Current results</h2>
-  <p class="note">The newest evaluated observation for each resource and check. A failed collection adds no observation, so it never changes a result.</p>
-  {{if .Data.Results}}
-  <div class="scroll"><table>
-    <thead><tr><th>Resource</th><th>Check</th><th>Result</th><th>Explanation</th><th>Evidence</th><th>Collected</th></tr></thead>
-    <tbody>
-    {{range .Data.Results}}
-    <tr>
-      <td>{{.Resource}}</td>
-      <td class="nowrap">{{.CheckKey}} <span class="dim">v{{.CheckVersion}}</span></td>
-      <td><span class="result {{.Result}}">{{label .Result}}</span></td>
-      <td>{{.Explanation}}</td>
-      <td class="nowrap"><code title="{{.PayloadSHA256}}">{{short .PayloadSHA256}}</code><br><span class="dim">evaluation {{.EvaluationID}}</span></td>
-      <td class="nowrap">{{when .CollectedAt}}</td>
-    </tr>
-    {{end}}
-    </tbody>
-  </table></div>
-  {{else}}<p class="empty">Not evaluated: no check has produced a result yet.</p>{{end}}
+<section class="section">
+  <div class="section-head"><h2>Current results</h2><span class="hint">The newest evaluated observation for each resource and check. A failed collection adds no observation, so it never changes a result.</span></div>
+  <div class="card table-card">
+    {{if .Data.Results}}
+    <table class="table">
+      <thead><tr><th>Check</th><th>Resource</th><th>Result</th><th>Explanation</th><th>Evidence</th><th>Collected</th></tr></thead>
+      <tbody>
+      {{range .Data.Results}}
+      <tr>
+        <td class="nowrap"><code>{{.CheckKey}}</code> <span class="xs faint">v{{.CheckVersion}}</span></td>
+        <td class="small">{{.Resource}}</td>
+        <td><span class="pill t-{{tone .Result}} result {{.Result}}">{{label .Result}}</span></td>
+        <td class="body">{{.Explanation}}</td>
+        <td class="nowrap"><code class="sha" title="{{.PayloadSHA256}}">{{short .PayloadSHA256}}</code><div class="xs faint">evaluation {{.EvaluationID}}</div></td>
+        <td class="time">{{when .CollectedAt}}</td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{else}}<p class="empty">Not evaluated: no check has produced a result yet.</p>{{end}}
+  </div>
 </section>
+
+{{with .Data.Detail}}
+<a class="scrim" href="/" aria-label="Close details"></a>
+<aside class="drawer" aria-label="Control details">
+  <div class="drawer-head">
+    <div class="stack grow"><code class="accent xs">{{.Control.Key}}</code><h2>{{.Control.Title}}</h2><div><span class="pill t-{{tone .State}}">{{label .State}}</span></div></div>
+    <a class="btn btn-secondary btn-icon" href="/" aria-label="Close"><i class="ph ph-x"></i></a>
+  </div>
+  <dl class="kv">
+    <dt>Risk</dt><dd>{{.Control.Risk}}</dd>
+    <dt>Owner</dt><dd>{{.Control.Owner}}</dd>
+    <dt>Evidence expected</dt><dd>{{.Control.EvidenceExpectation}}</dd>
+    <dt>Evidence window</dt><dd>{{window .Control}}</dd>
+  </dl>
+  <section class="section"><h3>Why</h3>{{range .Reasons}}<div class="reason">{{.}}</div>{{end}}</section>
+  <section class="section"><h3>Rests on</h3><div class="chips">{{range .Control.Checks}}<code class="chip">{{.}}</code>{{end}}{{if .Control.ManualCheck}}<code class="chip">{{.Control.ManualCheck}} (manual)</code>{{end}}</div></section>
+  <section class="section"><h3>Framework mapping</h3>
+    {{range .Control.Mappings}}
+    <div class="mapping"><div class="row"><span class="strong">{{upper .Framework}} {{.Requirement}}</span><span class="muted">{{.Strength}} mapping</span>{{if not .ReviewedBy}}<span class="tag">mapping not reviewed</span>{{end}}</div><div class="limit">Limitation: {{.Limitation}}</div></div>
+    {{else}}<p class="small muted">None. No framework in this release has a requirement this control maps to.</p>{{end}}
+  </section>
+</aside>
+{{end}}
 {{end}}
