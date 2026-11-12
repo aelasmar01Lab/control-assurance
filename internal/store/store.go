@@ -99,9 +99,9 @@ func (s *Store) ImportPack(ctx context.Context, p *pack.Pack) (imported bool, er
 		for i, r := range p.Requirements {
 			_, err := tx.Exec(ctx, `
 				INSERT INTO requirements
-					(framework_version_id, identifier, group_title, title, body, position, parent_identifier, label)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-				id, r.ID, r.Group, r.Title, r.Text, i+1, r.Parent, r.Label)
+					(framework_version_id, identifier, group_title, title, body, position, parent_identifier, label, heading)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+				id, r.ID, r.Group, r.Title, r.Text, i+1, r.Parent, r.Label, r.Heading)
 			if err != nil {
 				return err
 			}

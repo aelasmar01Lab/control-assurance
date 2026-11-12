@@ -18,7 +18,8 @@ func TestEveryRequirementIsMappedOrTracked(t *testing.T) {
 	known := map[string]bool{}
 	total := 0
 	for _, p := range all {
-		for _, r := range p.Requirements {
+		// Headings give the hierarchy and are not assessed.
+		for _, r := range p.Assessed() {
 			total++
 			known[p.Framework.Key+" "+r.ID] = true
 			mapped := len(MappedControls(p.Framework.Key, r.ID)) > 0

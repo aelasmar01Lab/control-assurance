@@ -170,3 +170,17 @@ func TestControlDefinitions(t *testing.T) {
 		t.Errorf("OwnersForCheck(GH-01) = %v", got)
 	}
 }
+
+// A control that nothing tests yet is not evaluated. It must never read as
+// supported, which is what "no failures" would otherwise amount to.
+func TestControlWithNoCheckIsNotEvaluated(t *testing.T) {
+	state, reasons := Derive(Control{Key: "access-example"}, Input{Now: time.Now()})
+	if state != NotEvaluated || len(reasons) != 1 {
+		t.Fatalf("state = %s, reasons = %v", state, reasons)
+	}
+	// Results for other controls' checks do not change that.
+	state, _ = Derive(Control{Key: "access-example"}, Input{Now: time.Now(), Results: []CheckResult{res("GH-01", check.Pass, time.Hour, NoException)}})
+	if state != NotEvaluated {
+		t.Errorf("with unrelated results: state = %s", state)
+	}
+}

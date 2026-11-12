@@ -84,7 +84,7 @@ func deriveRequirements(controls []ControlView) ([]RequirementView, error) {
 	}
 	var out []RequirementView
 	for _, p := range all {
-		for _, r := range p.Requirements {
+		for _, r := range p.Assessed() {
 			v := RequirementView{
 				Framework: p.Framework.Key, FrameworkVersion: p.Framework.Version,
 				ID: r.ID, Group: r.Group, Title: r.Name(), Text: r.Text, Controls: []RequirementControl{},

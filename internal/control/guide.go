@@ -99,28 +99,37 @@ func GuideFor(packs []*pack.Pack, controls []Control, tracked []Tracking) string
 		b.WriteString("Each requirement is either covered in part by a control, or tracked with a reason. ")
 		b.WriteString("\"Tracked manually\" means the work is done or judged outside this system, with no evidence held here. None of the three tracking statuses is a positive state.\n\n")
 		b.WriteString("| Requirement | Covered by | Tracking | Review | Owner | Applicability | Evidence expected | Rationale |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n")
-		for _, r := range p.Requirements {
+		for _, r := range p.Assessed() {
 			var covered []string
 			for _, m := range mappedControls(p.Framework.Key, r.ID) {
 				covered = append(covered, fmt.Sprintf("%s (%s; %s)", m.Control.Title, m.Mapping.EffectiveStrength(), m.Mapping.Review.Label()))
 			}
 			if len(covered) > 0 {
 				first := mappedControls(p.Framework.Key, r.ID)[0].Control
-				fmt.Fprintf(&b, "| %s %s | %s | | | %s | Applicable. | See the control. | |\n", r.ID, r.Name(), strings.Join(covered, ", "), first.Owner)
+				fmt.Fprintf(&b, "| %s %s | %s | | | %s | Applicable. | See the control. | |\n", r.ID, requirementName(r), strings.Join(covered, ", "), first.Owner)
 				continue
 			}
 			t, ok := trackingFor(p.Framework.Key, r.ID)
 			if !ok {
-				fmt.Fprintf(&b, "| %s %s | | **untracked** | | | | | |\n", r.ID, r.Name())
+				fmt.Fprintf(&b, "| %s %s | | **untracked** | | | | | |\n", r.ID, requirementName(r))
 				continue
 			}
 			rationale := t.Rationale
 			if t.Note != "" {
 				rationale += " **Source note:** " + t.Note
 			}
-			fmt.Fprintf(&b, "| %s %s | | %s | %s | %s | %s | %s | %s |\n", r.ID, r.Name(),
+			fmt.Fprintf(&b, "| %s %s | | %s | %s | %s | %s | %s | %s |\n", r.ID, requirementName(r),
 				strings.ReplaceAll(string(t.Status), "_", " "), t.Review.Label(), t.Owner, t.Applicability, t.EvidenceExpectation, rationale)
 		}
 	}
 	return b.String()
+}
+
+// requirementName is what to call a requirement in a table: its title or
+// label, or its text when the framework gives it neither.
+func requirementName(r pack.Requirement) string {
+	if n := r.Name(); n != "" {
+		return n
+	}
+	return strings.ReplaceAll(r.Text, "|", "\\|")
 }

@@ -72,6 +72,13 @@ var funcs = template.FuncMap{
 	"window":   evidenceWindow,
 	"upper":    strings.ToUpper,
 	"rights":   textRights,
+	// sentence ends a text with a full stop when it has none.
+	"sentence": func(s string) string {
+		if strings.HasSuffix(s, ".") {
+			return s
+		}
+		return s + "."
+	},
 	"counts": func(head string, rows []content.Counts) map[string]any {
 		return map[string]any{"Head": head, "Rows": rows}
 	},

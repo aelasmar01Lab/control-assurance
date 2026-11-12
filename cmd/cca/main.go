@@ -241,13 +241,17 @@ func runRequirements(args []string, stdout io.Writer) error {
 
 		tw := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(tw, "ID\tGROUP\tTITLE")
-		for _, r := range p.Requirements {
-			fmt.Fprintf(tw, "%s\t%s\t%s\n", r.ID, r.Group, r.Name())
+		for _, r := range p.Assessed() {
+			name := r.Name()
+			if name == "" {
+				name = r.Text
+			}
+			fmt.Fprintf(tw, "%s\t%s\t%s\n", r.ID, r.Group, name)
 		}
 		if err := tw.Flush(); err != nil {
 			return err
 		}
-		fmt.Fprintf(stdout, "\n%d requirements\n", len(p.Requirements))
+		fmt.Fprintf(stdout, "\n%d requirements\n", len(p.Assessed()))
 	}
 	return nil
 }
@@ -264,7 +268,7 @@ func runPacks(args []string, stdout io.Writer) error {
 		}
 		for _, p := range all {
 			fmt.Fprintf(stdout, "ok  %s %s (%d requirements)\n",
-				p.Framework.Key, p.Framework.Version, len(p.Requirements))
+				p.Framework.Key, p.Framework.Version, len(p.Assessed()))
 		}
 		return nil
 	}

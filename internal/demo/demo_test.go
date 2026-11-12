@@ -74,13 +74,27 @@ func TestSeededDemoReplaysTheLoop(t *testing.T) {
 		"dependency-remediation":   control.NotEvaluated,
 		"ai-usage-logging":         control.NeedsAttention,
 	}
+	seen := 0
 	for _, c := range ov.Controls {
-		if c.State != want[c.Control.Key] {
-			t.Errorf("%s is %s (%v), want %s", c.Control.Key, c.State, c.Reasons, want[c.Control.Key])
+		wanted, ok := want[c.Control.Key]
+		if !ok {
+			// A control the demo plays no evidence for. Whatever else it
+			// reads, it cannot read as supported or as an accepted risk.
+			if c.State != control.NotEvaluated && c.State != control.NeedsAttention {
+				t.Errorf("%s is %s (%v) with no evidence in the demo", c.Control.Key, c.State, c.Reasons)
+			}
+			continue
+		}
+		seen++
+		if c.State != wanted {
+			t.Errorf("%s is %s (%v), want %s", c.Control.Key, c.State, c.Reasons, wanted)
 		}
 		if c.Control.Key == "ai-usage-logging" && !strings.Contains(strings.Join(c.Reasons, " "), "exception expired") {
 			t.Errorf("ai-usage-logging reasons = %v, want the lapsed exception named", c.Reasons)
 		}
+	}
+	if seen != len(want) {
+		t.Errorf("the demo shows %d of the %d controls it plays a history for", seen, len(want))
 	}
 	if ov.IntegrationProblems != 0 {
 		t.Errorf("the demo ends with %d integration problems", ov.IntegrationProblems)

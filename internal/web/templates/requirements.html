@@ -10,7 +10,7 @@
     <dt>No control; tracked with a reason</dt><dd>{{.Tracked}} <span class="muted">({{.TrackedReviewed}} reviewed)</span></dd>
   </dl>
   <dl class="kv spaced">
-    <dt>Text</dt><dd>{{if eq .TextRights "full"}}The publisher's text, under: {{.License}}.{{else if eq .TextRights "identifiers_only"}}Identifiers and this project's own labels only. The publisher's titles and text are not reproduced; read them in your own copy. {{.License}}.{{else}}Written by this project. {{.License}}.{{end}}{{if .Attribution}} {{.Attribution}}{{end}}</dd>
+    <dt>Text</dt><dd>{{if eq .TextRights "full"}}The publisher's text, under: {{sentence .License}}{{else if eq .TextRights "identifiers_only"}}Identifiers and this project's own labels only. The publisher's titles and text are not reproduced; read them in your own copy. {{sentence .License}}{{else}}Written by this project. {{sentence .License}}{{end}}{{if .Attribution}} {{.Attribution}}{{end}}</dd>
     <dt>Source</dt><dd class="mono small">{{.Source}}</dd>
   </dl>
 </div>
@@ -25,7 +25,7 @@
       <tbody>
       {{range .Rows}}
       <tr>
-        <td><div><span class="mono muted">{{.ID}}</span> <strong class="strong">{{.Title}}</strong></div><div class="sub">{{.Owner}} · {{.Applicability}}</div>
+        <td><div><span class="mono muted">{{.ID}}</span> {{if .Title}}<strong class="strong">{{.Title}}</strong>{{else}}<span class="pretty">{{.Text}}</span>{{end}}</div><div class="sub">{{.Owner}} · {{.Applicability}}</div>
           {{if .Note}}<div class="note-box"><span class="tag">source note</span>{{.Note}}</div>{{end}}</td>
         <td><span class="pill t-{{tone .State}} state {{.State}}">{{label .State}}</span></td>
         <td class="small">

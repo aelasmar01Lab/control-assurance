@@ -54,6 +54,10 @@
           "group": { "type": "string" },
           "title": { "type": "string" },
           "label": { "type": "string" },
+          "heading": {
+            "description": "True for a node that gives the hierarchy, such as a function or a category. A heading carries upstream's wording where the pack may, but is not itself assessed: nothing maps to it and it needs no tracking entry.",
+            "type": "boolean"
+          },
           "text": { "type": "string" }
         }
       }

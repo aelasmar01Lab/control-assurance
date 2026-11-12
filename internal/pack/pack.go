@@ -95,6 +95,9 @@ type Requirement struct {
 	Text  string `yaml:"text"`
 	// Label is a short description in the project's own words.
 	Label string `yaml:"label"`
+	// Heading marks a node that gives the hierarchy, such as a function or
+	// a category. It is not assessed: nothing maps to it.
+	Heading bool `yaml:"heading"`
 }
 
 // Name is what to call the requirement beside its identifier: upstream's
@@ -201,7 +204,7 @@ func (p *Pack) check() error {
 		}
 		if profile {
 			// A profile selects; everything else comes from the pack it selects from.
-			if r.Parent != "" || r.Group != "" || r.Title != "" || r.Text != "" || r.Label != "" {
+			if r.Parent != "" || r.Group != "" || r.Title != "" || r.Text != "" || r.Label != "" || r.Heading {
 				return fmt.Errorf("requirement %s: a profile lists identifiers only", r.ID)
 			}
 			continue
@@ -230,6 +233,18 @@ func (p *Pack) check() error {
 		}
 	}
 	return nil
+}
+
+// Assessed returns the requirements that are not headings: the ones a
+// control can map to and that must be mapped or tracked.
+func (p *Pack) Assessed() []Requirement {
+	out := make([]Requirement, 0, len(p.Requirements))
+	for _, r := range p.Requirements {
+		if !r.Heading {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 // Lookup returns the requirement with the given identifier.

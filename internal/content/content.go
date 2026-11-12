@@ -397,8 +397,13 @@ func (s *Set) check(refs Refs) Problems {
 			}
 			return false
 		}
-		if _, ok := pk.Lookup(id); !ok {
+		r, ok := pk.Lookup(id)
+		if !ok {
 			add(p, entry, "%s %s has no requirement %q", framework, version, id)
+			return false
+		}
+		if r.Heading {
+			add(p, entry, "%s %s is a heading of %s, not a requirement; map or track what is under it", framework, id, framework)
 			return false
 		}
 		return true
@@ -476,7 +481,7 @@ func (s *Set) check(refs Refs) Problems {
 			continue
 		}
 		var missing []string
-		for _, r := range p.Requirements {
+		for _, r := range p.Assessed() {
 			k := pair{p.Framework.Key, p.Framework.Version, r.ID}
 			if !mapped[k] && !seenTracking[k] {
 				missing = append(missing, r.ID)

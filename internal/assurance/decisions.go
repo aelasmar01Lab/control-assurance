@@ -168,7 +168,7 @@ func (s *Service) LoadCatalog(ctx context.Context, actor authz.Actor, packs []*p
 		if err != nil {
 			return out, err
 		}
-		out = append(out, ImportResult{p.Framework.Key, p.Framework.Version, len(p.Requirements), imported})
+		out = append(out, ImportResult{p.Framework.Key, p.Framework.Version, len(p.Assessed()), imported})
 	}
 	return out, nil
 }

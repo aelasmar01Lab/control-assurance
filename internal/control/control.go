@@ -304,8 +304,8 @@ type Input struct {
 // Derive returns the control's state and the reasons for it. The first
 // matching rule wins:
 //
-//  1. Not evaluated: the control has automated checks and none has ever
-//     produced a result.
+//  1. Not evaluated: nothing tests the control yet, or it has automated
+//     checks and none has ever produced a result.
 //  2. Needs attention: a current failure with no approved, unexpired
 //     exception (including one whose exception has expired), or manual
 //     evidence that is missing, rejected or still awaiting review.
@@ -330,6 +330,11 @@ func Derive(c Control, in Input) (State, []string) {
 	hasManual := c.ManualCheck != ""
 
 	// 1. Never evaluated.
+	if len(c.Checks) == 0 && !hasManual {
+		// Nothing tests this control yet. Saying anything else about it
+		// would be a state with no evidence behind it.
+		return NotEvaluated, []string{"No check or manual evidence is defined for this control yet."}
+	}
 	if len(c.Checks) > 0 && len(results) == 0 {
 		return NotEvaluated, []string{"No check for this control has produced a result yet."}
 	}
