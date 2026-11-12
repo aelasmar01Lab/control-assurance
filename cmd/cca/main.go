@@ -23,13 +23,24 @@ Usage:
   cca <command> [arguments]
 
 Commands:
-  requirements list        List every requirement in the built-in framework packs
-  packs validate [file]... Validate pack files (the built-in packs when no file is given)
-  migrate up               Apply pending database migrations (needs DATABASE_URL)
-  migrate status           Show which migrations are applied (needs DATABASE_URL)
-  version                  Print the build version
+  requirements list            List every requirement in the built-in framework packs
+  packs validate [file]...     Validate pack files (the built-in packs when no file is given)
+  packs load                   Import the built-in packs into the database
+  migrate up | status          Apply or show database migrations
+  collect github [owner/name]  Collect branch-rule evidence (repositories may also come from CCA_GITHUB_REPOS)
+  evaluate                     Apply every check to evidence it has not yet evaluated
+  results                      Show the current result for each resource and check
+  findings list                List findings, open first
+  checks guide                 Print the check guide generated from the check definitions
+  serve                        Serve the read-only pages (CCA_ADDR, default 127.0.0.1:8080)
+  version                      Print the build version
 
-Not implemented yet: serve, collect, evaluate, export
+Environment:
+  DATABASE_URL      PostgreSQL connection string (needed by everything that touches the database)
+  CCA_EVIDENCE_DIR  Evidence store directory (default data/evidence)
+  GITHUB_TOKEN      GitHub token; when unset, the GitHub CLI's current login is used
+
+Not implemented yet: export
 `
 
 // errUsage marks an error caused by how the command was invoked.
@@ -53,10 +64,26 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	case "requirements":
 		err = runRequirements(args[1:], stdout)
 	case "packs":
-		err = runPacks(args[1:], stdout)
+		if len(args) == 2 && args[1] == "load" {
+			err = runPacksLoad(ctx, stdout)
+		} else {
+			err = runPacks(args[1:], stdout)
+		}
 	case "migrate":
 		err = runMigrate(ctx, args[1:], stdout)
-	case "serve", "collect", "evaluate", "export":
+	case "collect":
+		err = runCollect(ctx, args[1:], stdout)
+	case "evaluate":
+		err = runEvaluate(ctx, args[1:], stdout)
+	case "results":
+		err = runResults(ctx, args[1:], stdout)
+	case "findings":
+		err = runFindings(ctx, args[1:], stdout)
+	case "checks":
+		err = runChecks(args[1:], stdout)
+	case "serve":
+		err = runServe(ctx, args[1:], stdout)
+	case "export":
 		err = errors.New("not implemented")
 	default:
 		err = fmt.Errorf("%w: unknown command", errUsage)
@@ -107,7 +134,7 @@ func runRequirements(args []string, stdout io.Writer) error {
 
 func runPacks(args []string, stdout io.Writer) error {
 	if len(args) == 0 || args[0] != "validate" {
-		return fmt.Errorf("%w: expected \"packs validate [file]...\"", errUsage)
+		return fmt.Errorf("%w: expected \"packs validate [file]...\" or \"packs load\"", errUsage)
 	}
 	files := args[1:]
 	if len(files) == 0 {

@@ -1,0 +1,136 @@
+package store
+
+import (
+	"context"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+)
+
+// EvaluationRow is one evaluation with the evidence it rests on.
+type EvaluationRow struct {
+	EvaluationID  int64
+	ObservationID int64
+	Resource      string
+	CheckKey      string
+	CheckVersion  string
+	Result        string
+	Explanation   string
+	PayloadSHA256 string
+	CollectedAt   time.Time
+	EvaluatedAt   time.Time
+}
+
+const evaluationColumns = `
+	e.id, o.id, r.external_id, e.check_key, e.check_version, e.result,
+	e.explanation, o.payload_sha256, o.collected_at, e.evaluated_at
+	FROM evaluations e
+	JOIN observations o ON o.id = e.observation_id
+	JOIN resources r ON r.id = o.resource_id`
+
+// LatestResults returns, for each resource and check, the evaluation of the
+// newest observation. It is the current result; a failed collection run adds
+// no observation and so never changes it.
+func (s *Store) LatestResults(ctx context.Context) ([]EvaluationRow, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT * FROM (
+			SELECT DISTINCT ON (r.id, e.check_key)`+evaluationColumns+`
+			ORDER BY r.id, e.check_key, o.id DESC, e.id DESC
+		) latest
+		ORDER BY 3, 4`)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, pgx.RowToStructByPos[EvaluationRow])
+}
+
+// Evaluations returns the most recent evaluations, newest first.
+func (s *Store) Evaluations(ctx context.Context, limit int) ([]EvaluationRow, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT`+evaluationColumns+` ORDER BY e.id DESC LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, pgx.RowToStructByPos[EvaluationRow])
+}
+
+// FindingRow is a finding with the evaluations that opened and closed it.
+type FindingRow struct {
+	ID                  int64
+	Resource            string
+	CheckKey            string
+	OpenedAt            time.Time
+	OpeningEvaluationID int64
+	OpeningExplanation  string
+	ClosedAt            *time.Time
+	ClosingEvaluationID *int64
+	ClosingExplanation  *string
+}
+
+// Open reports whether the finding is still open.
+func (f FindingRow) Open() bool { return f.ClosingEvaluationID == nil }
+
+// Findings returns every finding, open ones first, then newest first.
+func (s *Store) Findings(ctx context.Context) ([]FindingRow, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT f.id, r.external_id, f.check_key, f.opened_at,
+		       f.opening_evaluation_id, eo.explanation,
+		       f.closed_at, f.closing_evaluation_id, ec.explanation
+		FROM findings f
+		JOIN resources r ON r.id = f.resource_id
+		JOIN evaluations eo ON eo.id = f.opening_evaluation_id
+		LEFT JOIN evaluations ec ON ec.id = f.closing_evaluation_id
+		ORDER BY (f.closing_evaluation_id IS NOT NULL), f.id DESC`)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, pgx.RowToStructByPos[FindingRow])
+}
+
+// RunRow is one collection attempt.
+type RunRow struct {
+	ID                int64
+	Integration       string
+	Resource          string
+	StartedAt         time.Time
+	FinishedAt        *time.Time
+	Outcome           string
+	ErrorClass        string
+	ErrorDetail       string
+	InventoryComplete bool
+}
+
+// Runs returns the most recent collection runs, newest first.
+func (s *Store) Runs(ctx context.Context, limit int) ([]RunRow, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT c.id, c.integration, r.external_id, c.started_at, c.finished_at,
+		       c.outcome, c.error_class, c.error_detail, c.inventory_complete
+		FROM collection_runs c JOIN resources r ON r.id = c.resource_id
+		ORDER BY c.id DESC LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, pgx.RowToStructByPos[RunRow])
+}
+
+// RequirementCount returns how many requirements are imported per framework version.
+func (s *Store) RequirementCount(ctx context.Context) (map[string]int, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT fv.key || ' ' || fv.version, count(rq.id)
+		FROM framework_versions fv LEFT JOIN requirements rq ON rq.framework_version_id = fv.id
+		GROUP BY 1`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]int{}
+	for rows.Next() {
+		var name string
+		var n int
+		if err := rows.Scan(&name, &n); err != nil {
+			return nil, err
+		}
+		out[name] = n
+	}
+	return out, rows.Err()
+}

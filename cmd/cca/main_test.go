@@ -21,7 +21,11 @@ func TestRun(t *testing.T) {
 		{"no args prints usage", nil, 2, nil, "Usage:"},
 		{"version", []string{"version"}, 0, []string{"dev\n"}, ""},
 		{"help", []string{"help"}, 0, []string{"Usage:"}, ""},
-		{"unimplemented command fails", []string{"serve"}, 1, nil, "not implemented"},
+		{"unimplemented command fails", []string{"export"}, 1, nil, "not implemented"},
+		{"collect needs an integration", []string{"collect"}, 2, nil, "collect github"},
+		{"collect rejects a bad repository name", []string{"collect", "github", "not-a-repo"}, 2, nil, "owner/name"},
+		{"findings needs list", []string{"findings"}, 2, nil, "findings list"},
+		{"checks guide", []string{"checks", "guide"}, 0, []string{"# Check guide", "## GH-01 (version 1)", "## GH-02 (version 1)"}, ""},
 		{"unknown command", []string{"bogus"}, 2, nil, "unknown command"},
 		{
 			"requirements list shows the catalog and its source hash",
