@@ -87,6 +87,7 @@ To run it against a real lab instead, see
 | [docs/walkthrough.md](docs/walkthrough.md) | A ten-minute tour of the demo |
 | [docs/controls.md](docs/controls.md) | Every control, its mappings and limits, and how each requirement is tracked, with what has been reviewed (generated) |
 | [docs/review-queue.md](docs/review-queue.md) | What is waiting for the maintainer's review, and the command that signs each entry (generated) |
+| [docs/authoring-rules.md](docs/authoring-rules.md) | The maintainer's rules for sourcing packs and writing controls and mappings, and which of them the tooling checks |
 | [docs/drafting-log.md](docs/drafting-log.md) | What the agent drafted in each unit of work, from which sources, and what it is least sure of |
 | [CLAUDE.md](CLAUDE.md) | The standing rules the agent works under |
 | [BLOCKED.md](BLOCKED.md) | Frameworks the agent could not source, and what is needed for each |
