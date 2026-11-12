@@ -340,3 +340,25 @@ func (s *Store) JobsHealth(ctx context.Context) ([]JobHealth, error) {
 	}
 	return pgx.CollectRows(rows, pgx.RowToStructByPos[JobHealth])
 }
+
+// ScopeRow is a resource and the scope decision made about it.
+type ScopeRow struct {
+	Provider    string
+	Kind        string
+	ExternalID  string
+	Scope       string
+	ScopeReason string
+	DecidedBy   string
+	CreatedAt   time.Time
+}
+
+// ResourcesBefore returns every resource registered before the given time.
+func (s *Store) ResourcesBefore(ctx context.Context, before time.Time) ([]ScopeRow, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT provider, kind, external_id, scope, scope_reason, decided_by, created_at
+		FROM resources WHERE created_at < $1 ORDER BY provider, kind, external_id`, before)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, pgx.RowToStructByPos[ScopeRow])
+}

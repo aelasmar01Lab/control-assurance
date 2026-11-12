@@ -15,7 +15,7 @@ This README states only what is implemented.
 | MVSP framework pack (25 requirements, pinned source), schema validation, database import | Implemented |
 | GitHub collector: branch rules, Dependabot alerts, security policy file; classified errors, pagination completeness | Implemented |
 | AWS collector: IAM credential report, CloudTrail trails, Bedrock invocation logging; read-only assumed role | Implemented |
-| Evidence store: filesystem, content-addressed by SHA-256 | Implemented |
+| Evidence store, content-addressed by SHA-256: local directory, or an S3 bucket with create-only writes under its own role | Implemented |
 | Eight automated checks (GH-01 to GH-04, AWS-01 to AWS-04) and REC-01 (manual evidence), versioned, with stated limits | Implemented |
 | Job queue in PostgreSQL, worker pool, daily schedule, retries per error class, recovery of abandoned runs | Implemented |
 | Evaluations and findings, insert-only history | Implemented |
@@ -26,8 +26,11 @@ This README states only what is implemented.
 | Web interface: overview, findings, manual evidence, integration health, decision log | Implemented |
 | Fault table: every injected fault, its error class and retry behaviour, generated and tested | Implemented |
 | Current-state JSON export | Implemented |
+| Review package for a past period, with a manifest hash and an offline verifier | Implemented |
+| Check versions: a new version adds evaluations beside the old; every stored evaluation can be re-run | Implemented |
+| Deduplication case study on a documented synthetic dataset | Implemented |
 | A state for each of the 25 MVSP requirements; reviewed mappings | Not started |
-| Review package for a past period, S3 evidence store, deduplication study | Not started |
+| Hosted demo, seeded demo data | Not started |
 
 ## The loop
 
@@ -126,6 +129,39 @@ A control's state is derived on read and never stored. The first match wins:
 *Supported* is always shown beside the assertions it rests on. Nothing in
 the product is called compliant.
 
+## History and the review package
+
+```sh
+bin/cca reproduce                                            # re-run every stored evaluation
+bin/cca package --from 2026-11-01 --to 2026-11-08 --out review.zip
+bin/cca package verify review.zip                            # needs no database
+```
+
+- **Check versions.** Changing a check means registering a new version. The
+  evaluator applies the newest version of each check to new evidence, and
+  to stored evidence it has not yet seen, which adds evaluations and
+  rewrites none. Older versions stay in the binary so their evaluations can
+  be re-run. `cca reproduce` re-applies each evaluation's recorded version
+  to its stored evidence and reports any that no longer gives the recorded
+  result and explanation.
+- **Review package.** For a period that is over, the package holds the
+  control states as they stood at its end, every run, observation and
+  evaluation in it, the findings that were open with their exceptions and
+  notes, the decision log, and the evidence files. `manifest.json` lists the
+  SHA-256 of every file; the SHA-256 of the manifest identifies the package.
+  The manifest records nothing about when or by whom it was generated, so
+  the same period gives the same manifest whenever it is asked for. Each
+  generation is written to the decision log with that hash.
+- **Verification.** `cca package verify` recomputes every hash, reports
+  files that are missing, changed or unlisted, and re-runs every evaluation
+  in the package from the evidence in the package. It reads no database.
+  A manifest hash you recorded when the package was made is what makes a
+  later edit of both a file and the manifest detectable.
+
+The [deduplication case study](docs/dedup-study.md) compares storing every
+collection, hashing raw responses and hashing normalized payloads, on a
+synthetic dataset. `make study` regenerates it.
+
 ## Roles
 
 Four lab roles: operator, control owner, reviewer and auditor. The
@@ -150,7 +186,14 @@ GitHub: `GITHUB_TOKEN` when set, otherwise the GitHub CLI's current login
 access to repository metadata, contents and Dependabot alerts. A CLI login
 is much broader than that; see [decision 7](docs/decisions.md).
 
-AWS: the SDK's standard credential chain, so `AWS_PROFILE` selects the
+Evidence in S3: set `CCA_EVIDENCE_S3_BUCKET` and `CCA_EVIDENCE_AWS_PROFILE`.
+The profile is named explicitly and must differ from `AWS_PROFILE`. The
+evidence role ([`deploy/aws/evidence-policy.json`](deploy/aws/evidence-policy.json))
+may read objects under one prefix and create new ones; it cannot overwrite
+or delete, and it cannot read the sources. The collector role cannot touch
+the bucket. `cca evidence copy-to-s3` copies payloads already stored locally.
+
+AWS collection: the SDK's standard credential chain, so `AWS_PROFILE` selects the
 role and `AWS_REGION` or the profile selects the Region. The collector is
 meant to run as a role with the seven read-only actions in
 [`deploy/aws/collector-policy.json`](deploy/aws/collector-policy.json), plus
@@ -171,15 +214,16 @@ collected.
 | `internal/github` | The only code that talks to GitHub; read-only |
 | `internal/aws` | The only code that talks to AWS; read-only |
 | `internal/check` | Versioned checks and the generated check guide |
-| `internal/evidence` | Content-addressed evidence store |
+| `internal/evidence` | Content-addressed evidence store: local directory and S3 |
+| `internal/study` | The deduplication case study harness |
 | `internal/store` | PostgreSQL access |
 | `internal/web` | The web interface: sign-in, pages and forms |
 | `internal/pack` | Pack parsing and validation |
 | `internal/db` | Migrations runner |
 | `migrations/` | SQL migrations (goose format), embedded in the binary |
 | `packs/` | Framework packs (YAML) and their JSON Schema, embedded in the binary |
-| `docs/` | Check guide, permission matrix and fault table (all generated), and decision records |
-| `deploy/aws` | IAM policy for the read-only collector role |
+| `docs/` | Check guide, permission matrix, fault table and case study (all generated), and decision records |
+| `deploy/aws` | IAM policies for the read-only collector role and the evidence store role |
 
 ## Development
 
@@ -192,6 +236,7 @@ make test      # run tests; database tests use throwaway schemas, so run db-up f
 make build     # build bin/cca
 make lint      # needs golangci-lint v2
 make vuln      # govulncheck
+make study     # regenerate docs/dedup-study.md; needs no database
 make guide     # regenerate docs/checks.md, docs/permissions.md and docs/faults.md after changing a check, a permission, a fault or a retry policy
 ```
 

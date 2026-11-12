@@ -1,0 +1,12 @@
+{{define "content"}}
+<section>
+  <h2>Review package</h2>
+  <p class="note">Everything recorded for one past period, in one archive: the control states as they stood at the end of the period, every collection run, observation and evaluation in it, the findings that were open, their exceptions and notes, the decision log, and the evidence itself. The period must be over. Asking for the same period again gives a package with the same manifest hash.</p>
+  <form method="get" action="/package.zip" class="inline">
+    <label>From <input type="date" name="from" value="{{.Data.From}}" required></label>
+    <label>Up to, not including <input type="date" name="to" value="{{.Data.To}}" required></label>
+    <button type="submit">Download package</button>
+  </form>
+  <p class="note">Dates are in UTC. To check a package, run <code>cca package verify &lt;file.zip&gt;</code>: it recomputes every hash and re-applies each recorded check version to the stored evidence. Each download is recorded in the decision log with the manifest hash.</p>
+</section>
+{{end}}

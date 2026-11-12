@@ -157,27 +157,39 @@ func (c *Collector) CollectIAMCredentials(ctx context.Context, account string) (
 	if generated.IsZero() {
 		return nil, time.Time{}, &collect.Error{Class: collect.Malformed, Detail: "the credential report has no generation time"}
 	}
-	users, err := parseCredentialReport(raw)
-	if err != nil {
-		return nil, time.Time{}, err
-	}
 	summary, err := c.API.AccountSummary(ctx)
 	if err != nil {
 		return nil, time.Time{}, err
 	}
+	out, err := NormalizeIAMCredentials(account, raw, summary)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+	return out, generated.UTC(), nil
+}
+
+// NormalizeIAMCredentials builds the evidence from a credential report and
+// the account summary as the API returned them. It keeps the report columns
+// in ReportColumnsKept and the two root counters of the summary, drops
+// every other column and counter, and sorts the users by name.
+func NormalizeIAMCredentials(account string, reportCSV []byte, summary map[string]int32) (*IAMCredentials, error) {
+	users, err := parseCredentialReport(reportCSV)
+	if err != nil {
+		return nil, err
+	}
 	mfa, okMFA := summary["AccountMFAEnabled"]
 	keys, okKeys := summary["AccountAccessKeysPresent"]
 	if !okMFA || !okKeys {
-		return nil, time.Time{}, &collect.Error{Class: collect.Malformed, Detail: "the account summary lacks the root MFA or root access key counters"}
+		return nil, &collect.Error{Class: collect.Malformed, Detail: "the account summary lacks the root MFA or root access key counters"}
 	}
 	return &IAMCredentials{
 		AccountID: account, RootMFAEnabled: mfa == 1, RootAccessKeysPresent: keys != 0, Users: users,
-	}, generated.UTC(), nil
+	}, nil
 }
 
-// reportColumns are the credential report columns the collector keeps. Every
-// other column is dropped.
-var reportColumns = []string{
+// ReportColumnsKept are the credential report columns the normalizer keeps.
+// Every other column is dropped.
+var ReportColumnsKept = []string{
 	"user", "user_creation_time", "password_enabled", "password_last_used", "password_last_changed", "mfa_active",
 	"access_key_1_active", "access_key_1_last_rotated", "access_key_1_last_used_date",
 	"access_key_2_active", "access_key_2_last_rotated", "access_key_2_last_used_date",
@@ -197,7 +209,7 @@ func parseCredentialReport(raw []byte) ([]User, error) {
 	for i, name := range rows[0] {
 		col[name] = i
 	}
-	for _, name := range reportColumns {
+	for _, name := range ReportColumnsKept {
 		if _, ok := col[name]; !ok {
 			return nil, malformed("column " + name + " is missing")
 		}

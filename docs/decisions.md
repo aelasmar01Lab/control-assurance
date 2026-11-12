@@ -189,3 +189,61 @@ values, so the tests use a synthetic account and the normalizer never sees
 an SDK type. Given up: a small dependency tree; the SDK brings about twenty
 modules. Signing requests and assuming roles by hand was the alternative,
 and is not something to own.
+
+## 21. A review package's manifest says nothing about its making
+
+`manifest.json` holds the period, the scope and the hash of every file, and
+nothing about who generated the package or when. Those facts go to the
+decision log, with the manifest hash. Given up: a package that is
+self-describing about its own origin. In exchange, the same period yields
+the same manifest byte for byte, so two people can compare one hash to know
+they hold the same package. A package is refused for a period that is not
+over, because only the past is certain to read the same tomorrow.
+
+## 22. A package shows the period as it stood at its end
+
+An exception approved after the period reads as a bare request in that
+period's package; a finding closed after it reads as open. This works
+because the only rows that ever change (a finding's closing, an exception's
+decision, a submission's review) each carry the time of the change, and
+everything else is insert-only. Given up: nothing in storage; the cost is
+that "as of" filtering is done in Go over full history, which will need
+SQL once history is large.
+
+## 23. The package is unsigned
+
+Verification proves a package is internally consistent and that its
+evaluations reproduce. It cannot prove the package came from this system:
+someone who edits a file and rewrites the manifest produces a package that
+verifies, with a different manifest hash. The defence in this release is
+the hash recorded in the decision log at generation. Given up: signatures
+and the key management they need.
+
+## 24. Old check versions stay in the binary
+
+An evaluation records its check key and version, and reproduction needs
+that version's code. So versions are never removed, and `cca reproduce`
+reports a missing version as a mismatch, not as a pass. Re-evaluating
+stored evidence under a new version adds rows and, as decision 4 says,
+moves no finding. Given up: deleting dead code. A version that never
+produced an evaluation anywhere is the only kind safe to remove.
+
+## 25. The evidence store's role can create and read, nothing else
+
+In S3, evidence is written with `If-None-Match: *` and the role's policy
+allows `PutObject` only when that header is present, so an existing payload
+cannot be replaced, and the role has no delete. It is a different role from
+the collector's, and the binary refuses to start if both are given the same
+profile. Bucket versioning is on as a second line. Given up: garbage
+collection of payloads nothing references; nothing deletes evidence in
+this release. Not used: S3 Object Lock, which would also stop the account
+owner deleting objects, at the price of a bucket that cannot be emptied.
+
+## 26. The case study measures a documented assumption
+
+The deduplication study's dataset is synthetic, and the gap it shows
+between raw-byte and normalized hashing comes from an assumption that the
+source sometimes reorders the same rules. That assumption is stated in the
+report beside the numbers, with what happens when it is zero. Given up: a
+more impressive, unqualified ratio. Counts and bytes are fixed by the seed
+and checked by a test; read times are machine-dependent and labelled so.

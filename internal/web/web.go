@@ -4,6 +4,7 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
@@ -82,6 +83,7 @@ var pages = map[string]*template.Template{
 	"evidence":     mustPage("evidence.html"),
 	"log":          mustPage("log.html"),
 	"integrations": mustPage("integrations.html"),
+	"package":      mustPage("package.html"),
 	"login":        mustPage("login.html"),
 	"error":        mustPage("error.html"),
 }
@@ -132,6 +134,8 @@ func Handler(svc *assurance.Service, opts Options) http.Handler {
 	mux.HandleFunc("POST /integrations/collect", s.as(s.queueCollection))
 	mux.HandleFunc("GET /log", s.as(s.decisionLog))
 	mux.HandleFunc("GET /export.json", s.as(s.export))
+	mux.HandleFunc("GET /package", s.as(s.packageForm))
+	mux.HandleFunc("GET /package.zip", s.as(s.packageZip))
 
 	// Reject state-changing requests that come from another origin.
 	csrf := http.NewCrossOriginProtection()
@@ -392,6 +396,48 @@ func (s *server) evidenceFile(w http.ResponseWriter, r *http.Request, actor auth
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", name))
 	_, _ = w.Write(data) //nolint:gosec // sent as an octet-stream attachment with nosniff, so never rendered
+}
+
+func (s *server) packageForm(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
+	// Offer the last complete week, ending today (UTC).
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+	s.render(w, r, http.StatusOK, "package", "Review package", &actor, map[string]string{
+		"From": today.AddDate(0, 0, -7).Format("2006-01-02"), "To": today.Format("2006-01-02"),
+	})
+}
+
+func (s *server) packageZip(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
+	from, errFrom := time.Parse("2006-01-02", r.URL.Query().Get("from"))
+	to, errTo := time.Parse("2006-01-02", r.URL.Query().Get("to"))
+	var (
+		p   *assurance.Package
+		err error
+	)
+	if errFrom != nil || errTo != nil {
+		err = fmt.Errorf("%w: both dates are needed, as YYYY-MM-DD", assurance.ErrInvalid)
+	} else {
+		p, err = s.svc.BuildPackage(r.Context(), actor, from, to)
+	}
+	if errors.Is(err, assurance.ErrInvalid) {
+		// A problem with the period goes back to the form.
+		s.sessions.Put(r.Context(), sessionFlashKey, "No package was made: "+strings.TrimPrefix(err.Error(), assurance.ErrInvalid.Error()+": "))
+		http.Redirect(w, r, "/package", http.StatusSeeOther)
+		return
+	}
+	if err != nil {
+		s.fail(w, r, &actor, err)
+		return
+	}
+	var buf bytes.Buffer
+	if err := p.WriteZip(&buf); err != nil {
+		s.fail(w, r, &actor, err)
+		return
+	}
+	name := fmt.Sprintf("review-package-%s-to-%s.zip", from.Format("2006-01-02"), to.Format("2006-01-02"))
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", `attachment; filename="`+name+`"`)
+	w.Header().Set("X-Manifest-SHA256", p.ManifestSHA256)
+	_, _ = w.Write(buf.Bytes())
 }
 
 func (s *server) integrations(w http.ResponseWriter, r *http.Request, actor authz.Actor) {

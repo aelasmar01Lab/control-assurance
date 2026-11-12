@@ -58,6 +58,55 @@ func (s *Store) Evaluations(ctx context.Context, limit int) ([]EvaluationRow, er
 	return pgx.CollectRows(rows, pgx.RowToStructByPos[EvaluationRow])
 }
 
+// PayloadHashes returns the SHA-256 of every evidence payload on record.
+func (s *Store) PayloadHashes(ctx context.Context) ([]string, error) {
+	rows, err := s.pool.Query(ctx, `SELECT sha256 FROM evidence_payloads ORDER BY sha256`)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, pgx.RowTo[string])
+}
+
+// AllEvaluations returns every evaluation, oldest first.
+func (s *Store) AllEvaluations(ctx context.Context) ([]EvaluationRow, error) {
+	rows, err := s.pool.Query(ctx, `SELECT`+evaluationColumns+` ORDER BY e.id`)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, pgx.RowToStructByPos[EvaluationRow])
+}
+
+// ObservationRow is what one successful collection run saw.
+type ObservationRow struct {
+	ID                int64
+	RunID             int64
+	Provider          string
+	ResourceKind      string
+	Resource          string
+	Kind              string
+	CollectedAt       time.Time
+	SourceTimestamp   *time.Time
+	PayloadSHA256     string
+	PayloadSize       int64
+	NormalizerVersion string
+}
+
+// Observations returns the observations collected in [from, to), oldest first.
+func (s *Store) Observations(ctx context.Context, from, to time.Time) ([]ObservationRow, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT o.id, o.run_id, r.provider, r.kind, r.external_id, o.kind, o.collected_at, o.source_timestamp,
+		       o.payload_sha256, p.size_bytes, o.normalizer_version
+		FROM observations o
+		JOIN resources r ON r.id = o.resource_id
+		JOIN evidence_payloads p ON p.sha256 = o.payload_sha256
+		WHERE o.collected_at >= $1 AND o.collected_at < $2
+		ORDER BY o.id`, from, to)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, pgx.RowToStructByPos[ObservationRow])
+}
+
 // FindingRow is a finding with the evaluations that opened and closed it.
 type FindingRow struct {
 	ID                  int64

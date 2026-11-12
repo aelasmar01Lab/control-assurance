@@ -145,7 +145,7 @@ func (s *Service) RequestCollection(ctx context.Context, actor authz.Actor, prov
 	}
 	var out []QueuedRun
 	for _, t := range targets {
-		resourceID, err := s.Store.UpsertResource(ctx, in.Provider, in.ResourceKind, t, actor.Username)
+		resourceID, err := s.Store.UpsertResource(ctx, in.Provider, in.ResourceKind, t, actor.Username, s.now())
 		if err != nil {
 			return out, fmt.Errorf("record resource %s: %w", t, err)
 		}

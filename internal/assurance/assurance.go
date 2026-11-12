@@ -53,8 +53,11 @@ type EvaluationSummary struct {
 	Finding       store.FindingChange
 }
 
-// Evaluate applies every registered check to each observation it has not
-// yet evaluated, oldest first. Running it again with nothing new does nothing.
+// Evaluate applies the current version of every check to each observation
+// that version has not yet evaluated, oldest first. Running it again with
+// nothing new does nothing. When a check gains a new version, every stored
+// observation of its kind is evaluated under it, which adds evaluations and
+// rewrites none.
 func (s *Service) Evaluate(ctx context.Context, actor authz.Actor) ([]EvaluationSummary, error) {
 	if err := authz.Can(actor, authz.RunEvaluation, authz.Resource{}); err != nil {
 		return nil, err
@@ -72,7 +75,7 @@ func (s *Service) Evaluate(ctx context.Context, actor authz.Actor) ([]Evaluation
 
 func (s *Service) evaluate(ctx context.Context) ([]EvaluationSummary, error) {
 	var out []EvaluationSummary
-	for _, c := range check.Automated() {
+	for _, c := range check.Current() {
 		if err := s.Store.SyncCheckVersion(ctx, c); err != nil {
 			return out, err
 		}
@@ -91,7 +94,7 @@ func (s *Service) evaluate(ctx context.Context) ([]EvaluationSummary, error) {
 			if err != nil {
 				return out, fmt.Errorf("%s on observation %d: %w", c.Key, o.ID, err)
 			}
-			id, change, err := s.Store.RecordEvaluation(ctx, o, c, result, explanation)
+			id, change, err := s.Store.RecordEvaluation(ctx, o, c, result, explanation, s.now())
 			if err != nil {
 				return out, fmt.Errorf("record %s on observation %d: %w", c.Key, o.ID, err)
 			}

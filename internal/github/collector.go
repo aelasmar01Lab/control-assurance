@@ -143,21 +143,44 @@ func (c *Client) CollectBranchRules(ctx context.Context, repo string) (*BranchRu
 		next = link
 	}
 
-	for i := range out.Rules {
-		canonical, err := canonicalJSON(out.Rules[i].Parameters)
-		if err != nil {
-			return nil, &Error{Class: ClassMalformed, Detail: "rule parameters are not valid JSON"}
-		}
-		out.Rules[i].Parameters = canonical
+	if err := out.normalize(); err != nil {
+		return nil, err
 	}
-	sort.SliceStable(out.Rules, func(i, j int) bool {
-		a, b := out.Rules[i], out.Rules[j]
-		if a.Type != b.Type {
-			return a.Type < b.Type
-		}
-		return a.RulesetID < b.RulesetID
-	})
 	return out, nil
+}
+
+// NormalizeBranchRules builds the evidence for a branch from rules as the
+// API returned them. It keeps every field of every rule and drops none; it
+// sorts the rules by type then ruleset, and re-encodes each rule's
+// parameters with object keys sorted and insignificant white space removed.
+func NormalizeBranchRules(repo, defaultBranch string, protected, complete bool, rules []Rule) (*BranchRules, error) {
+	out := &BranchRules{
+		Repository: repo, DefaultBranch: defaultBranch, BranchProtected: protected,
+		RulesComplete: complete, Rules: append([]Rule{}, rules...),
+	}
+	if err := out.normalize(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// normalize puts the rules into their canonical form and order.
+func (b *BranchRules) normalize() error {
+	for i := range b.Rules {
+		canonical, err := canonicalJSON(b.Rules[i].Parameters)
+		if err != nil {
+			return &Error{Class: ClassMalformed, Detail: "rule parameters are not valid JSON"}
+		}
+		b.Rules[i].Parameters = canonical
+	}
+	sort.SliceStable(b.Rules, func(i, j int) bool {
+		x, y := b.Rules[i], b.Rules[j]
+		if x.Type != y.Type {
+			return x.Type < y.Type
+		}
+		return x.RulesetID < y.RulesetID
+	})
+	return nil
 }
 
 // canonicalJSON re-encodes raw with object keys sorted, so equal values have

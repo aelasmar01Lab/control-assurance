@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -36,7 +37,23 @@ func openStore(ctx context.Context) (*store.Store, error) {
 	return store.Open(ctx, url)
 }
 
-func openEvidence() (*evidence.FS, error) {
+// openEvidence opens the evidence store: an S3 bucket when
+// CCA_EVIDENCE_S3_BUCKET is set, otherwise a local directory.
+func openEvidence(ctx context.Context) (evidence.Store, error) {
+	if bucket := os.Getenv("CCA_EVIDENCE_S3_BUCKET"); bucket != "" {
+		profile := os.Getenv("CCA_EVIDENCE_AWS_PROFILE")
+		if profile == "" {
+			return nil, errors.New("CCA_EVIDENCE_S3_BUCKET is set but CCA_EVIDENCE_AWS_PROFILE is not; the evidence store needs its own AWS profile")
+		}
+		if profile == os.Getenv("AWS_PROFILE") {
+			return nil, errors.New("CCA_EVIDENCE_AWS_PROFILE and AWS_PROFILE name the same profile; the evidence store and the collector must use different roles")
+		}
+		prefix := os.Getenv("CCA_EVIDENCE_S3_PREFIX")
+		if prefix == "" {
+			prefix = "evidence"
+		}
+		return evidence.OpenS3(ctx, profile, bucket, prefix)
+	}
 	dir := os.Getenv("CCA_EVIDENCE_DIR")
 	if dir == "" {
 		dir = "data/evidence"
@@ -51,7 +68,7 @@ func openService(ctx context.Context) (*assurance.Service, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	ev, err := openEvidence()
+	ev, err := openEvidence(ctx)
 	if err != nil {
 		st.Close()
 		return nil, nil, err
@@ -491,6 +508,171 @@ func runExport(ctx context.Context, args []string, stdout io.Writer) error {
 	enc := json.NewEncoder(stdout)
 	enc.SetIndent("", "  ")
 	return enc.Encode(data)
+}
+
+// parseMoment reads a date (the start of that day, UTC) or an RFC 3339 time.
+func parseMoment(v string) (time.Time, error) {
+	if t, err := time.Parse("2006-01-02", v); err == nil {
+		return t, nil
+	}
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("%w: %q is not a date (2026-11-01) or a time (2026-11-01T09:00:00Z)", errUsage, v)
+	}
+	return t.UTC(), nil
+}
+
+func runPackage(ctx context.Context, args []string, stdout io.Writer) error {
+	const form = "expected \"package --from <when> --to <when> --out <directory or file.zip>\" or \"package verify <directory or file.zip>\""
+	if len(args) == 2 && args[0] == "verify" {
+		fsys, err := assurance.OpenPackage(args[len(args)-1])
+		if err != nil {
+			return err
+		}
+		v, err := assurance.VerifyPackage(fsys)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(stdout, "manifest sha256  %s\nperiod           %s to %s\nfiles            %d\nevaluations      %d, of which %d reproduce\n",
+			v.ManifestSHA256, v.PeriodFrom.Format(time.RFC3339), v.PeriodTo.Format(time.RFC3339), v.Files, v.Evaluations, v.Reproduced)
+		for _, p := range v.Problems {
+			fmt.Fprintln(stdout, "PROBLEM  "+p)
+		}
+		if !v.OK() {
+			return fmt.Errorf("the package has %d problem(s)", len(v.Problems))
+		}
+		fmt.Fprintln(stdout, "The package is intact and every evaluation in it reproduces.")
+		return nil
+	}
+
+	opts := map[string]string{}
+	for i := 0; i+1 < len(args); i += 2 {
+		opts[args[i]] = args[i+1]
+	}
+	if len(args) != 6 || opts["--from"] == "" || opts["--to"] == "" || opts["--out"] == "" {
+		return fmt.Errorf("%w: %s", errUsage, form)
+	}
+	from, err := parseMoment(opts["--from"])
+	if err != nil {
+		return err
+	}
+	to, err := parseMoment(opts["--to"])
+	if err != nil {
+		return err
+	}
+	out := opts["--out"]
+
+	svc, closeSvc, err := openService(ctx)
+	if err != nil {
+		return err
+	}
+	defer closeSvc()
+	actor, err := cliActor(ctx, svc)
+	if err != nil {
+		return err
+	}
+	p, err := svc.BuildPackage(ctx, actor, from, to)
+	if err != nil {
+		return err
+	}
+	if strings.HasSuffix(out, ".zip") {
+		f, err := os.OpenFile(out, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600) //nolint:gosec // the operator names the output file
+		if err != nil {
+			return err
+		}
+		if err := p.WriteZip(f); err != nil {
+			_ = f.Close()
+			return err
+		}
+		if err := f.Close(); err != nil {
+			return err
+		}
+	} else if err := p.WriteDir(out); err != nil {
+		return err
+	}
+	fmt.Fprintf(stdout, "wrote %s\nperiod           %s to %s\nmanifest sha256  %s\n", out,
+		p.Manifest.PeriodFrom.Format(time.RFC3339), p.Manifest.PeriodTo.Format(time.RFC3339), p.ManifestSHA256)
+	tw := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
+	keys := slices.Sorted(maps.Keys(p.Manifest.Counts))
+	for _, k := range keys {
+		fmt.Fprintf(tw, "%s\t%d\n", strings.ReplaceAll(k, "_", " "), p.Manifest.Counts[k])
+	}
+	return tw.Flush()
+}
+
+// runEvidence copies every payload on record from the local evidence
+// directory into the configured S3 store. Payloads are filed under their
+// hash and never overwritten, so running it again copies nothing twice.
+func runEvidence(ctx context.Context, args []string, stdout io.Writer) error {
+	if len(args) != 1 || args[0] != "copy-to-s3" {
+		return fmt.Errorf("%w: expected \"evidence copy-to-s3\"", errUsage)
+	}
+	if os.Getenv("CCA_EVIDENCE_S3_BUCKET") == "" {
+		return errors.New("CCA_EVIDENCE_S3_BUCKET is not set")
+	}
+	st, err := openStore(ctx)
+	if err != nil {
+		return err
+	}
+	defer st.Close()
+	dst, err := openEvidence(ctx)
+	if err != nil {
+		return err
+	}
+	dir := os.Getenv("CCA_EVIDENCE_DIR")
+	if dir == "" {
+		dir = "data/evidence"
+	}
+	src, err := evidence.NewFS(dir)
+	if err != nil {
+		return err
+	}
+	hashes, err := st.PayloadHashes(ctx)
+	if err != nil {
+		return err
+	}
+	for _, sha := range hashes {
+		// Both the read and the read-back are verified against the hash.
+		data, err := src.Get(ctx, sha)
+		if err != nil {
+			return err
+		}
+		if _, _, err := dst.Put(ctx, data); err != nil {
+			return err
+		}
+		if _, err := dst.Get(ctx, sha); err != nil {
+			return err
+		}
+	}
+	fmt.Fprintf(stdout, "%d payloads are in the S3 evidence store, each verified against its hash\n", len(hashes))
+	return nil
+}
+
+func runReproduce(ctx context.Context, args []string, stdout io.Writer) error {
+	if len(args) != 0 {
+		return fmt.Errorf("%w: \"reproduce\" takes no arguments", errUsage)
+	}
+	svc, closeSvc, err := openService(ctx)
+	if err != nil {
+		return err
+	}
+	defer closeSvc()
+	actor, err := cliActor(ctx, svc)
+	if err != nil {
+		return err
+	}
+	r, err := svc.Reproduce(ctx, actor)
+	if err != nil {
+		return err
+	}
+	for _, m := range r.Mismatches {
+		fmt.Fprintln(stdout, "MISMATCH  "+m)
+	}
+	fmt.Fprintf(stdout, "%d of %d stored evaluations reproduce from their stored evidence and recorded check version\n", r.Reproduced, r.Evaluations)
+	if len(r.Mismatches) > 0 {
+		return fmt.Errorf("%d evaluation(s) do not reproduce", len(r.Mismatches))
+	}
+	return nil
 }
 
 func runUsers(ctx context.Context, args []string, stdout io.Writer) error {

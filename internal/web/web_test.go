@@ -1,6 +1,7 @@
 package web_test
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -448,6 +449,47 @@ func TestIntegrationHealthInTheBrowser(t *testing.T) {
 		if status, _ := b.post("/integrations/collect", url.Values{}); status != http.StatusForbidden {
 			t.Errorf("%s POST /integrations/collect = %d, want 403", name, status)
 		}
+	}
+}
+
+// The auditor can download the review package for a past period, and it
+// verifies without the database.
+func TestReviewPackageInTheBrowser(t *testing.T) {
+	s := newSite(t)
+	s.failing()
+	auditor := s.signedIn("auditor")
+	if status, body := auditor.get("/package"); status != http.StatusOK || !strings.Contains(body, "Download package") {
+		t.Fatalf("GET /package = %d", status)
+	}
+
+	// The evidence was collected today, so a period ending tomorrow holds
+	// it but is not over; one ending today is over but holds nothing yet.
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+	period := func(from, to time.Time) string {
+		return "/package.zip?from=" + from.Format("2006-01-02") + "&to=" + to.Format("2006-01-02")
+	}
+	if status, body := auditor.get(period(today, today.AddDate(0, 0, 1))); status != http.StatusOK || !strings.Contains(body, "has not passed yet") {
+		t.Errorf("a period that is not over: status %d, want the form with an explanation", status)
+	}
+	if status, body := auditor.get("/package.zip?from=yesterday&to="); status != http.StatusOK || !strings.Contains(body, "both dates are needed") {
+		t.Errorf("bad dates: status %d", status)
+	}
+
+	status, body := auditor.get(period(today.AddDate(0, 0, -7), today))
+	if status != http.StatusOK || !strings.HasPrefix(body, "PK") {
+		t.Fatalf("download: status %d, not a zip", status)
+	}
+	archive, err := zip.NewReader(strings.NewReader(body), int64(len(body)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, err := assurance.VerifyPackage(archive)
+	if err != nil || !v.OK() {
+		t.Errorf("the downloaded package does not verify: %+v, %v", v, err)
+	}
+	// The download is in the decision log, with the manifest hash.
+	if _, log := auditor.get("/log"); !strings.Contains(log, "package.generated") || !strings.Contains(log, v.ManifestSHA256) {
+		t.Error("the download is not in the decision log")
 	}
 }
 

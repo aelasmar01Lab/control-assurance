@@ -5,6 +5,7 @@ package check
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -80,7 +81,54 @@ var rec01 = Check{
 
 var registry = []Check{gh01, gh02, gh03, gh04, aws01, aws02, aws03, aws04, rec01}
 
-// Automated returns the checks the evaluator runs against observations.
+// Current returns the newest version of each automated check: the versions
+// the evaluator applies to new evidence. Older versions stay registered so
+// that the evaluations they produced can still be reproduced.
+func Current() []Check {
+	newest := map[string]Check{}
+	for _, c := range Automated() {
+		if have, ok := newest[c.Key]; !ok || versionNumber(c.Version) > versionNumber(have.Version) {
+			newest[c.Key] = c
+		}
+	}
+	var out []Check
+	for _, c := range Automated() {
+		if newest[c.Key].Version == c.Version {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// versionNumber reads a version as a whole number; versions are "1", "2", ...
+func versionNumber(v string) int {
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
+// Register adds a check version to the registry and returns a function
+// that removes it again. A version must be a whole number not already
+// registered for the key. It exists so that tests can introduce a new
+// version; the shipped checks are registered at start-up.
+func Register(c Check) (remove func(), err error) {
+	if _, taken := Lookup(c.Key, c.Version); taken || versionNumber(c.Version) < 1 {
+		return nil, fmt.Errorf("check %s version %q is already registered or is not a whole number", c.Key, c.Version)
+	}
+	registry = append(registry, c)
+	return func() {
+		for i, have := range registry {
+			if have.Key == c.Key && have.Version == c.Version {
+				registry = append(registry[:i:i], registry[i+1:]...)
+				return
+			}
+		}
+	}, nil
+}
+
+// Automated returns every registered version of every automated check.
 func Automated() []Check {
 	var out []Check
 	for _, c := range All() {

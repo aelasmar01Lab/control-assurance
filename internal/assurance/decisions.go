@@ -225,6 +225,19 @@ func (s *Service) overview(ctx context.Context) (*Overview, error) {
 		return nil, err
 	}
 
+	_, problems, err := s.jobs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &Overview{
+		Controls: deriveControls(now, results, findings, exceptions, submissions),
+		Results:  results, Runs: runs, IntegrationProblems: problems,
+	}, nil
+}
+
+// deriveControls works out every control's state at the given moment from
+// the results, findings, exceptions and submissions as they stood then.
+func deriveControls(now time.Time, results []store.EvaluationRow, findings []store.FindingRow, exceptions []store.ExceptionRow, submissions []store.SubmissionRow) []ControlView {
 	// The open finding for each check and resource, and its exception cover.
 	type key struct{ check, resource string }
 	openFinding := map[key]int64{}
@@ -250,12 +263,7 @@ func (s *Service) overview(ctx context.Context) (*Overview, error) {
 		return best, until
 	}
 
-	_, problems, err := s.jobs(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	out := &Overview{Results: results, Runs: runs, IntegrationProblems: problems}
+	var out []ControlView
 	for _, c := range control.All {
 		in := control.Input{Now: now}
 		for _, r := range results {
@@ -287,12 +295,12 @@ func (s *Service) overview(ctx context.Context) (*Overview, error) {
 			in.Manual, in.ManualValidUntil = control.ManualEvidence(subs, now)
 		}
 		state, reasons := control.Derive(c, in)
-		out.Controls = append(out.Controls, ControlView{
+		out = append(out, ControlView{
 			Control: c, State: state, Reasons: reasons,
 			Manual: in.Manual, ManualValidUntil: in.ManualValidUntil,
 		})
 	}
-	return out, nil
+	return out
 }
 
 // FindingView is a finding with its notes and exceptions, and what the

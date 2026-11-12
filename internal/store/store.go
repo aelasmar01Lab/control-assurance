@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
@@ -21,7 +22,20 @@ type Store struct {
 
 // Open connects to the database at databaseURL.
 func Open(ctx context.Context, databaseURL string) (*Store, error) {
-	pool, err := pgxpool.New(ctx, databaseURL)
+	cfg, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("open database: %w", err)
+	}
+	// Read every timestamp in UTC, so that exported history is the same
+	// bytes whatever time zone the machine is in.
+	cfg.AfterConnect = func(_ context.Context, conn *pgx.Conn) error {
+		conn.TypeMap().RegisterType(&pgtype.Type{
+			Name: "timestamptz", OID: pgtype.TimestamptzOID,
+			Codec: &pgtype.TimestamptzCodec{ScanLocation: time.UTC},
+		})
+		return nil
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
@@ -96,14 +110,14 @@ func (s *Store) ImportPack(ctx context.Context, p *pack.Pack) (imported bool, er
 }
 
 // UpsertResource records an in-scope resource and returns its id.
-func (s *Store) UpsertResource(ctx context.Context, provider, kind, externalID, decidedBy string) (int64, error) {
+func (s *Store) UpsertResource(ctx context.Context, provider, kind, externalID, decidedBy string, at time.Time) (int64, error) {
 	var id int64
 	err := s.pool.QueryRow(ctx, `
-		INSERT INTO resources (provider, kind, external_id, scope, decided_by)
-		VALUES ($1, $2, $3, 'in_scope', $4)
+		INSERT INTO resources (provider, kind, external_id, scope, decided_by, created_at)
+		VALUES ($1, $2, $3, 'in_scope', $4, $5)
 		ON CONFLICT (provider, kind, external_id) DO UPDATE SET provider = EXCLUDED.provider
 		RETURNING id`,
-		provider, kind, externalID, decidedBy).Scan(&id)
+		provider, kind, externalID, decidedBy, at).Scan(&id)
 	return id, err
 }
 
@@ -177,7 +191,7 @@ const (
 // Findings only move when the observation is newer than any this check has
 // already evaluated for the resource, so replaying history under a new check
 // version adds evaluations without rewriting what happened.
-func (s *Store) RecordEvaluation(ctx context.Context, o PendingObservation, c check.Check, result check.Result, explanation string) (evaluationID int64, change FindingChange, err error) {
+func (s *Store) RecordEvaluation(ctx context.Context, o PendingObservation, c check.Check, result check.Result, explanation string, at time.Time) (evaluationID int64, change FindingChange, err error) {
 	err = s.inTx(ctx, func(tx pgx.Tx) error {
 		var newestEvaluated int64
 		err := tx.QueryRow(ctx, `
@@ -190,9 +204,9 @@ func (s *Store) RecordEvaluation(ctx context.Context, o PendingObservation, c ch
 		}
 
 		err = tx.QueryRow(ctx, `
-			INSERT INTO evaluations (observation_id, check_key, check_version, result, explanation)
-			VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-			o.ID, c.Key, c.Version, string(result), explanation).Scan(&evaluationID)
+			INSERT INTO evaluations (observation_id, check_key, check_version, result, explanation, evaluated_at)
+			VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+			o.ID, c.Key, c.Version, string(result), explanation, at).Scan(&evaluationID)
 		if err != nil {
 			return err
 		}
@@ -203,10 +217,10 @@ func (s *Store) RecordEvaluation(ctx context.Context, o PendingObservation, c ch
 		switch result {
 		case check.Fail:
 			tag, err := tx.Exec(ctx, `
-				INSERT INTO findings (check_key, resource_id, opening_evaluation_id)
-				VALUES ($1, $2, $3)
+				INSERT INTO findings (check_key, resource_id, opening_evaluation_id, opened_at)
+				VALUES ($1, $2, $3, $4)
 				ON CONFLICT (check_key, resource_id) WHERE closing_evaluation_id IS NULL DO NOTHING`,
-				c.Key, o.ResourceID, evaluationID)
+				c.Key, o.ResourceID, evaluationID, at)
 			if err != nil {
 				return err
 			}
@@ -215,9 +229,9 @@ func (s *Store) RecordEvaluation(ctx context.Context, o PendingObservation, c ch
 			}
 		case check.Pass:
 			tag, err := tx.Exec(ctx, `
-				UPDATE findings SET closing_evaluation_id = $3, closed_at = now()
+				UPDATE findings SET closing_evaluation_id = $3, closed_at = $4
 				WHERE check_key = $1 AND resource_id = $2 AND closing_evaluation_id IS NULL`,
-				c.Key, o.ResourceID, evaluationID)
+				c.Key, o.ResourceID, evaluationID, at)
 			if err != nil {
 				return err
 			}

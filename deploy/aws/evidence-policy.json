@@ -1,0 +1,22 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CcaEvidenceRead",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::EVIDENCE_BUCKET/evidence/*"
+    },
+    {
+      "Sid": "CcaEvidenceWriteOnce",
+      "Effect": "Allow",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::EVIDENCE_BUCKET/evidence/*",
+      "Condition": {
+        "Null": {
+          "s3:if-none-match": "false"
+        }
+      }
+    }
+  ]
+}

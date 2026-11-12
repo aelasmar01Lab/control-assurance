@@ -13,6 +13,7 @@ import (
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/db"
 	"github.com/aelasmar01Lab/control-assurance/internal/pack"
+	"github.com/aelasmar01Lab/control-assurance/internal/study"
 	"github.com/aelasmar01Lab/control-assurance/packs"
 )
 
@@ -41,6 +42,11 @@ Commands:
   results                      Show each control's state and the current result of each check
   findings list                List findings with their exceptions and notes
   export                       Write a current-state export as JSON
+  package --from --to --out    Write the review package for a past period (a directory, or a .zip file)
+  package verify <path>        Check a review package: every hash, and that every evaluation reproduces
+  study dedup                  Run the deduplication case study on its synthetic dataset and print the report
+  evidence copy-to-s3          Copy every stored payload from the local directory into the S3 evidence store
+  reproduce                    Re-run every stored evaluation and report any that no longer reproduces
   serve                        Serve the web interface (CCA_ADDR, default 127.0.0.1:8080)
   version                      Print the build version
 
@@ -48,13 +54,15 @@ Environment:
   DATABASE_URL          PostgreSQL connection string (needed by everything that touches the database)
   CCA_USER              The user a command acts as; its role decides what the command may do
   CCA_EVIDENCE_DIR      Evidence store directory (default data/evidence)
+  CCA_EVIDENCE_S3_BUCKET    Keep evidence in this S3 bucket instead (prefix: CCA_EVIDENCE_S3_PREFIX, default evidence)
+  CCA_EVIDENCE_AWS_PROFILE  The AWS profile for the evidence bucket; it must differ from AWS_PROFILE
   GITHUB_TOKEN          GitHub token; when unset, the GitHub CLI's current login is used
   AWS_PROFILE           AWS profile for the read-only collector role; AWS_REGION sets the Region
   CCA_COLLECT_INTERVAL  How often the worker collects each job (default 24h)
   CCA_WORKERS           Collection runs made at the same time (default 4)
   CCA_COOKIE_SECURE     Set to 1 when serving over HTTPS
 
-migrate and users are setup commands and take no CCA_USER.
+migrate, users and evidence are setup commands and take no CCA_USER.
 `
 
 // errUsage marks an error caused by how the command was invoked.
@@ -101,6 +109,14 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		err = runChecks(args[1:], stdout)
 	case "serve":
 		err = runServe(ctx, args[1:], stdout)
+	case "package":
+		err = runPackage(ctx, args[1:], stdout)
+	case "study":
+		err = runStudy(args[1:], stdout)
+	case "evidence":
+		err = runEvidence(ctx, args[1:], stdout)
+	case "reproduce":
+		err = runReproduce(ctx, args[1:], stdout)
 	case "export":
 		err = runExport(ctx, args[1:], stdout)
 	case "users":
@@ -119,6 +135,23 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	return 1
+}
+
+func runStudy(args []string, stdout io.Writer) error {
+	if len(args) != 1 || args[0] != "dedup" {
+		return fmt.Errorf("%w: expected \"study dedup\"", errUsage)
+	}
+	dir, err := os.MkdirTemp("", "cca-study-")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = os.RemoveAll(dir) }()
+	result, err := study.Run(study.Default, dir)
+	if err != nil {
+		return err
+	}
+	fmt.Fprint(stdout, result.Markdown(study.Hardware()))
+	return nil
 }
 
 func runRequirements(args []string, stdout io.Writer) error {

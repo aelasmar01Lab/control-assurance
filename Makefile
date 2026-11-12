@@ -1,4 +1,4 @@
-.PHONY: build test lint vuln db-up db-down migrate packs guide serve
+.PHONY: build test lint vuln db-up db-down migrate packs guide study serve
 
 # Local development database; matches compose.yaml and .env.example.
 DATABASE_URL ?= postgres://cca:cca_local_only@127.0.0.1:5433/cca?sslmode=disable
@@ -37,6 +37,10 @@ guide:
 	go run ./cmd/cca checks guide > docs/checks.md
 	go run ./cmd/cca permissions > docs/permissions.md
 	go run ./cmd/cca faults > docs/faults.md
+
+# Regenerate the deduplication case study. Needs no database and no network.
+study:
+	go run ./cmd/cca study dedup > docs/dedup-study.md
 
 serve: build
 	bin/cca serve
