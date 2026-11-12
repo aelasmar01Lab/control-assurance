@@ -1,0 +1,467 @@
+# Mappings from controls to NIST CSF 2.0 subcategories.
+# Pilot: only PR.AA (identity management, authentication and access control)
+# has been mapped. Edit freely; sign what you have reviewed with "cca review sign".
+framework: nist-csf
+version: "2.0"
+mappings:
+
+  - control: access-unique-identities
+    requirement: PR.AA-01
+    strength: partial
+    rationale: >-
+      Assigning each account to one named person is how the organization knows
+      whose identity it is managing.
+    limitation: >-
+      PR.AA-01 also covers the identities of services and hardware, and the
+      issuing, changing and revoking of credentials. This control covers human
+      accounts only and says nothing of their lifecycle.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-request-approval
+    requirement: PR.AA-01
+    strength: partial
+    rationale: >-
+      A recorded approval before access is granted is the issuing step of
+      managing an identity.
+    limitation: >-
+      It covers issuing only. Changing and revoking identities, and service
+      and hardware identities, are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-offboarding-removal
+    requirement: PR.AA-01
+    strength: partial
+    rationale: >-
+      Disabling a leaver's accounts is the revoking step of managing
+      identities and credentials.
+    limitation: >-
+      It covers people who leave. Credentials that should be revoked for other
+      reasons, and service and hardware identities, are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: credential-lifecycle
+    requirement: PR.AA-01
+    strength: partial
+    rationale: >-
+      Finding console passwords and access keys nobody uses is part of
+      managing credentials in the cloud account.
+    limitation: >-
+      It reads IAM users in one cloud account. It does not see roles,
+      federated sessions, the code host or hardware, and it shows last use,
+      not whether the credential is still needed.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-key-age
+    requirement: PR.AA-01
+    strength: partial
+    rationale: >-
+      Keeping access keys under 90 days old is credential management for the
+      cloud account's IAM users.
+    limitation: >-
+      It covers the age of one kind of credential in one system. Issuing,
+      revoking, and service and hardware identities are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-workload-roles
+    requirement: PR.AA-01
+    strength: partial
+    rationale: >-
+      Giving automation a role to assume is how the organization manages the
+      identities of its services.
+    limitation: >-
+      It covers services that call the cloud account. Human and hardware
+      identities, and services elsewhere, are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-privileged-inventory
+    requirement: PR.AA-01
+    strength: supporting
+    rationale: >-
+      A list of administrative identities with their owners is a record the
+      organization needs in order to manage them.
+    limitation: >-
+      A list shows that the identities are known, not that they are issued,
+      changed or revoked under any process.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-identity-proofing
+    requirement: PR.AA-02
+    strength: partial
+    rationale: >-
+      Confirming who a person is before issuing their account is identity
+      proofing.
+    limitation: >-
+      PR.AA-02 also asks that the proofed identity be bound to its
+      credentials, and that proofing fit the context of the interaction.
+      Neither is shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-unique-identities
+    requirement: PR.AA-02
+    strength: supporting
+    rationale: >-
+      An account that belongs to exactly one person is a precondition for
+      binding a proofed identity to a credential.
+    limitation: >-
+      It shows that each account has one named person, not that the person was
+      proofed or how the credential was bound to them.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: human-access
+    requirement: PR.AA-03
+    strength: partial
+    rationale: >-
+      Multi-factor authentication on every console password, and on the root
+      user, is authentication of the cloud account's users.
+    limitation: >-
+      It covers console sign-in by IAM users and root in one cloud account.
+      Federated users, services and hardware are not seen.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-code-host-two-factor
+    requirement: PR.AA-03
+    strength: partial
+    rationale: >-
+      Requiring two-factor authentication of every member is authentication of
+      the code host's users.
+    limitation: >-
+      It covers people signing in to the code host. Tokens, deploy keys and
+      other services that authenticate to it, and hardware, are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-single-sign-on
+    requirement: PR.AA-03
+    strength: partial
+    rationale: >-
+      Signing in through one identity provider is how users of every in-scope
+      system are authenticated.
+    limitation: >-
+      It shows where users authenticate, not how strongly. Services and
+      hardware are not covered.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-workload-roles
+    requirement: PR.AA-03
+    strength: partial
+    rationale: >-
+      A workload that assumes a role authenticates with short-lived
+      credentials each time it calls the cloud account.
+    limitation: >-
+      It covers services calling the cloud account. Users, hardware, and
+      services that call other systems are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-password-length
+    requirement: PR.AA-03
+    strength: supporting
+    rationale: >-
+      A minimum password length makes the password factor of console
+      authentication harder to guess.
+    limitation: >-
+      Password length is one property of one factor. It does not show that
+      users, services or hardware are authenticated.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-permissions-through-roles
+    requirement: PR.AA-05
+    strength: partial
+    rationale: >-
+      Granting permissions through groups and roles is how permissions in the
+      cloud account are managed by job function.
+    limitation: >-
+      It shows how permissions are attached, not what they allow. A written
+      policy, review, least privilege and separation of duties are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-no-unrestricted-policy
+    requirement: PR.AA-05
+    strength: partial
+    rationale: >-
+      The absence of a policy that allows everything is a floor under least
+      privilege in the cloud account.
+    limitation: >-
+      It rules out only the widest possible policy. A policy can be far too
+      broad without allowing everything, and AWS-managed policies are not
+      read.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-review-periodic
+    requirement: PR.AA-05
+    strength: partial
+    rationale: >-
+      A quarterly review of every account with a recorded decision is the
+      'reviewed' part of PR.AA-05.
+    limitation: >-
+      It reviews accounts, not each permission an account holds, and it does
+      not show that permissions are defined in a policy or enforced.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-role-change
+    requirement: PR.AA-05
+    strength: partial
+    rationale: >-
+      Removing permissions a new role does not need keeps entitlements matched
+      to the job, which is managing them.
+    limitation: >-
+      It covers role changes only. Permissions that were too broad from the
+      start are not found by it.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-privileged-inventory
+    requirement: PR.AA-05
+    strength: partial
+    rationale: >-
+      Naming an owner and a purpose for every administrative identity is
+      managing the highest entitlements.
+    limitation: >-
+      It covers administrative rights only, and a list does not show that the
+      rights are the least the purpose needs.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-application-roles
+    requirement: PR.AA-05
+    strength: partial
+    rationale: >-
+      An explicit allow rule per role, refused to all others, is authorization
+      that is defined and enforced in this application.
+    limitation: >-
+      It covers this application only. It shows the rules are enforced as
+      written, not that the rules themselves are least privilege, and it
+      involves no review.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-separation-of-duties
+    requirement: PR.AA-05
+    strength: partial
+    rationale: >-
+      Stopping a requester from approving their own request is separation of
+      duties, which PR.AA-05 names.
+    limitation: >-
+      It covers two decisions in this application. Separation of duties in the
+      cloud account and the code host is not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-collector-read-only
+    requirement: PR.AA-05
+    strength: partial
+    rationale: >-
+      A collector role limited to read actions is least privilege applied to
+      one service identity.
+    limitation: >-
+      It covers one role. It says nothing about the permissions of any other
+      identity.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-root-not-used
+    requirement: PR.AA-05
+    strength: supporting
+    rationale: >-
+      Not using the root user keeps everyday work on identities whose
+      permissions can be limited.
+    limitation: >-
+      It shows the unrestricted identity is idle, not that the identities used
+      instead hold least privilege.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-emergency-use-recorded
+    requirement: PR.AA-05
+    strength: supporting
+    rationale: >-
+      Recording each use of the root user makes use of the one unrestricted
+      identity reviewable.
+    limitation: >-
+      A record of use is not a limit on permissions, and it covers the root
+      user only.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""

@@ -1,0 +1,24 @@
+key: access-permissions-through-roles
+title: Permissions granted through groups or roles
+statement: >-
+  No IAM user in the cloud account has a permissions policy attached to it
+  directly; permissions come from groups or roles.
+risk: >-
+  Permissions drift person by person, so nobody can say what a job function is
+  allowed to do.
+owner_role: control-owner
+type: automated
+checks: []
+evidence_expectation: >-
+  The policies attached to each IAM user, read from the cloud account at least
+  every 48 hours.
+freshness_hours: 48
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: ""
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

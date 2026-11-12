@@ -1,0 +1,27 @@
+key: access-separation-of-duties
+title: Requester cannot approve their own request
+statement: >-
+  In this application, the person who requests an exception or submits
+  evidence cannot be the person who approves it.
+risk: >-
+  One person both asks for a risk to be accepted and accepts it.
+owner_role: control-owner
+type: manual
+checks: []
+manual_evidence:
+  expectation: >-
+    An export of the decision log for the period, with the requester and the
+    approver of each exception and each evidence review.
+  validity_months: 12
+evidence_expectation: >-
+  The decision log, showing a different person as requester and approver on
+  every decision.
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: ""
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

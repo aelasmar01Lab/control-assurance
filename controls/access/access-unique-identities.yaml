@@ -1,0 +1,28 @@
+key: access-unique-identities
+title: One identity per person
+statement: >-
+  Every account that a person uses to sign in to the cloud account, the code
+  host or this application is assigned to exactly one named person.
+risk: >-
+  An action cannot be traced to the person who took it, because several people
+  share the account.
+owner_role: control-owner
+type: manual
+checks: []
+manual_evidence:
+  expectation: >-
+    A dated export or list of the human accounts on each in-scope system, with
+    the person each belongs to.
+  validity_months: 3
+evidence_expectation: >-
+  A dated list of every human account on each in-scope system, each with the
+  name of the one person who uses it.
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: ""
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

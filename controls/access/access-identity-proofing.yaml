@@ -1,0 +1,30 @@
+key: access-identity-proofing
+title: Identity confirmed before an account is issued
+statement: >-
+  Before an account is issued, the system's administrator confirms who the
+  person is through a channel other than the request itself.
+risk: >-
+  An account is issued to someone who is not who they claim to be.
+owner_role: control-owner
+type: manual
+checks: []
+manual_evidence:
+  expectation: >-
+    A dated record, for each new account in the period, of who confirmed the
+    person's identity and by what means.
+  validity_months: 12
+evidence_expectation: >-
+  For each account issued in the period, a dated record of who confirmed the
+  person's identity and how.
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: >-
+  The lab has one person. This control describes what would be observed with
+  more than one; decide whether it applies to the lab as it is, or should read
+  applies_to_lab: no with a reason.
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

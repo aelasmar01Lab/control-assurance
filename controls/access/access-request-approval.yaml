@@ -1,0 +1,26 @@
+key: access-request-approval
+title: Access granted on recorded approval
+statement: >-
+  Access to an in-scope system is granted only after the system's owner has
+  approved the request in writing.
+risk: A person holds access that nobody decided they should have.
+owner_role: control-owner
+type: manual
+checks: []
+manual_evidence:
+  expectation: >-
+    The access requests made in the period, each with its approval, approver
+    and date.
+  validity_months: 12
+evidence_expectation: >-
+  For each grant of access in the period, a dated request and the owner's
+  dated approval.
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: ""
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

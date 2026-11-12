@@ -1,0 +1,27 @@
+key: access-review-periodic
+title: Quarterly access review
+statement: >-
+  Every account on each in-scope system is reviewed at least once a quarter,
+  with a recorded decision to keep or remove it.
+risk: >-
+  Access that is no longer needed stays in place because nobody looks.
+owner_role: control-owner
+type: manual
+checks: []
+manual_evidence:
+  expectation: >-
+    A dated access review for each in-scope system: every account, the
+    decision to keep or remove it, and who decided.
+  validity_months: 3
+evidence_expectation: >-
+  A dated review record for each in-scope system, listing every account and
+  the decision made about it.
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: ""
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

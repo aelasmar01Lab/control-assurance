@@ -1,0 +1,22 @@
+key: access-collector-read-only
+title: Collector role is read-only
+statement: >-
+  The role this application's collector assumes in the cloud account allows
+  read actions only.
+risk: The tool that watches the account is able to change it.
+owner_role: control-owner
+type: automated
+checks: []
+evidence_expectation: >-
+  The policy documents attached to the collector role, read from the cloud
+  account at least every 48 hours.
+freshness_hours: 48
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: ""
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

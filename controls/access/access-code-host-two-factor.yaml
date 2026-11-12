@@ -1,0 +1,22 @@
+key: access-code-host-two-factor
+title: Two-factor required on the code host
+statement: >-
+  The code hosting organization requires two-factor authentication of every
+  member.
+risk: A stolen password alone is enough to push code.
+owner_role: control-owner
+type: automated
+checks: []
+evidence_expectation: >-
+  The organization's two-factor requirement setting, read from the code host
+  at least every 48 hours.
+freshness_hours: 48
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: ""
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

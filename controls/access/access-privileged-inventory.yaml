@@ -1,0 +1,28 @@
+key: access-privileged-inventory
+title: Named list of administrators
+statement: >-
+  Every identity with administrative rights in the cloud account or the code
+  host is on a list that names the person answerable for it and why it has
+  those rights.
+risk: >-
+  Administrative rights are held by identities nobody can account for.
+owner_role: control-owner
+type: manual
+checks: []
+manual_evidence:
+  expectation: >-
+    A dated list of the administrative identities in the cloud account and the
+    code host, each with an owner and a purpose.
+  validity_months: 3
+evidence_expectation: >-
+  A dated list of every administrative identity in the cloud account and the
+  code host, with its owner and purpose.
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: ""
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

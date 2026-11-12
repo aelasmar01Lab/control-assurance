@@ -1,0 +1,28 @@
+key: access-offboarding-removal
+title: Access removed when a person leaves
+statement: >-
+  When a person leaves, their accounts on every in-scope system are disabled
+  or deleted within one business day.
+risk: A person who has left can still sign in.
+owner_role: control-owner
+type: manual
+checks: []
+manual_evidence:
+  expectation: >-
+    For each person who left in the period: the leaving date, and the date
+    each of their accounts was disabled or deleted.
+  validity_months: 12
+evidence_expectation: >-
+  For each departure in the period, the leaving date and the date each of the
+  person's accounts was disabled or deleted.
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: >-
+  One business day is the agent's choice of deadline. Set the deadline the lab
+  would keep.
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

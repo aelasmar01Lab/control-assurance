@@ -1,0 +1,26 @@
+key: access-application-roles
+title: Every application action checked against a role
+statement: >-
+  Every action in this application is allowed to a role by an explicit rule
+  and refused to every other role.
+risk: A user does something their role was never meant to allow.
+owner_role: control-owner
+type: manual
+checks: []
+manual_evidence:
+  expectation: >-
+    The permission matrix (docs/permissions.md) and the passing output of the
+    allow and deny tests for the release in use.
+  validity_months: 12
+evidence_expectation: >-
+  The generated permission matrix and the output of the tests that try each
+  action as each role.
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: ""
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

@@ -12,7 +12,7 @@ A control is something the lab does to reduce a risk. A check is one narrow asse
 - **partial**: the control covers part of what the requirement asks for.
 - **supporting**: the control is related evidence, and does not establish the requirement.
 
-Reviewed so far: 0 of 8 controls and 0 of 8 mappings.
+Reviewed so far: 0 of 27 controls and 0 of 32 mappings.
 
 ## How a control's state is derived
 
@@ -31,6 +31,263 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 
 ## Controls
 
+### Every application action checked against a role (`access-application-roles`)
+
+| | |
+| --- | --- |
+| Statement | Every action in this application is allowed to a role by an explicit rule and refused to every other role. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | A user does something their role was never meant to allow. |
+| Owner | control-owner |
+| Evidence expected | The generated permission matrix and the output of the tests that try each action as each role. |
+| Rests on | manual evidence (manual evidence, valid 12 months) |
+| Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. An explicit allow rule per role, refused to all others, is authorization that is defined and enforced in this application. **Limitation:** It covers this application only. It shows the rules are enforced as written, not that the rules themselves are least privilege, and it involves no review. |
+
+### Two-factor required on the code host (`access-code-host-two-factor`)
+
+| | |
+| --- | --- |
+| Statement | The code hosting organization requires two-factor authentication of every member. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, automated |
+| Risk addressed | A stolen password alone is enough to push code. |
+| Owner | control-owner |
+| Evidence expected | The organization's two-factor requirement setting, read from the code host at least every 48 hours. |
+| Rests on |  |
+| Evidence window | 48 hours |
+| Maps to nist-csf PR.AA-03 | **partial**, draft, not reviewed. Requiring two-factor authentication of every member is authentication of the code host's users. **Limitation:** It covers people signing in to the code host. Tokens, deploy keys and other services that authenticate to it, and hardware, are not shown. |
+
+### Collector role is read-only (`access-collector-read-only`)
+
+| | |
+| --- | --- |
+| Statement | The role this application's collector assumes in the cloud account allows read actions only. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, automated |
+| Risk addressed | The tool that watches the account is able to change it. |
+| Owner | control-owner |
+| Evidence expected | The policy documents attached to the collector role, read from the cloud account at least every 48 hours. |
+| Rests on |  |
+| Evidence window | 48 hours |
+| Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. A collector role limited to read actions is least privilege applied to one service identity. **Limitation:** It covers one role. It says nothing about the permissions of any other identity. |
+
+### Emergency access recorded (`access-emergency-use-recorded`)
+
+| | |
+| --- | --- |
+| Statement | Each use of the cloud account's root user is recorded within one business day, with the reason and the person who used it. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | Use of the most powerful identity goes unexplained. |
+| Owner | control-owner |
+| Evidence expected | A log of root user use: date, person, reason. An empty log for a period with no root use is evidence too. |
+| Rests on | manual evidence (manual evidence, valid 12 months) |
+| Maps to nist-csf PR.AA-05 | **supporting**, draft, not reviewed. Recording each use of the root user makes use of the one unrestricted identity reviewable. **Limitation:** A record of use is not a limit on permissions, and it covers the root user only. |
+
+### Identity confirmed before an account is issued (`access-identity-proofing`)
+
+| | |
+| --- | --- |
+| Statement | Before an account is issued, the system's administrator confirms who the person is through a channel other than the request itself. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | An account is issued to someone who is not who they claim to be. |
+| Owner | control-owner |
+| Evidence expected | For each account issued in the period, a dated record of who confirmed the person's identity and how. |
+| Rests on | manual evidence (manual evidence, valid 12 months) |
+| Maps to nist-csf PR.AA-02 | **partial**, draft, not reviewed. Confirming who a person is before issuing their account is identity proofing. **Limitation:** PR.AA-02 also asks that the proofed identity be bound to its credentials, and that proofing fit the context of the interaction. Neither is shown. |
+
+### Access keys rotated within 90 days (`access-key-age`)
+
+| | |
+| --- | --- |
+| Statement | Every active IAM user access key in the cloud account is less than 90 days old. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, automated |
+| Risk addressed | A key that leaked long ago still works. |
+| Owner | control-owner |
+| Evidence expected | Access key creation dates in the IAM credential report, collected at least every 48 hours. |
+| Rests on |  |
+| Evidence window | 48 hours |
+| Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. Keeping access keys under 90 days old is credential management for the cloud account's IAM users. **Limitation:** It covers the age of one kind of credential in one system. Issuing, revoking, and service and hardware identities are not shown. |
+
+### No policy allowing everything (`access-no-unrestricted-policy`)
+
+| | |
+| --- | --- |
+| Statement | No customer-managed IAM policy in the cloud account allows every action on every resource. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, automated |
+| Risk addressed | One attached policy gives an identity full control of the account. |
+| Owner | control-owner |
+| Evidence expected | Every customer-managed IAM policy document, read from the cloud account at least every 48 hours. |
+| Rests on |  |
+| Evidence window | 48 hours |
+| Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. The absence of a policy that allows everything is a floor under least privilege in the cloud account. **Limitation:** It rules out only the widest possible policy. A policy can be far too broad without allowing everything, and AWS-managed policies are not read. |
+
+### Access removed when a person leaves (`access-offboarding-removal`)
+
+| | |
+| --- | --- |
+| Statement | When a person leaves, their accounts on every in-scope system are disabled or deleted within one business day. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | A person who has left can still sign in. |
+| Owner | control-owner |
+| Evidence expected | For each departure in the period, the leaving date and the date each of the person's accounts was disabled or deleted. |
+| Rests on | manual evidence (manual evidence, valid 12 months) |
+| Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. Disabling a leaver's accounts is the revoking step of managing identities and credentials. **Limitation:** It covers people who leave. Credentials that should be revoked for other reasons, and service and hardware identities, are not shown. |
+
+### Minimum password length of 14 (`access-password-length`)
+
+| | |
+| --- | --- |
+| Statement | The cloud account's IAM password policy requires passwords of at least 14 characters. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, automated |
+| Risk addressed | A console password is short enough to guess. |
+| Owner | control-owner |
+| Evidence expected | The IAM account password policy, read from the cloud account at least every 48 hours. |
+| Rests on |  |
+| Evidence window | 48 hours |
+| Maps to nist-csf PR.AA-03 | **supporting**, draft, not reviewed. A minimum password length makes the password factor of console authentication harder to guess. **Limitation:** Password length is one property of one factor. It does not show that users, services or hardware are authenticated. |
+
+### Permissions granted through groups or roles (`access-permissions-through-roles`)
+
+| | |
+| --- | --- |
+| Statement | No IAM user in the cloud account has a permissions policy attached to it directly; permissions come from groups or roles. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, automated |
+| Risk addressed | Permissions drift person by person, so nobody can say what a job function is allowed to do. |
+| Owner | control-owner |
+| Evidence expected | The policies attached to each IAM user, read from the cloud account at least every 48 hours. |
+| Rests on |  |
+| Evidence window | 48 hours |
+| Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. Granting permissions through groups and roles is how permissions in the cloud account are managed by job function. **Limitation:** It shows how permissions are attached, not what they allow. A written policy, review, least privilege and separation of duties are not shown. |
+
+### Named list of administrators (`access-privileged-inventory`)
+
+| | |
+| --- | --- |
+| Statement | Every identity with administrative rights in the cloud account or the code host is on a list that names the person answerable for it and why it has those rights. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | Administrative rights are held by identities nobody can account for. |
+| Owner | control-owner |
+| Evidence expected | A dated list of every administrative identity in the cloud account and the code host, with its owner and purpose. |
+| Rests on | manual evidence (manual evidence, valid 3 months) |
+| Maps to nist-csf PR.AA-01 | **supporting**, draft, not reviewed. A list of administrative identities with their owners is a record the organization needs in order to manage them. **Limitation:** A list shows that the identities are known, not that they are issued, changed or revoked under any process. |
+| Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. Naming an owner and a purpose for every administrative identity is managing the highest entitlements. **Limitation:** It covers administrative rights only, and a list does not show that the rights are the least the purpose needs. |
+
+### Access granted on recorded approval (`access-request-approval`)
+
+| | |
+| --- | --- |
+| Statement | Access to an in-scope system is granted only after the system's owner has approved the request in writing. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | A person holds access that nobody decided they should have. |
+| Owner | control-owner |
+| Evidence expected | For each grant of access in the period, a dated request and the owner's dated approval. |
+| Rests on | manual evidence (manual evidence, valid 12 months) |
+| Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. A recorded approval before access is granted is the issuing step of managing an identity. **Limitation:** It covers issuing only. Changing and revoking identities, and service and hardware identities, are not shown. |
+
+### Quarterly access review (`access-review-periodic`)
+
+| | |
+| --- | --- |
+| Statement | Every account on each in-scope system is reviewed at least once a quarter, with a recorded decision to keep or remove it. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | Access that is no longer needed stays in place because nobody looks. |
+| Owner | control-owner |
+| Evidence expected | A dated review record for each in-scope system, listing every account and the decision made about it. |
+| Rests on | manual evidence (manual evidence, valid 3 months) |
+| Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. A quarterly review of every account with a recorded decision is the 'reviewed' part of PR.AA-05. **Limitation:** It reviews accounts, not each permission an account holds, and it does not show that permissions are defined in a policy or enforced. |
+
+### Access adjusted when a role changes (`access-role-change`)
+
+| | |
+| --- | --- |
+| Statement | When a person changes role, permissions the new role does not need are removed within five business days. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | A person accumulates the permissions of every role they have held. |
+| Owner | control-owner |
+| Evidence expected | For each role change in the period, the date of the change and the date the permissions were adjusted. |
+| Rests on | manual evidence (manual evidence, valid 12 months) |
+| Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. Removing permissions a new role does not need keeps entitlements matched to the job, which is managing them. **Limitation:** It covers role changes only. Permissions that were too broad from the start are not found by it. |
+
+### Root user not used (`access-root-not-used`)
+
+| | |
+| --- | --- |
+| Statement | The root user of the cloud account has not signed in or made an API call in the last 90 days. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, automated |
+| Risk addressed | The one identity that cannot be restricted is used for everyday work. |
+| Owner | control-owner |
+| Evidence expected | The root user's last-used dates in the IAM credential report, collected at least every 48 hours. |
+| Rests on |  |
+| Evidence window | 48 hours |
+| Maps to nist-csf PR.AA-05 | **supporting**, draft, not reviewed. Not using the root user keeps everyday work on identities whose permissions can be limited. **Limitation:** It shows the unrestricted identity is idle, not that the identities used instead hold least privilege. |
+
+### Requester cannot approve their own request (`access-separation-of-duties`)
+
+| | |
+| --- | --- |
+| Statement | In this application, the person who requests an exception or submits evidence cannot be the person who approves it. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | One person both asks for a risk to be accepted and accepts it. |
+| Owner | control-owner |
+| Evidence expected | The decision log, showing a different person as requester and approver on every decision. |
+| Rests on | manual evidence (manual evidence, valid 12 months) |
+| Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. Stopping a requester from approving their own request is separation of duties, which PR.AA-05 names. **Limitation:** It covers two decisions in this application. Separation of duties in the cloud account and the code host is not shown. |
+
+### Sign-in through one identity provider (`access-single-sign-on`)
+
+| | |
+| --- | --- |
+| Statement | People sign in to every in-scope system through one identity provider. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | Each system keeps its own passwords, so removing a person means finding every one of them. |
+| Owner | control-owner |
+| Evidence expected | The sign-in configuration of each in-scope system, showing the identity provider it trusts. |
+| Rests on | manual evidence (manual evidence, valid 12 months) |
+| Maps to nist-csf PR.AA-03 | **partial**, draft, not reviewed. Signing in through one identity provider is how users of every in-scope system are authenticated. **Limitation:** It shows where users authenticate, not how strongly. Services and hardware are not covered. |
+
+### One identity per person (`access-unique-identities`)
+
+| | |
+| --- | --- |
+| Statement | Every account that a person uses to sign in to the cloud account, the code host or this application is assigned to exactly one named person. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | An action cannot be traced to the person who took it, because several people share the account. |
+| Owner | control-owner |
+| Evidence expected | A dated list of every human account on each in-scope system, each with the name of the one person who uses it. |
+| Rests on | manual evidence (manual evidence, valid 3 months) |
+| Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. Assigning each account to one named person is how the organization knows whose identity it is managing. **Limitation:** PR.AA-01 also covers the identities of services and hardware, and the issuing, changing and revoking of credentials. This control covers human accounts only and says nothing of their lifecycle. |
+| Maps to nist-csf PR.AA-02 | **supporting**, draft, not reviewed. An account that belongs to exactly one person is a precondition for binding a proofed identity to a credential. **Limitation:** It shows that each account has one named person, not that the person was proofed or how the credential was bound to them. |
+
+### Automation uses roles, not user keys (`access-workload-roles`)
+
+| | |
+| --- | --- |
+| Statement | Automation that calls the cloud account does so by assuming a role; no IAM user access key is held by a workload. |
+| Review | **draft, not reviewed** |
+| Domain and type | access, manual |
+| Risk addressed | A long-lived key sits in a pipeline or on a machine, where it can be copied. |
+| Owner | control-owner |
+| Evidence expected | A dated list of every workload that calls the cloud account and the role each assumes. |
+| Rests on | manual evidence (manual evidence, valid 12 months) |
+| Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. Giving automation a role to assume is how the organization manages the identities of its services. **Limitation:** It covers services that call the cloud account. Human and hardware identities, and services elsewhere, are not shown. |
+| Maps to nist-csf PR.AA-03 | **partial**, draft, not reviewed. A workload that assumes a role authenticates with short-lived credentials each time it calls the cloud account. **Limitation:** It covers services calling the cloud account. Users, hardware, and services that call other systems are not shown. |
+
 ### Credential lifecycle (`credential-lifecycle`)
 
 | | |
@@ -44,6 +301,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on | AWS-02 |
 | Evidence window | 48 hours |
 | Maps to mvsp 4.2 | **partial**, draft, not reviewed. Finding passwords and keys that have gone unused supports removing access that is no longer needed. **Limitation:** It shows last use, not whether access is still needed, and it does not see roles or federated sessions. |
+| Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. Finding console passwords and access keys nobody uses is part of managing credentials in the cloud account. **Limitation:** It reads IAM users in one cloud account. It does not see roles, federated sessions, the code host or hardware, and it shows last use, not whether the credential is still needed. |
 
 ### Human access (`human-access`)
 
@@ -58,6 +316,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on | AWS-01 |
 | Evidence window | 48 hours |
 | Maps to mvsp 4.2 | **partial**, draft, not reviewed. MFA on every console password limits what a stolen password allows. **Limitation:** MVSP 4.2 covers logical access more widely: least privilege, access review and removal of unused accounts. Federated users are not seen. |
+| Maps to nist-csf PR.AA-03 | **partial**, draft, not reviewed. Multi-factor authentication on every console password, and on the root user, is authentication of the cloud account's users. **Limitation:** It covers console sign-in by IAM users and root in one cloud account. Federated users, services and hardware are not seen. |
 
 ### Change management (`change-management`)
 
@@ -174,3 +433,116 @@ Each requirement is either covered in part by a control, or tracked with a reaso
 | 4.2 Logical access | Credential lifecycle (partial; draft, not reviewed), Human access (partial; draft, not reviewed) | | | control-owner | Applicable. | See the control. | |
 | 4.3 Sub-processors | | out of scope | draft, not reviewed | control-owner | Not applicable. | None. | The lab holds no customer data, so no third party has access to any. |
 | 4.4 Backup and disaster recovery | Backup and recovery (partial; draft, not reviewed) | | | control-owner | Applicable. | See the control. | |
+
+## Every NIST Cybersecurity Framework (CSF) requirement (2.0)
+
+Each requirement is either covered in part by a control, or tracked with a reason. "Tracked manually" means the work is done or judged outside this system, with no evidence held here. None of the three tracking statuses is a positive state.
+
+| Requirement | Covered by | Tracking | Review | Owner | Applicability | Evidence expected | Rationale |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| GV.OC-01 The organizational mission is understood and informs cybersecurity risk management | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.OC-02 Internal and external stakeholders are understood, and their needs and expectations regarding cybersecurity risk management are understood and considered | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.OC-03 Legal, regulatory, and contractual requirements regarding cybersecurity - including privacy and civil liberties obligations - are understood and managed | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.OC-04 Critical objectives, capabilities, and services that external stakeholders depend on or expect from the organization are understood and communicated | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.OC-05 Outcomes, capabilities, and services that the organization depends on are understood and communicated | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.RM-01 Risk management objectives are established and agreed to by organizational stakeholders | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.RM-02 Risk appetite and risk tolerance statements are established, communicated, and maintained | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.RM-03 Cybersecurity risk management activities and outcomes are included in enterprise risk management processes | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.RM-04 Strategic direction that describes appropriate risk response options is established and communicated | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.RM-05 Lines of communication across the organization are established for cybersecurity risks, including risks from suppliers and other third parties | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.RM-06 A standardized method for calculating, documenting, categorizing, and prioritizing cybersecurity risks is established and communicated | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.RM-07 Strategic opportunities (i.e., positive risks) are characterized and are included in organizational cybersecurity risk discussions | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.RR-01 Organizational leadership is responsible and accountable for cybersecurity risk and fosters a culture that is risk-aware, ethical, and continually improving | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.RR-02 Roles, responsibilities, and authorities related to cybersecurity risk management are established, communicated, understood, and enforced | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.RR-03 Adequate resources are allocated commensurate with the cybersecurity risk strategy, roles, responsibilities, and policies | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.RR-04 Cybersecurity is included in human resources practices | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.PO-01 Policy for managing cybersecurity risks is established based on organizational context, cybersecurity strategy, and priorities and is communicated and enforced | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.PO-02 Policy for managing cybersecurity risks is reviewed, updated, communicated, and enforced to reflect changes in requirements, threats, technology, and organizational mission | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.OV-01 Cybersecurity risk management strategy outcomes are reviewed to inform and adjust strategy and direction | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.OV-02 The cybersecurity risk management strategy is reviewed and adjusted to ensure coverage of organizational requirements and risks | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.OV-03 Organizational cybersecurity risk management performance is evaluated and reviewed for adjustments needed | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.SC-01 A cybersecurity supply chain risk management program, strategy, objectives, policies, and processes are established and agreed to by organizational stakeholders | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.SC-02 Cybersecurity roles and responsibilities for suppliers, customers, and partners are established, communicated, and coordinated internally and externally | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.SC-03 Cybersecurity supply chain risk management is integrated into cybersecurity and enterprise risk management, risk assessment, and improvement processes | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.SC-04 Suppliers are known and prioritized by criticality | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.SC-05 Requirements to address cybersecurity risks in supply chains are established, prioritized, and integrated into contracts and other types of agreements with suppliers and other relevant third parties | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.SC-06 Planning and due diligence are performed to reduce risks before entering into formal supplier or other third-party relationships | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.SC-07 The risks posed by a supplier, their products and services, and other third parties are understood, recorded, prioritized, assessed, responded to, and monitored over the course of the relationship | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.SC-08 Relevant suppliers and other third parties are included in incident planning, response, and recovery activities | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.SC-09 Supply chain security practices are integrated into cybersecurity and enterprise risk management programs, and their performance is monitored throughout the technology product and service life cycle | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| GV.SC-10 Cybersecurity supply chain risk management plans include provisions for activities that occur after the conclusion of a partnership or service agreement | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.AM-01 Inventories of hardware managed by the organization are maintained | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.AM-02 Inventories of software, services, and systems managed by the organization are maintained | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.AM-03 Representations of the organization's authorized network communication and internal and external network data flows are maintained | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.AM-04 Inventories of services provided by suppliers are maintained | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.AM-05 Assets are prioritized based on classification, criticality, resources, and impact on the mission | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.AM-07 Inventories of data and corresponding metadata for designated data types are maintained | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.AM-08 Systems, hardware, software, services, and data are managed throughout their life cycles | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.RA-01 Vulnerabilities in assets are identified, validated, and recorded | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.RA-02 Cyber threat intelligence is received from information sharing forums and sources | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.RA-03 Internal and external threats to the organization are identified and recorded | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.RA-04 Potential impacts and likelihoods of threats exploiting vulnerabilities are identified and recorded | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.RA-05 Threats, vulnerabilities, likelihoods, and impacts are used to understand inherent risk and inform risk response prioritization | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.RA-06 Risk responses are chosen, prioritized, planned, tracked, and communicated | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.RA-07 Changes and exceptions are managed, assessed for risk impact, recorded, and tracked | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.RA-08 Processes for receiving, analyzing, and responding to vulnerability disclosures are established | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.RA-09 The authenticity and integrity of hardware and software are assessed prior to acquisition and use | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.RA-10 Critical suppliers are assessed prior to acquisition | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.IM-01 Improvements are identified from evaluations | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.IM-02 Improvements are identified from security tests and exercises, including those done in coordination with suppliers and relevant third parties | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.IM-03 Improvements are identified from execution of operational processes, procedures, and activities | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| ID.IM-04 Incident response plans and other cybersecurity plans that affect operations are established, communicated, maintained, and improved | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.AA-01 Identities and credentials for authorized users, services, and hardware are managed by the organization | Access keys rotated within 90 days (partial; draft, not reviewed), Access removed when a person leaves (partial; draft, not reviewed), Named list of administrators (supporting; draft, not reviewed), Access granted on recorded approval (partial; draft, not reviewed), One identity per person (partial; draft, not reviewed), Automation uses roles, not user keys (partial; draft, not reviewed), Credential lifecycle (partial; draft, not reviewed) | | | control-owner | Applicable. | See the control. | |
+| PR.AA-02 Identities are proofed and bound to credentials based on the context of interactions | Identity confirmed before an account is issued (partial; draft, not reviewed), One identity per person (supporting; draft, not reviewed) | | | control-owner | Applicable. | See the control. | |
+| PR.AA-03 Users, services, and hardware are authenticated | Two-factor required on the code host (partial; draft, not reviewed), Minimum password length of 14 (supporting; draft, not reviewed), Sign-in through one identity provider (partial; draft, not reviewed), Automation uses roles, not user keys (partial; draft, not reviewed), Human access (partial; draft, not reviewed) | | | control-owner | Applicable. | See the control. | |
+| PR.AA-04 Identity assertions are protected, conveyed, and verified | | not implemented | draft, not reviewed | control-owner | Applicable once the lab has an identity provider. | The identity provider's signing configuration, and each system's settings for verifying assertions. | No identity provider issues assertions for the lab. Each system is signed in to directly, so there is no assertion to protect, convey or verify. |
+| PR.AA-05 Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties | Every application action checked against a role (partial; draft, not reviewed), Collector role is read-only (partial; draft, not reviewed), Emergency access recorded (supporting; draft, not reviewed), No policy allowing everything (partial; draft, not reviewed), Permissions granted through groups or roles (partial; draft, not reviewed), Named list of administrators (partial; draft, not reviewed), Quarterly access review (partial; draft, not reviewed), Access adjusted when a role changes (partial; draft, not reviewed), Root user not used (supporting; draft, not reviewed), Requester cannot approve their own request (partial; draft, not reviewed) | | | control-owner | Applicable. | See the control. | |
+| PR.AA-06 Physical access to assets is managed, monitored, and enforced commensurate with risk | | out of scope | draft, not reviewed | control-owner | Not applicable. | None. | The lab has no premises and owns no hardware. Physical access to the data centres is the cloud providers'. |
+| PR.AT-01 Personnel are provided with awareness and training so that they possess the knowledge and skills to perform general tasks with cybersecurity risks in mind | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.AT-02 Individuals in specialized roles are provided with awareness and training so that they possess the knowledge and skills to perform relevant tasks with cybersecurity risks in mind | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.DS-01 The confidentiality, integrity, and availability of data-at-rest are protected | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.DS-02 The confidentiality, integrity, and availability of data-in-transit are protected | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.DS-10 The confidentiality, integrity, and availability of data-in-use are protected | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.DS-11 Backups of data are created, protected, maintained, and tested | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.PS-01 Configuration management practices are established and applied | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.PS-02 Software is maintained, replaced, and removed commensurate with risk | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.PS-03 Hardware is maintained, replaced, and removed commensurate with risk | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.PS-04 Log records are generated and made available for continuous monitoring | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.PS-05 Installation and execution of unauthorized software are prevented | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.PS-06 Secure software development practices are integrated, and their performance is monitored throughout the software development life cycle | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.IR-01 Networks and environments are protected from unauthorized logical access and usage | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.IR-02 The organization's technology assets are protected from environmental threats | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.IR-03 Mechanisms are implemented to achieve resilience requirements in normal and adverse situations | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| PR.IR-04 Adequate resource capacity to ensure availability is maintained | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| DE.AE-02 Potentially adverse events are analyzed to better understand associated activities | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| DE.AE-03 Information is correlated from multiple sources | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| DE.AE-04 The estimated impact and scope of adverse events are understood | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| DE.AE-06 Information on adverse events is provided to authorized staff and tools | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| DE.AE-07 Cyber threat intelligence and other contextual information are integrated into the analysis | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| DE.AE-08 Incidents are declared when adverse events meet the defined incident criteria | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| DE.CM-01 Networks and network services are monitored to find potentially adverse events | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| DE.CM-02 The physical environment is monitored to find potentially adverse events | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| DE.CM-03 Personnel activity and technology usage are monitored to find potentially adverse events | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| DE.CM-06 External service provider activities and services are monitored to find potentially adverse events | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| DE.CM-09 Computing hardware and software, runtime environments, and their data are monitored to find potentially adverse events | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.MA-01 The incident response plan is executed in coordination with relevant third parties once an incident is declared | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.MA-02 Incident reports are triaged and validated | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.MA-03 Incidents are categorized and prioritized | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.MA-04 Incidents are escalated or elevated as needed | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.MA-05 The criteria for initiating incident recovery are applied | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.AN-03 Analysis is performed to establish what has taken place during an incident and the root cause of the incident | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.AN-06 Actions performed during an investigation are recorded, and the records' integrity and provenance are preserved | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.AN-07 Incident data and metadata are collected, and their integrity and provenance are preserved | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.AN-08 An incident's magnitude is estimated and validated | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.CO-02 Internal and external stakeholders are notified of incidents | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.CO-03 Information is shared with designated internal and external stakeholders | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.MI-01 Incidents are contained | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RS.MI-02 Incidents are eradicated | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RC.RP-01 The recovery portion of the incident response plan is executed once initiated from the incident response process | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RC.RP-02 Recovery actions are selected, scoped, prioritized, and performed | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RC.RP-03 The integrity of backups and other restoration assets is verified before using them for restoration | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RC.RP-04 Critical mission functions and cybersecurity risk management are considered to establish post-incident operational norms | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RC.RP-05 The integrity of restored assets is verified, systems and services are restored, and normal operating status is confirmed | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RC.RP-06 The end of incident recovery is declared based on criteria, and incident-related documentation is completed | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RC.CO-03 Recovery activities and progress in restoring operational capabilities are communicated to designated internal and external stakeholders | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |
+| RC.CO-04 Public updates on incident recovery are shared using approved methods and messaging | | not implemented | draft, not reviewed | control-owner | Not yet assessed. | Not yet stated. | No control has been drafted for this subcategory. The pilot covers PR.AA only; the rest is drafted in Wave 1. |

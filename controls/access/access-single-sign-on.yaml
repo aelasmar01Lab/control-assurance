@@ -1,0 +1,30 @@
+key: access-single-sign-on
+title: Sign-in through one identity provider
+statement: >-
+  People sign in to every in-scope system through one identity provider.
+risk: >-
+  Each system keeps its own passwords, so removing a person means finding
+  every one of them.
+owner_role: control-owner
+type: manual
+checks: []
+manual_evidence:
+  expectation: >-
+    For each in-scope system, a dated capture of its sign-in configuration
+    naming the identity provider.
+  validity_months: 12
+evidence_expectation: >-
+  The sign-in configuration of each in-scope system, showing the identity
+  provider it trusts.
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: >-
+  The lab has no identity provider yet; Phase 3 of the plan adds one. Until
+  then this control reads needs attention, which is true. Decide whether to
+  keep it now or add it with the provider.
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

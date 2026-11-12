@@ -65,10 +65,16 @@ request: there is none, and the database would refuse it too.
 
 ## 5. Every requirement, honestly (1 minute)
 
-Open **Requirements**. All 25 MVSP requirements are listed. Seven are
+Open **Frameworks**, then **Requirements** on Minimum Viable Secure
+Product. All 25 MVSP requirements are listed. Seven are
 covered in part by a control and show that control's state. The other
 eighteen say how they are tracked: manually, not implemented, or out of
-scope, each with a reason. None is shown as met.
+scope, each with a reason. None is shown as met. Every mapping and
+tracking entry says whether the maintainer has reviewed it.
+
+The overview lists more controls than the demo plays a history for. The
+access controls are drafts with no check behind them yet, so they read
+*not evaluated* or *needs attention*, never *supported*.
 
 ## 6. The review package (1 minute)
 

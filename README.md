@@ -57,7 +57,10 @@ To run it against a real lab instead, see
 | Accounts, sessions and four roles; one permission function with matrix tests | Implemented |
 | Manual evidence submission and review | Implemented |
 | Exceptions with mandatory expiry, remediation notes, decision log | Implemented |
-| Eight internal controls with derived state and a 48 hour evidence window | Implemented |
+| Eight internal controls backed by checks or reviewed evidence, with derived state and a 48 hour evidence window | Implemented |
+| Nineteen further controls in the access domain (the pilot), all drafts | Drafted. None has a check yet: the automated ones read *not evaluated*, the manual ones *needs attention* until evidence is submitted |
+| NIST CSF 2.0 pack: 106 subcategories with NIST's text, imported from NIST's reference-data export by a script in `tools/import/nist-csf` | Implemented |
+| NIST CSF 2.0 mappings | Pilot only: PR.AA (6 subcategories) is mapped or tracked. The other 100 subcategories carry a placeholder entry that says nothing has been drafted for them |
 | Controls, mappings and tracking entries as YAML files, validated against schemas and each other | Implemented |
 | Review contract: sign an entry, a signature covers its exact content, an edit after signing fails CI | Implemented |
 | Content reviewed by the maintainer | See [docs/review-queue.md](docs/review-queue.md) for the current count |
@@ -74,7 +77,8 @@ To run it against a real lab instead, see
 | This project's own MVSP self-assessment, generated | Implemented |
 | Content reviewed by anyone other than the maintainer | Not started |
 | Hosted demo, and a check of its own HTTPS and headers | Not started |
-| A second framework pack | Not started |
+| SOC 2 pack | Blocked: see [BLOCKED.md](BLOCKED.md) |
+| Every other framework | Not started |
 
 ## Documents
 
@@ -85,6 +89,7 @@ To run it against a real lab instead, see
 | [docs/review-queue.md](docs/review-queue.md) | What is waiting for the maintainer's review, and the command that signs each entry (generated) |
 | [docs/drafting-log.md](docs/drafting-log.md) | What the agent drafted in each unit of work, from which sources, and what it is least sure of |
 | [CLAUDE.md](CLAUDE.md) | The standing rules the agent works under |
+| [BLOCKED.md](BLOCKED.md) | Frameworks the agent could not source, and what is needed for each |
 | [docs/checks.md](docs/checks.md) | Each check: its assertion, source, and what a pass does and does not establish (generated) |
 | [docs/permissions.md](docs/permissions.md) | Who may do what (generated) |
 | [docs/faults.md](docs/faults.md) | Every injected fault, its error class and how it is retried (generated) |
@@ -192,13 +197,20 @@ the product is called compliant.
 
 ## Requirements
 
-`cca requirements status`, or the Frameworks page, lists all 25 MVSP
-requirements. Seven are covered in part by a control and take the worst
+`cca requirements status`, or the Frameworks page, lists every requirement
+of every pack. For MVSP that is all 25. Seven are covered in part by a control and take the worst
 state among their controls; the best a requirement can read is *partly
 evidenced*, because no mapping in this release is stronger than partial.
 The other eighteen show how they are tracked: manually, not implemented, or
 out of scope, each with a reason. None of those is a positive state, and
 nothing is shown as met.
+
+NIST CSF 2.0 is partway in. Its 106 subcategories are all listed, with
+NIST's text. Only the six under PR.AA (identity management, authentication
+and access control) have been assessed: four are mapped by draft controls,
+and two are tracked with a reason. The other 100 read *not implemented*
+with the rationale "No control has been drafted for this subcategory",
+which is a statement about this repository, not about the lab.
 
 One thing in the catalog is wrong at the source: the pinned upstream file
 gives requirement 2.1 (Single sign-on) the statement text of requirement
@@ -348,6 +360,7 @@ collected.
 | `internal/db` | Migrations runner |
 | `migrations/` | SQL migrations (goose format), embedded in the binary |
 | `packs/` | Framework packs (YAML) and their JSON Schema, embedded in the binary |
+| `tools/import/` | One script per imported framework, so an import can be repeated |
 | `docs/` | Check guide, permission matrix, fault table and case study (all generated), and decision records |
 | `deploy/aws` | IAM policies for the read-only collector role and the evidence store role |
 

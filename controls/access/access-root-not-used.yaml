@@ -1,0 +1,26 @@
+key: access-root-not-used
+title: Root user not used
+statement: >-
+  The root user of the cloud account has not signed in or made an API call in
+  the last 90 days.
+risk: >-
+  The one identity that cannot be restricted is used for everyday work.
+owner_role: control-owner
+type: automated
+checks: []
+evidence_expectation: >-
+  The root user's last-used dates in the IAM credential report, collected at
+  least every 48 hours.
+freshness_hours: 48
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: >-
+  AWS-02 reads the same report but asserts something else (credentials that
+  have gone unused). This control needs its own check; none is pointed at it
+  yet.
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

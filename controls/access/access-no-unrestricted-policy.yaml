@@ -1,0 +1,23 @@
+key: access-no-unrestricted-policy
+title: No policy allowing everything
+statement: >-
+  No customer-managed IAM policy in the cloud account allows every action on
+  every resource.
+risk: >-
+  One attached policy gives an identity full control of the account.
+owner_role: control-owner
+type: automated
+checks: []
+evidence_expectation: >-
+  Every customer-managed IAM policy document, read from the cloud account at
+  least every 48 hours.
+freshness_hours: 48
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: ""
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

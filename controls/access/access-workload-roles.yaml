@@ -1,0 +1,29 @@
+key: access-workload-roles
+title: Automation uses roles, not user keys
+statement: >-
+  Automation that calls the cloud account does so by assuming a role; no IAM
+  user access key is held by a workload.
+risk: >-
+  A long-lived key sits in a pipeline or on a machine, where it can be copied.
+owner_role: control-owner
+type: manual
+checks: []
+manual_evidence:
+  expectation: >-
+    A dated list of the workloads that call the cloud account, the role each
+    assumes, and a statement that none holds a user access key.
+  validity_months: 12
+evidence_expectation: >-
+  A dated list of every workload that calls the cloud account and the role
+  each assumes.
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: >-
+  This could become an automated control if every IAM user were tagged as a
+  person or a workload. As drafted it rests on a list a person keeps.
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""

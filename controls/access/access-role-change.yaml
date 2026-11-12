@@ -1,0 +1,29 @@
+key: access-role-change
+title: Access adjusted when a role changes
+statement: >-
+  When a person changes role, permissions the new role does not need are
+  removed within five business days.
+risk: >-
+  A person accumulates the permissions of every role they have held.
+owner_role: control-owner
+type: manual
+checks: []
+manual_evidence:
+  expectation: >-
+    For each role change in the period: its date, the permissions removed, and
+    the date they were removed.
+  validity_months: 12
+evidence_expectation: >-
+  For each role change in the period, the date of the change and the date the
+  permissions were adjusted.
+applies_to_lab: "yes"
+applies_reason: ""
+reviewer_note: >-
+  Five business days is the agent's choice of deadline. Set the deadline the
+  lab would keep.
+review:
+  status: draft
+  drafted_by: agent
+  reviewed_by: ""
+  reviewed_on: ""
+  content_sha256: ""
