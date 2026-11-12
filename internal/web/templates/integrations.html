@@ -1,0 +1,68 @@
+{{define "content"}}
+<section>
+  <h2>Integration health</h2>
+  <p class="note">Whether evidence is arriving. A problem here is a problem with collection: it is never a check result, and it changes none. A failed attempt leaves the previous result in place and lets its evidence age; after {{.Data.FreshnessHours}} hours without new evidence a job is stale.</p>
+  {{if .Data.MayCollect}}
+  <form method="post" action="/integrations/collect" class="inline">
+    <button type="submit">Queue collection now</button>
+    <span class="dim">Queues every job below. A running worker (<code>cca worker</code>) collects them; this site holds no source credentials.</span>
+  </form>
+  {{end}}
+  {{if .Data.Jobs}}
+  <div class="scroll"><table>
+    <thead><tr><th>Source</th><th>Resource</th><th>Evidence</th><th>Status</th><th>Newest evidence</th><th>Last attempt</th><th>Waiting</th></tr></thead>
+    <tbody>
+    {{range .Data.Jobs}}
+    <tr>
+      <td>{{.Provider}}</td>
+      <td>{{.Resource}}</td>
+      <td><code>{{.Kind}}</code></td>
+      <td>
+        <span class="job {{.Status}}">{{.Status}}</span>
+        {{if and .Stale (ne (print .Status) "pending")}}<span class="job stale">stale</span>{{end}}
+        {{if .FailuresSinceSuccess}}<div class="dim">{{.FailuresSinceSuccess}} failed attempt(s) since the last success</div>{{end}}
+      </td>
+      <td class="nowrap">
+        {{if .LastSuccessAt}}{{whenPtr .LastSuccessAt}}<br><span class="dim">{{.EvidenceAgeHours}} hours old{{if .LastSuccessComplete}}{{if not (deref .LastSuccessComplete)}}, incomplete coverage{{end}}{{end}}</span>
+        {{else}}<span class="dim">none yet</span>{{end}}
+      </td>
+      <td>
+        {{if .LastID}}#{{deref .LastID}} {{deref .LastOutcome}}, attempt {{deref .LastAttempt}}<br><span class="dim">{{whenPtr .LastFinishedAt}}</span>
+          {{if deref .LastErrorClass}}<br><code>{{deref .LastErrorClass}}</code> <span class="dim">{{deref .LastErrorDetail}}</span>{{end}}
+        {{else}}<span class="dim">none finished</span>{{end}}
+      </td>
+      <td>
+        {{if .PendingID}}#{{deref .PendingID}} {{deref .PendingOutcome}}, attempt {{deref .PendingAttempt}} <span class="dim">({{deref .PendingCause}})</span><br><span class="dim">not before {{whenPtr .PendingRunAfter}}</span>
+        {{else}}<span class="dim">nothing</span>{{end}}
+      </td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}<p class="empty">No collection has been attempted.</p>{{end}}
+</section>
+
+<section>
+  <h2>Collection runs</h2>
+  <p class="note">Every attempt, newest first, including failures and retries. Each retry is its own run and names the attempt it follows. How each error class is retried is in the fault table (<code>docs/faults.md</code>).</p>
+  {{if .Data.Runs}}
+  <div class="scroll"><table>
+    <thead><tr><th>Run</th><th>Evidence</th><th>Resource</th><th>Why</th><th>Queued</th><th>Outcome</th><th>Coverage</th><th>Error</th></tr></thead>
+    <tbody>
+    {{range .Data.Runs}}
+    <tr>
+      <td>#{{.ID}}</td>
+      <td><code>{{.Kind}}</code></td>
+      <td>{{.Resource}}</td>
+      <td>{{.Cause}}{{if .RetryOf}} of #{{deref .RetryOf}}{{end}}<br><span class="dim">attempt {{.Attempt}}</span></td>
+      <td class="nowrap">{{when .QueuedAt}}</td>
+      <td><span class="run {{.Outcome}}">{{.Outcome}}</span></td>
+      <td>{{if eq .Outcome "succeeded"}}{{if .InventoryComplete}}complete{{else}}<span class="result not_evaluated">incomplete</span>{{end}}{{else}}<span class="dim">none</span>{{end}}</td>
+      <td>{{if .ErrorClass}}<code>{{.ErrorClass}}</code><br><span class="dim">{{.ErrorDetail}}</span>{{end}}</td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}<p class="empty">No collection has been attempted.</p>{{end}}
+</section>
+{{end}}

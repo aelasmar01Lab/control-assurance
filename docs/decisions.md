@@ -83,7 +83,9 @@ CLI commands act as the user named in `CCA_USER`, with that user's role and
 name in the decision log. There is no password prompt: anyone who can run the
 CLI already holds `DATABASE_URL`, which is the stronger credential. Given up:
 any claim that the CLI proves who ran it. `migrate` and `users` are setup
-commands and take no user.
+commands and take no user. The worker is no exception: `cca worker` runs as
+`CCA_USER`, and its scheduled collections and evaluations are checked against
+that user's role like anyone else's.
 
 ## 10. Separation of duties is enforced twice
 
@@ -104,7 +106,7 @@ an evaluation.
 
 ## 12. Controls are defined in code
 
-The two internal controls, their owners, checks and framework mappings are Go
+The eight internal controls, their owners, checks and framework mappings are Go
 values in `internal/control`. The plan stores them as database rows with
 revisions; here a revision is a reviewed commit. Given up: editing a control
 without a release, and a queryable history of control changes inside the
@@ -118,3 +120,72 @@ Sign-in uses local accounts with argon2id hashes and server-side sessions
 second factor, no lockout or rate limit on sign-in, and no self-service
 password change. MVSP 2.1 expects single sign-on, so this project's own
 self-assessment will record 2.1 as not met.
+
+## 14. The job queue is the collection_runs table
+
+Collection attempts are queued, claimed and finished as rows of
+`collection_runs`, claimed with `FOR UPDATE SKIP LOCKED`. There is no queue
+library and no broker. A partial unique index allows one unfinished attempt
+per job, which is what makes "ask twice, collect once" hold. Given up:
+throughput and anything like priorities or fan-out, none of which a daily
+collection of a few dozen jobs needs. In exchange every attempt, retry and
+error class is a row a page can show, in the same database as the results.
+
+## 15. One row per attempt, retried by error class
+
+A retry is a new run that names the attempt it follows; a finished run is
+never reopened, and a trigger refuses to change one. Whether and when to
+retry is a table keyed by error class (`docs/faults.md`). Classes that need a
+person, such as an expired credential or a refused read, are not retried at
+all: retrying them only adds noise, and the next scheduled collection tries
+again. The AWS SDK's own retries are turned off so that every attempt is
+recorded. Given up: the quick, invisible recovery an SDK retry gives for a
+single dropped request; here that costs a recorded failure and a one minute
+wait.
+
+## 16. A killed worker is detected by lease, not by heartbeat
+
+A claimed run carries a five minute lease, and one attempt is cut off after
+ninety seconds, so a live worker always finishes inside its lease. A run
+still marked running after its lease belongs to a worker that stopped; the
+next worker pass records it as `interrupted` and queues the retry. Given up:
+prompt recovery. An abandoned run waits out the rest of its lease, up to
+five minutes, which is nothing against a 48 hour freshness window.
+
+## 17. Ages are measured to the evidence, not to the clock
+
+GH-03 (alert age) and AWS-02 (credential idle time) measure to the moment the
+evidence describes: the credential report's generation time, or the time of
+collection. That moment is stored on the observation, so re-running a check
+on a stored observation a year later gives the same result and the same
+words. Given up: a result that worsens on its own as time passes without
+new evidence. That is what staleness is for; an old pass becomes a stale
+control, not a silent fail. The thresholds (30 and 90 days) are constants of
+the check version, so changing one means a new version.
+
+## 18. "Turned off" and "could not read" are evidence
+
+When Dependabot alerts are turned off, GitHub answers 403 with a specific
+message (confirmed on a lab repository on 2026-11-12). The collector stores
+that as an observation with `alerts_enabled: false`, and GH-03 returns
+`not_evaluated`. The same holds for a trail whose status the role is refused.
+Given up: treating every 403 alike. In exchange, "nobody is looking" can
+never read as "nothing is wrong", and any other 403 is still a permission
+failure on the run.
+
+## 19. The site holds no source credentials
+
+Only `cca collect` and `cca worker` hold GitHub and AWS credentials. The
+operator's "queue collection" button on the integration health page adds
+queue rows; a worker must be running to act on them. Given up: collection
+with one click and no second process. In exchange the process that listens
+on a port can read nothing from GitHub or AWS, whatever is wrong with it.
+
+## 20. The AWS collector uses the official SDK behind a narrow interface
+
+The four AWS checks need seven read calls. They go through
+`aws-sdk-go-v2`, wrapped in an interface of seven methods that return plain
+values, so the tests use a synthetic account and the normalizer never sees
+an SDK type. Given up: a small dependency tree; the SDK brings about twenty
+modules. Signing requests and assuming roles by hand was the alternative,
+and is not something to own.

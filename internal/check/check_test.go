@@ -62,7 +62,7 @@ func TestGitHubChecks(t *testing.T) {
 			if !ok {
 				t.Fatalf("check %s version 1 not registered", tt.key)
 			}
-			got, explanation, err := c.Eval(tt.payload)
+			got, explanation, err := c.Eval(Input{Payload: tt.payload})
 			if err != nil {
 				t.Fatalf("Eval: %v", err)
 			}
@@ -79,7 +79,7 @@ func TestGitHubChecks(t *testing.T) {
 func TestUnreadablePayloadIsAnErrorNotAResult(t *testing.T) {
 	for _, c := range Automated() {
 		for _, bad := range []string{``, `not json`, `{}`} {
-			if result, _, err := c.Eval([]byte(bad)); err == nil {
+			if result, _, err := c.Eval(Input{Payload: []byte(bad)}); err == nil {
 				t.Errorf("%s: Eval(%q) = %s, want an error", c.Key, bad, result)
 			}
 		}

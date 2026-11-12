@@ -2,6 +2,7 @@ package assurance_test
 
 import (
 	"context"
+	"maps"
 	"net/http"
 	"strings"
 	"testing"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/aelasmar01Lab/control-assurance/internal/assurance"
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
+	"github.com/aelasmar01Lab/control-assurance/internal/aws"
+	"github.com/aelasmar01Lab/control-assurance/internal/aws/awstest"
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
 	"github.com/aelasmar01Lab/control-assurance/internal/evidence"
 	"github.com/aelasmar01Lab/control-assurance/internal/github"
@@ -27,6 +30,7 @@ type harness struct {
 	st    *store.Store
 	fake  *githubtest.Fake
 	gh    *github.Client
+	aws   *awstest.Fake
 	repos []string
 	clock time.Time
 
@@ -57,7 +61,13 @@ func newHarness(t *testing.T) *harness {
 		repos: []string{githubtest.FakeRepository},
 		clock: time.Date(2026, 11, 12, 9, 0, 0, 0, time.UTC),
 	}
-	h.svc = &assurance.Service{Store: st, Evidence: ev, GitHub: gh, Now: func() time.Time { return h.clock }}
+	h.aws = awstest.New(h.clock)
+	collectors := gh.Collectors()
+	maps.Copy(collectors, (&aws.Collector{
+		API:   h.aws,
+		Sleep: func(context.Context, time.Duration) error { return nil },
+	}).Collectors())
+	h.svc = &assurance.Service{Store: st, Evidence: ev, Collectors: collectors, Now: func() time.Time { return h.clock }}
 
 	if _, err := h.svc.SeedLabUsers(ctx); err != nil {
 		t.Fatalf("SeedLabUsers: %v", err)
@@ -72,17 +82,49 @@ func newHarness(t *testing.T) *harness {
 	return h
 }
 
-// collect makes one collection attempt and returns its summary.
+// collect makes one attempt to collect branch rules and returns its summary.
 func (h *harness) collect() assurance.RunSummary {
 	h.t.Helper()
-	runs, err := h.svc.CollectGitHub(context.Background(), h.operator, h.repos)
-	if err != nil {
-		h.t.Fatalf("CollectGitHub: %v", err)
-	}
+	runs := h.collectKinds("github", h.repos, github.BranchRulesKind)
 	if len(runs) != 1 {
 		h.t.Fatalf("runs = %d, want 1", len(runs))
 	}
 	return runs[0]
+}
+
+// collectKinds queues the given kinds for the targets and runs what is due.
+// With no kinds it collects everything the integration offers.
+func (h *harness) collectKinds(provider string, targets []string, kinds ...string) []assurance.RunSummary {
+	h.t.Helper()
+	ctx := context.Background()
+	if _, err := h.svc.RequestCollection(ctx, h.operator, provider, targets, kinds); err != nil {
+		h.t.Fatalf("RequestCollection: %v", err)
+	}
+	return h.work()
+}
+
+// work runs every attempt that is due.
+func (h *harness) work() []assurance.RunSummary {
+	h.t.Helper()
+	runs, err := h.svc.Work(context.Background(), h.operator, 3)
+	if err != nil {
+		h.t.Fatalf("Work: %v", err)
+	}
+	return runs
+}
+
+// collectEverything collects every kind from the fake repository and the
+// fake account.
+func (h *harness) collectEverything() []assurance.RunSummary {
+	h.t.Helper()
+	ctx := context.Background()
+	if _, err := h.svc.RequestCollection(ctx, h.operator, "github", h.repos, nil); err != nil {
+		h.t.Fatalf("RequestCollection: %v", err)
+	}
+	if _, err := h.svc.RequestCollection(ctx, h.operator, "aws", []string{awstest.FakeAccount}, nil); err != nil {
+		h.t.Fatalf("RequestCollection: %v", err)
+	}
+	return h.work()
 }
 
 func (h *harness) evaluate() []assurance.EvaluationSummary {
@@ -362,7 +404,7 @@ func TestStoredEvaluationsReproduce(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		result, explanation, err := c.Eval(payload)
+		result, explanation, err := c.Eval(check.Input{Payload: payload, AsOf: r.AsOf})
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -1,4 +1,7 @@
 {{define "content"}}
+{{if .Data.IntegrationProblems}}
+<p class="health" role="status"><strong>Integration health:</strong> {{.Data.IntegrationProblems}} collection job(s) are failing, retrying or stale. The results below are the last ones collected; a collection problem never changes a result. <a href="/integrations">See integration health</a>.</p>
+{{end}}
 <section>
   <h2>Controls</h2>
   <p class="note">A control's state is worked out each time this page loads, from the results, evidence reviews and exceptions below it. It is never stored or edited.</p>
@@ -45,28 +48,5 @@
     </tbody>
   </table></div>
   {{else}}<p class="empty">Not evaluated: no check has produced a result yet.</p>{{end}}
-</section>
-
-<section>
-  <h2>Collection runs</h2>
-  <p class="note">Every collection attempt, including failures. A failure is an integration-health problem, not a check result.</p>
-  {{if .Data.Runs}}
-  <div class="scroll"><table>
-    <thead><tr><th>Run</th><th>Integration</th><th>Resource</th><th>Started</th><th>Outcome</th><th>Coverage</th><th>Error</th></tr></thead>
-    <tbody>
-    {{range .Data.Runs}}
-    <tr>
-      <td>#{{.ID}}</td>
-      <td>{{.Integration}}</td>
-      <td>{{.Resource}}</td>
-      <td class="nowrap">{{when .StartedAt}}</td>
-      <td><span class="run {{.Outcome}}">{{.Outcome}}</span></td>
-      <td>{{if eq .Outcome "succeeded"}}{{if .InventoryComplete}}complete{{else}}<span class="result not_evaluated">incomplete</span>{{end}}{{else}}<span class="dim">none</span>{{end}}</td>
-      <td>{{if .ErrorClass}}<code>{{.ErrorClass}}</code><br><span class="dim">{{.ErrorDetail}}</span>{{end}}</td>
-    </tr>
-    {{end}}
-    </tbody>
-  </table></div>
-  {{else}}<p class="empty">No collection has been attempted.</p>{{end}}
 </section>
 {{end}}

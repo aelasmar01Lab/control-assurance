@@ -13,6 +13,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -58,6 +59,17 @@ var funcs = template.FuncMap{
 	},
 	"label": func(v any) string { return strings.ReplaceAll(fmt.Sprint(v), "_", " ") },
 	"hours": func(d time.Duration) int { return int(d.Hours()) },
+	// deref shows what a pointer points at, or nothing for nil.
+	"deref": func(v any) any {
+		rv := reflect.ValueOf(v)
+		if rv.Kind() != reflect.Pointer {
+			return v
+		}
+		if rv.IsNil() {
+			return ""
+		}
+		return rv.Elem().Interface()
+	},
 }
 
 func mustPage(name string) *template.Template {
@@ -65,12 +77,13 @@ func mustPage(name string) *template.Template {
 }
 
 var pages = map[string]*template.Template{
-	"overview": mustPage("overview.html"),
-	"findings": mustPage("findings.html"),
-	"evidence": mustPage("evidence.html"),
-	"log":      mustPage("log.html"),
-	"login":    mustPage("login.html"),
-	"error":    mustPage("error.html"),
+	"overview":     mustPage("overview.html"),
+	"findings":     mustPage("findings.html"),
+	"evidence":     mustPage("evidence.html"),
+	"log":          mustPage("log.html"),
+	"integrations": mustPage("integrations.html"),
+	"login":        mustPage("login.html"),
+	"error":        mustPage("error.html"),
 }
 
 // Options configures the site.
@@ -115,6 +128,8 @@ func Handler(svc *assurance.Service, opts Options) http.Handler {
 	mux.HandleFunc("POST /evidence", s.as(s.submitEvidence))
 	mux.HandleFunc("POST /evidence/{id}/review", s.as(s.reviewEvidence))
 	mux.HandleFunc("GET /evidence/{id}/file", s.as(s.evidenceFile))
+	mux.HandleFunc("GET /integrations", s.as(s.integrations))
+	mux.HandleFunc("POST /integrations/collect", s.as(s.queueCollection))
 	mux.HandleFunc("GET /log", s.as(s.decisionLog))
 	mux.HandleFunc("GET /export.json", s.as(s.export))
 
@@ -377,6 +392,30 @@ func (s *server) evidenceFile(w http.ResponseWriter, r *http.Request, actor auth
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", name))
 	_, _ = w.Write(data) //nolint:gosec // sent as an octet-stream attachment with nosniff, so never rendered
+}
+
+func (s *server) integrations(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
+	health, err := s.svc.Health(r.Context(), actor)
+	if err != nil {
+		s.fail(w, r, &actor, err)
+		return
+	}
+	s.render(w, r, http.StatusOK, "integrations", "Integration health", &actor, health)
+}
+
+func (s *server) queueCollection(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
+	queued, err := s.svc.RequestAll(r.Context(), actor)
+	added := 0
+	for _, q := range queued {
+		if q.Queued {
+			added++
+		}
+	}
+	msg := fmt.Sprintf("Queued %d collection run(s); %d were already waiting. A running worker collects them.", added, len(queued)-added)
+	if err == nil && len(queued) == 0 {
+		msg = "Nothing to queue: no resource is in scope yet. Run \"cca collect\" once to register one."
+	}
+	s.done(w, r, actor, "/integrations", msg, err)
 }
 
 func (s *server) decisionLog(w http.ResponseWriter, r *http.Request, actor authz.Actor) {

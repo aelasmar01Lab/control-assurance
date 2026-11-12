@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 )
 
 // Result is the outcome of applying a check to an observation.
@@ -40,13 +41,24 @@ type Check struct {
 	Control string
 	// Mapping is the framework requirement and the strength of the mapping.
 	Mapping string
-	// Eval applies the check to an observation's stored payload. It is nil
-	// for a manual check.
-	Eval func(payload []byte) (Result, string, error)
+	// Eval applies the check to one stored observation. It is nil for a
+	// manual check. It must depend on nothing but its input, so that an
+	// evaluation can be reproduced from the stored observation.
+	Eval func(in Input) (Result, string, error)
 	// Manual marks a check whose evidence is submitted and reviewed by
 	// people. It has no Eval; its state is derived from the reviewed
 	// submissions of its control.
 	Manual bool
+}
+
+// Input is the stored observation a check is applied to.
+type Input struct {
+	// Payload is the evidence, as stored.
+	Payload []byte
+	// AsOf is the moment the evidence describes: the source's own
+	// timestamp when it gave one, otherwise the time of collection. A check
+	// that measures an age measures it to this moment, never to the clock.
+	AsOf time.Time
 }
 
 // REC01 is the manual-evidence check for the backup and recovery control.
@@ -66,7 +78,7 @@ var rec01 = Check{
 	Manual:           true,
 }
 
-var registry = []Check{gh01, gh02, rec01}
+var registry = []Check{gh01, gh02, gh03, gh04, aws01, aws02, aws03, aws04, rec01}
 
 // Automated returns the checks the evaluator runs against observations.
 func Automated() []Check {

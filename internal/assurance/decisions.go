@@ -189,6 +189,9 @@ type Overview struct {
 	Controls []ControlView
 	Results  []store.EvaluationRow
 	Runs     []store.RunRow
+	// IntegrationProblems counts collection jobs that are failing,
+	// retrying or stale. It is a flag beside the results, never part of one.
+	IntegrationProblems int
 }
 
 // Overview returns control states with the results and runs behind them.
@@ -247,7 +250,12 @@ func (s *Service) overview(ctx context.Context) (*Overview, error) {
 		return best, until
 	}
 
-	out := &Overview{Results: results, Runs: runs}
+	_, problems, err := s.jobs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := &Overview{Results: results, Runs: runs, IntegrationProblems: problems}
 	for _, c := range control.All {
 		in := control.Input{Now: now}
 		for _, r := range results {

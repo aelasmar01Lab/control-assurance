@@ -12,8 +12,11 @@ import (
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aelasmar01Lab/control-assurance/internal/collect"
 )
 
 const (
@@ -32,29 +35,24 @@ const (
 	maxBodyBytes    = 8 << 20
 )
 
-// ErrorClass says why a collection attempt failed. It is recorded on the run
-// and never becomes a check result.
-type ErrorClass string
+// ErrorClass says why a collection attempt failed. The classes are shared
+// by every collector.
+type ErrorClass = collect.Class
 
 // The error classes a GitHub collection can end in.
 const (
-	ClassAuth        ErrorClass = "auth"               // credential missing, invalid or expired
-	ClassPermission  ErrorClass = "permission"         // credential valid but not allowed to read this
-	ClassRateLimited ErrorClass = "rate_limited"       // primary or secondary rate limit
-	ClassNotFound    ErrorClass = "not_found"          // repository or branch does not exist, or is hidden
-	ClassNetwork     ErrorClass = "network"            // no usable HTTP response
-	ClassServer      ErrorClass = "server"             // GitHub returned a 5xx
-	ClassMalformed   ErrorClass = "malformed_response" // response was not the expected JSON
-	ClassUnexpected  ErrorClass = "unexpected_status"  // any other non-success status
+	ClassAuth        = collect.Auth
+	ClassPermission  = collect.Permission
+	ClassRateLimited = collect.RateLimited
+	ClassNotFound    = collect.NotFound
+	ClassNetwork     = collect.Network
+	ClassServer      = collect.Server
+	ClassMalformed   = collect.Malformed
+	ClassUnexpected  = collect.Unexpected
 )
 
 // Error is a classified collection failure.
-type Error struct {
-	Class  ErrorClass
-	Detail string
-}
-
-func (e *Error) Error() string { return string(e.Class) + ": " + e.Detail }
+type Error = collect.Error
 
 // Rule is one active rule that applies to a branch.
 type Rule struct {
@@ -105,20 +103,11 @@ func ValidRepository(s string) bool { return repoPattern.MatchString(s) }
 // CollectBranchRules reads the active rules on repo's default branch.
 // repo is "owner/name". Any failure is returned as an *Error.
 func (c *Client) CollectBranchRules(ctx context.Context, repo string) (*BranchRules, error) {
-	if !ValidRepository(repo) {
-		return nil, &Error{Class: ClassNotFound, Detail: fmt.Sprintf("%q is not an owner/name repository", repo)}
-	}
-
-	var repository struct {
-		DefaultBranch string `json:"default_branch"`
-	}
-	if _, err := c.get(ctx, "/repos/"+repo, &repository); err != nil {
+	defaultBranch, err := c.defaultBranch(ctx, repo)
+	if err != nil {
 		return nil, err
 	}
-	if repository.DefaultBranch == "" {
-		return nil, &Error{Class: ClassMalformed, Detail: "repository response has no default_branch"}
-	}
-	branchPath := "/repos/" + repo + "/branches/" + url.PathEscape(repository.DefaultBranch)
+	branchPath := "/repos/" + repo + "/branches/" + url.PathEscape(defaultBranch)
 
 	var branch struct {
 		Protected bool `json:"protected"`
@@ -129,18 +118,15 @@ func (c *Client) CollectBranchRules(ctx context.Context, repo string) (*BranchRu
 
 	out := &BranchRules{
 		Repository:      repo,
-		DefaultBranch:   repository.DefaultBranch,
+		DefaultBranch:   defaultBranch,
 		BranchProtected: branch.Protected,
 		RulesComplete:   true,
 		Rules:           []Rule{},
 	}
 
-	maxPages := c.MaxPages
-	if maxPages <= 0 {
-		maxPages = defaultMaxPages
-	}
+	maxPages := c.maxPages()
 	next := fmt.Sprintf("/repos/%s/rules/branches/%s?per_page=%d",
-		repo, url.PathEscape(repository.DefaultBranch), pageSize)
+		repo, url.PathEscape(defaultBranch), pageSize)
 	for page := 1; next != ""; page++ {
 		if page > maxPages {
 			// More pages exist than this collector reads. Say so rather
@@ -187,9 +173,35 @@ func canonicalJSON(raw json.RawMessage) (json.RawMessage, error) {
 	return json.Marshal(v)
 }
 
-// get fetches pathOrURL, decodes the JSON body into dst, and returns the URL
-// of the next page if the response names one.
-func (c *Client) get(ctx context.Context, pathOrURL string, dst any) (next string, err error) {
+// response is what one GET returned.
+type response struct {
+	status int
+	header http.Header
+	body   []byte
+	path   string
+}
+
+// message returns the "message" field of a GitHub error body, or "".
+func (r *response) message() string {
+	var e struct {
+		Message string `json:"message"`
+	}
+	_ = json.Unmarshal(r.body, &e)
+	return e.Message
+}
+
+// failure turns a non-success response into a classified error.
+func (r *response) failure() *Error {
+	e := &Error{Class: classify(r.status, r.header), Detail: fmt.Sprintf("GET %s returned %d", r.path, r.status)}
+	if e.Class == ClassRateLimited {
+		e.RetryAfter = retryAfter(r.header, time.Now())
+	}
+	return e
+}
+
+// fetch performs one GET and returns the response whatever its status. Only
+// a request that produced no usable response is an error.
+func (c *Client) fetch(ctx context.Context, pathOrURL string) (*response, error) {
 	base := strings.TrimRight(c.BaseURL, "/")
 	if base == "" {
 		base = defaultBaseURL
@@ -199,12 +211,12 @@ func (c *Client) get(ctx context.Context, pathOrURL string, dst any) (next strin
 		target = base + pathOrURL
 	} else if !strings.HasPrefix(pathOrURL, base+"/") {
 		// A next-page link must stay on the API host the token was meant for.
-		return "", &Error{Class: ClassMalformed, Detail: "next-page link points outside the API host"}
+		return nil, &Error{Class: ClassMalformed, Detail: "next-page link points outside the API host"}
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	if err != nil {
-		return "", &Error{Class: ClassNetwork, Detail: "could not build request"}
+		return nil, &Error{Class: ClassNetwork, Detail: "could not build request"}
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("X-GitHub-Api-Version", APIVersion)
@@ -225,33 +237,43 @@ func (c *Client) get(ctx context.Context, pathOrURL string, dst any) (next strin
 			// urlErr.Err omits the URL, and the token is never in the URL.
 			detail = "request failed: " + urlErr.Err.Error()
 		}
-		return "", &Error{Class: ClassNetwork, Detail: detail}
+		return nil, &Error{Class: ClassNetwork, Detail: detail}
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	path := req.URL.Path
-	if resp.StatusCode != http.StatusOK {
-		return "", &Error{Class: classify(resp), Detail: fmt.Sprintf("GET %s returned %d", path, resp.StatusCode)}
-	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes+1))
 	if err != nil {
-		return "", &Error{Class: ClassNetwork, Detail: fmt.Sprintf("GET %s: response body could not be read", path)}
+		return nil, &Error{Class: ClassNetwork, Detail: fmt.Sprintf("GET %s: response body could not be read", path)}
 	}
 	if len(body) > maxBodyBytes {
-		return "", &Error{Class: ClassMalformed, Detail: fmt.Sprintf("GET %s: response larger than %d bytes", path, maxBodyBytes)}
+		return nil, &Error{Class: ClassMalformed, Detail: fmt.Sprintf("GET %s: response larger than %d bytes", path, maxBodyBytes)}
 	}
-	if err := json.Unmarshal(body, dst); err != nil {
-		return "", &Error{Class: ClassMalformed, Detail: fmt.Sprintf("GET %s: response is not the expected JSON", path)}
-	}
-	return nextLink(resp.Header.Get("Link")), nil
+	return &response{status: resp.StatusCode, header: resp.Header, body: body, path: path}, nil
 }
 
-func classify(resp *http.Response) ErrorClass {
-	switch code := resp.StatusCode; {
+// get fetches pathOrURL, decodes the JSON body into dst, and returns the URL
+// of the next page if the response names one.
+func (c *Client) get(ctx context.Context, pathOrURL string, dst any) (next string, err error) {
+	resp, err := c.fetch(ctx, pathOrURL)
+	if err != nil {
+		return "", err
+	}
+	if resp.status != http.StatusOK {
+		return "", resp.failure()
+	}
+	if err := json.Unmarshal(resp.body, dst); err != nil {
+		return "", &Error{Class: ClassMalformed, Detail: fmt.Sprintf("GET %s: response is not the expected JSON", resp.path)}
+	}
+	return nextLink(resp.header.Get("Link")), nil
+}
+
+func classify(code int, header http.Header) ErrorClass {
+	switch {
 	case code == http.StatusUnauthorized:
 		return ClassAuth
 	case code == http.StatusForbidden || code == http.StatusTooManyRequests:
-		if resp.Header.Get("X-RateLimit-Remaining") == "0" || resp.Header.Get("Retry-After") != "" ||
+		if header.Get("X-RateLimit-Remaining") == "0" || header.Get("Retry-After") != "" ||
 			code == http.StatusTooManyRequests {
 			return ClassRateLimited
 		}
@@ -263,6 +285,85 @@ func classify(resp *http.Response) ErrorClass {
 	default:
 		return ClassUnexpected
 	}
+}
+
+// retryAfter reads how long GitHub asked the caller to wait: the Retry-After
+// header in seconds, or failing that the time the rate limit resets.
+func retryAfter(header http.Header, now time.Time) time.Duration {
+	if secs, err := strconv.Atoi(header.Get("Retry-After")); err == nil && secs > 0 {
+		return time.Duration(secs) * time.Second
+	}
+	if epoch, err := strconv.ParseInt(header.Get("X-RateLimit-Reset"), 10, 64); err == nil {
+		if d := time.Unix(epoch, 0).Sub(now); d > 0 {
+			return d
+		}
+	}
+	return 0
+}
+
+// defaultBranch returns the name of repo's default branch. It is the first
+// call of every collection, so a missing or hidden repository is reported
+// the same way whatever is being collected.
+func (c *Client) defaultBranch(ctx context.Context, repo string) (string, error) {
+	if !ValidRepository(repo) {
+		return "", &Error{Class: ClassNotFound, Detail: fmt.Sprintf("%q is not an owner/name repository", repo)}
+	}
+	var repository struct {
+		DefaultBranch string `json:"default_branch"`
+	}
+	if _, err := c.get(ctx, "/repos/"+repo, &repository); err != nil {
+		return "", err
+	}
+	if repository.DefaultBranch == "" {
+		return "", &Error{Class: ClassMalformed, Detail: "repository response has no default_branch"}
+	}
+	return repository.DefaultBranch, nil
+}
+
+func (c *Client) maxPages() int {
+	if c.MaxPages <= 0 {
+		return defaultMaxPages
+	}
+	return c.MaxPages
+}
+
+// Collectors returns the client's collectors, keyed by the kind of
+// observation each produces. The target of each is an "owner/name" repository.
+func (c *Client) Collectors() map[string]func(ctx context.Context, repo string) (*collect.Snapshot, error) {
+	return map[string]func(ctx context.Context, repo string) (*collect.Snapshot, error){
+		BranchRulesKind: func(ctx context.Context, repo string) (*collect.Snapshot, error) {
+			b, err := c.CollectBranchRules(ctx, repo)
+			if err != nil {
+				return nil, err
+			}
+			return snapshot(BranchRulesKind, BranchRulesNormalizer, b, b.RulesComplete)
+		},
+		AlertsKind: func(ctx context.Context, repo string) (*collect.Snapshot, error) {
+			a, err := c.CollectAlerts(ctx, repo)
+			if err != nil {
+				return nil, err
+			}
+			return snapshot(AlertsKind, AlertsNormalizer, a, a.AlertsComplete)
+		},
+		SecurityPolicyKind: func(ctx context.Context, repo string) (*collect.Snapshot, error) {
+			p, err := c.CollectSecurityPolicy(ctx, repo)
+			if err != nil {
+				return nil, err
+			}
+			return snapshot(SecurityPolicyKind, SecurityPolicyNormalizer, p, true)
+		},
+	}
+}
+
+// Kinds lists the kinds of observation collected from a repository.
+var Kinds = []string{BranchRulesKind, AlertsKind, SecurityPolicyKind}
+
+func snapshot(kind, normalizer string, v any, complete bool) (*collect.Snapshot, error) {
+	payload, err := json.Marshal(v)
+	if err != nil {
+		return nil, &Error{Class: collect.Storage, Detail: "evidence could not be encoded"}
+	}
+	return &collect.Snapshot{Kind: kind, Normalizer: normalizer, Payload: payload, Complete: complete}, nil
 }
 
 var nextLinkPattern = regexp.MustCompile(`<([^>]+)>;\s*rel="next"`)

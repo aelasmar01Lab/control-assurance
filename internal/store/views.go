@@ -19,11 +19,15 @@ type EvaluationRow struct {
 	PayloadSHA256 string
 	CollectedAt   time.Time
 	EvaluatedAt   time.Time
+	// AsOf is the moment the evidence describes: the source's own
+	// timestamp when it gave one, otherwise the time of collection.
+	AsOf time.Time
 }
 
 const evaluationColumns = `
 	e.id, o.id, r.external_id, e.check_key, e.check_version, e.result,
-	e.explanation, o.payload_sha256, o.collected_at, e.evaluated_at
+	e.explanation, o.payload_sha256, o.collected_at, e.evaluated_at,
+	COALESCE(o.source_timestamp, o.collected_at)
 	FROM evaluations e
 	JOIN observations o ON o.id = e.observation_id
 	JOIN resources r ON r.id = o.resource_id`
@@ -87,32 +91,6 @@ func (s *Store) Findings(ctx context.Context) ([]FindingRow, error) {
 		return nil, err
 	}
 	return pgx.CollectRows(rows, pgx.RowToStructByPos[FindingRow])
-}
-
-// RunRow is one collection attempt.
-type RunRow struct {
-	ID                int64
-	Integration       string
-	Resource          string
-	StartedAt         time.Time
-	FinishedAt        *time.Time
-	Outcome           string
-	ErrorClass        string
-	ErrorDetail       string
-	InventoryComplete bool
-}
-
-// Runs returns the most recent collection runs, newest first.
-func (s *Store) Runs(ctx context.Context, limit int) ([]RunRow, error) {
-	rows, err := s.pool.Query(ctx, `
-		SELECT c.id, c.integration, r.external_id, c.started_at, c.finished_at,
-		       c.outcome, c.error_class, c.error_detail, c.inventory_complete
-		FROM collection_runs c JOIN resources r ON r.id = c.resource_id
-		ORDER BY c.id DESC LIMIT $1`, limit)
-	if err != nil {
-		return nil, err
-	}
-	return pgx.CollectRows(rows, pgx.RowToStructByPos[RunRow])
 }
 
 // RequirementCount returns how many requirements are imported per framework version.

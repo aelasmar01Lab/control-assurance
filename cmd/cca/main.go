@@ -9,6 +9,7 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/aelasmar01Lab/control-assurance/internal/assurance"
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/db"
 	"github.com/aelasmar01Lab/control-assurance/internal/pack"
@@ -32,7 +33,10 @@ Commands:
   users seed                   Create the four lab users and print their passwords once
   users reset-password <user>  Give a user a new generated password
   packs load                   Import the built-in packs into the database
-  collect github [owner/name]  Collect branch-rule evidence (repositories may also come from CCA_GITHUB_REPOS)
+  faults                       Print the fault table generated from the fault list and retry policies
+  collect github [owner/name]  Collect from repositories now (they may also come from CCA_GITHUB_REPOS)
+  collect aws                  Collect from the AWS account the current credentials belong to
+  worker [--once]              Collect on a schedule, retry failures and evaluate new evidence
   evaluate                     Apply every check to evidence it has not yet evaluated
   results                      Show each control's state and the current result of each check
   findings list                List findings with their exceptions and notes
@@ -41,11 +45,14 @@ Commands:
   version                      Print the build version
 
 Environment:
-  DATABASE_URL       PostgreSQL connection string (needed by everything that touches the database)
-  CCA_USER           The user a command acts as; its role decides what the command may do
-  CCA_EVIDENCE_DIR   Evidence store directory (default data/evidence)
-  GITHUB_TOKEN       GitHub token; when unset, the GitHub CLI's current login is used
-  CCA_COOKIE_SECURE  Set to 1 when serving over HTTPS
+  DATABASE_URL          PostgreSQL connection string (needed by everything that touches the database)
+  CCA_USER              The user a command acts as; its role decides what the command may do
+  CCA_EVIDENCE_DIR      Evidence store directory (default data/evidence)
+  GITHUB_TOKEN          GitHub token; when unset, the GitHub CLI's current login is used
+  AWS_PROFILE           AWS profile for the read-only collector role; AWS_REGION sets the Region
+  CCA_COLLECT_INTERVAL  How often the worker collects each job (default 24h)
+  CCA_WORKERS           Collection runs made at the same time (default 4)
+  CCA_COOKIE_SECURE     Set to 1 when serving over HTTPS
 
 migrate and users are setup commands and take no CCA_USER.
 `
@@ -80,6 +87,10 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		err = runMigrate(ctx, args[1:], stdout)
 	case "collect":
 		err = runCollect(ctx, args[1:], stdout)
+	case "worker":
+		err = runWorker(ctx, args[1:], stdout, stderr)
+	case "faults":
+		fmt.Fprint(stdout, assurance.FaultTableMarkdown())
 	case "evaluate":
 		err = runEvaluate(ctx, args[1:], stdout)
 	case "results":

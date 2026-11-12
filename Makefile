@@ -36,6 +36,7 @@ packs:
 guide:
 	go run ./cmd/cca checks guide > docs/checks.md
 	go run ./cmd/cca permissions > docs/permissions.md
+	go run ./cmd/cca faults > docs/faults.md
 
 serve: build
 	bin/cca serve

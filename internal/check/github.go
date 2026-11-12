@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aelasmar01Lab/control-assurance/internal/github"
 )
@@ -75,8 +76,8 @@ func noQualifyingRule(b *github.BranchRules, what string) (Result, string, error
 	}
 }
 
-func evalGH01(payload []byte) (Result, string, error) {
-	b, err := decodeBranchRules(payload)
+func evalGH01(in Input) (Result, string, error) {
+	b, err := decodeBranchRules(in.Payload)
 	if err != nil {
 		return "", "", err
 	}
@@ -99,8 +100,8 @@ func evalGH01(payload []byte) (Result, string, error) {
 	return noQualifyingRule(b, "requires an approving review")
 }
 
-func evalGH02(payload []byte) (Result, string, error) {
-	b, err := decodeBranchRules(payload)
+func evalGH02(in Input) (Result, string, error) {
+	b, err := decodeBranchRules(in.Payload)
 	if err != nil {
 		return "", "", err
 	}
@@ -129,4 +130,115 @@ func evalGH02(payload []byte) (Result, string, error) {
 		}
 	}
 	return noQualifyingRule(b, "requires a named status check")
+}
+
+// The patch deadlines GH-03 applies. They are this project's policy choice,
+// not a framework figure, and changing either means a new check version.
+const (
+	deadlineHigh   = 30 * 24 * time.Hour // high and critical
+	deadlineMedium = 90 * 24 * time.Hour // medium
+)
+
+var gh03 = Check{
+	Key:              "GH-03",
+	Version:          "1",
+	ObservationKind:  github.AlertsKind,
+	Assertion:        "No open Dependabot alert of medium severity or higher is older than its patch deadline: 30 days for high and critical, 90 days for medium.",
+	Source:           "GitHub REST: `GET /repos/{owner}/{repo}/dependabot/alerts?state=open`",
+	Permission:       "Dependabot alerts: read",
+	Establishes:      "Every open alert visible to the credential was within its deadline at collection time.",
+	DoesNotEstablish: "Anything about vulnerabilities Dependabot does not know about, dismissed alerts, or low severity alerts. When alerts are turned off the result is not evaluated, never a count of zero.",
+	Control:          "Dependency remediation",
+	Mapping:          "MVSP 2.6 and 3.4, partial. The deadlines are a policy choice; MVSP 3.4 sets 90 days for application vulnerabilities.",
+	Eval:             evalGH03,
+}
+
+func evalGH03(in Input) (Result, string, error) {
+	var a github.Alerts
+	if err := json.Unmarshal(in.Payload, &a); err != nil {
+		return "", "", fmt.Errorf("decode %s payload: %w", github.AlertsKind, err)
+	}
+	if a.Repository == "" {
+		return "", "", fmt.Errorf("%s payload has no repository", github.AlertsKind)
+	}
+	if !a.AlertsEnabled {
+		return NotEvaluated, fmt.Sprintf(
+			"Dependabot alerts are turned off for %s, so there is no alert list to judge. This is not a count of zero.",
+			a.Repository), nil
+	}
+
+	var overdue []string
+	judged, low := 0, 0
+	for _, alert := range a.Alerts {
+		deadline, label := deadlineHigh, "30"
+		switch alert.Severity {
+		case "low":
+			low++
+			continue
+		case "medium":
+			deadline, label = deadlineMedium, "90"
+		case "high", "critical":
+		default:
+			// A severity this version does not know gets the shortest deadline.
+			label = "30, severity not recognised"
+		}
+		judged++
+		if age := in.AsOf.Sub(alert.CreatedAt); age > deadline {
+			overdue = append(overdue, fmt.Sprintf("#%d %s in %s, open %d days (deadline %s)",
+				alert.Number, alert.Severity, alert.Package, int(age.Hours()/24), label))
+		}
+	}
+	switch {
+	case len(overdue) > 0:
+		shown := overdue
+		if len(shown) > 5 {
+			shown = shown[:5]
+		}
+		return Fail, fmt.Sprintf("%d open alert(s) on %s are past their patch deadline: %s.",
+			len(overdue), a.Repository, strings.Join(shown, "; ")), nil
+	case !a.AlertsComplete:
+		return NotEvaluated, fmt.Sprintf(
+			"Incomplete coverage: the alert listing for %s was truncated after %d alerts, and none of those read is past its deadline. "+
+				"An overdue alert may exist among those not read.", a.Repository, len(a.Alerts)), nil
+	default:
+		return Pass, fmt.Sprintf(
+			"%d open alert(s) of medium severity or higher on %s, none past its deadline (30 days for high and critical, 90 for medium). "+
+				"%d low severity alert(s) were not judged.", judged, a.Repository, low), nil
+	}
+}
+
+var gh04 = Check{
+	Key:              "GH-04",
+	Version:          "1",
+	ObservationKind:  github.SecurityPolicyKind,
+	Assertion:        "The repository publishes a security policy file at a standard path on its default branch.",
+	Source:           "GitHub REST: `GET /repos/{owner}/{repo}/contents/{path}` for `SECURITY.md`, `.github/SECURITY.md` and `docs/SECURITY.md`",
+	Permission:       "Repository contents: read",
+	Establishes:      "A non-empty policy file existed at a standard path at collection time.",
+	DoesNotEstablish: "Anything about the file's content, any safe-harbour wording, or that reports are triaged. A default policy inherited from an organisation's `.github` repository is not read.",
+	Control:          "Vulnerability disclosure",
+	Mapping:          "MVSP 1.1, partial.",
+	Eval:             evalGH04,
+}
+
+func evalGH04(in Input) (Result, string, error) {
+	var p github.SecurityPolicy
+	if err := json.Unmarshal(in.Payload, &p); err != nil {
+		return "", "", fmt.Errorf("decode %s payload: %w", github.SecurityPolicyKind, err)
+	}
+	if p.Repository == "" || len(p.PathsChecked) == 0 {
+		return "", "", fmt.Errorf("%s payload has no repository or no paths", github.SecurityPolicyKind)
+	}
+	for _, f := range p.Found {
+		if f.Size > 0 {
+			return Pass, fmt.Sprintf("%s exists on %s of %s (%d bytes). Its content was not read.",
+				f.Path, p.DefaultBranch, p.Repository, f.Size), nil
+		}
+	}
+	empty := ""
+	if len(p.Found) > 0 {
+		empty = fmt.Sprintf(" %s exists but is empty.", p.Found[0].Path)
+	}
+	return Fail, fmt.Sprintf("No non-empty security policy file on %s of %s at any of: %s.%s A policy inherited from an organisation's .github repository is not read.",
+		p.DefaultBranch, p.Repository, strings.Join(p.PathsChecked, ", "), empty), nil
 }

@@ -6,14 +6,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"strings"
+	"syscall"
 	"text/tabwriter"
+	"time"
 
 	"github.com/aelasmar01Lab/control-assurance/internal/assurance"
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
+	"github.com/aelasmar01Lab/control-assurance/internal/aws"
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
 	"github.com/aelasmar01Lab/control-assurance/internal/evidence"
 	"github.com/aelasmar01Lab/control-assurance/internal/github"
@@ -112,24 +117,78 @@ func runPacksLoad(ctx context.Context, stdout io.Writer) error {
 	return err
 }
 
-func runCollect(ctx context.Context, args []string, stdout io.Writer) error {
-	if len(args) == 0 || args[0] != "github" {
-		return fmt.Errorf("%w: expected \"collect github [owner/name]...\"", errUsage)
+// githubCollectors returns the GitHub collectors, using GITHUB_TOKEN or the
+// GitHub CLI's login.
+func githubCollectors(ctx context.Context) (map[string]assurance.CollectFunc, error) {
+	token, err := githubToken(ctx)
+	if err != nil {
+		return nil, err
 	}
-	repos := args[1:]
-	if len(repos) == 0 {
-		for _, r := range strings.Split(os.Getenv("CCA_GITHUB_REPOS"), ",") {
-			if r = strings.TrimSpace(r); r != "" {
-				repos = append(repos, r)
+	return (&github.Client{Token: token}).Collectors(), nil
+}
+
+// awsCollectors returns the AWS collectors and the API they call, using the
+// SDK's standard credential chain (AWS_PROFILE, AWS_REGION).
+func awsCollectors(ctx context.Context) (map[string]assurance.CollectFunc, aws.API, error) {
+	sdk, err := aws.NewSDK(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	return (&aws.Collector{API: sdk}).Collectors(), sdk, nil
+}
+
+func workerCount() int {
+	if n, err := strconv.Atoi(os.Getenv("CCA_WORKERS")); err == nil && n > 0 && n <= 16 {
+		return n
+	}
+	return 4
+}
+
+func printRuns(stdout io.Writer, runs []assurance.RunSummary) (failed int) {
+	for _, r := range runs {
+		if !r.Succeeded {
+			failed++
+			retry := "not retried"
+			if r.RetryRunID != 0 {
+				retry = fmt.Sprintf("retry queued as run %d for %s", r.RetryRunID, r.RetryAt.UTC().Format("15:04:05Z"))
+			}
+			fmt.Fprintf(stdout, "run %d  %s  %s  attempt %d  FAILED  class=%s  %s  (%s)\n",
+				r.RunID, r.Kind, r.Target, r.Attempt, r.ErrorClass, r.ErrorDetail, retry)
+			continue
+		}
+		coverage := "complete"
+		if !r.InventoryComplete {
+			coverage = "INCOMPLETE"
+		}
+		fmt.Fprintf(stdout, "run %d  %s  %s  attempt %d  succeeded  coverage=%s  observation=%d  evidence=%s\n",
+			r.RunID, r.Kind, r.Target, r.Attempt, coverage, r.ObservationID, r.PayloadSHA256[:12])
+	}
+	return failed
+}
+
+func runCollect(ctx context.Context, args []string, stdout io.Writer) error {
+	if len(args) == 0 || (args[0] != "github" && args[0] != "aws") {
+		return fmt.Errorf("%w: expected \"collect github [owner/name]...\" or \"collect aws\"", errUsage)
+	}
+	provider, targets := args[0], args[1:]
+	if provider == "aws" && len(targets) > 0 {
+		return fmt.Errorf("%w: \"collect aws\" takes no arguments; the account is the one the credentials belong to", errUsage)
+	}
+	if provider == "github" {
+		if len(targets) == 0 {
+			for _, r := range strings.Split(os.Getenv("CCA_GITHUB_REPOS"), ",") {
+				if r = strings.TrimSpace(r); r != "" {
+					targets = append(targets, r)
+				}
 			}
 		}
-	}
-	if len(repos) == 0 {
-		return fmt.Errorf("%w: name at least one repository, or set CCA_GITHUB_REPOS", errUsage)
-	}
-	for _, r := range repos {
-		if !github.ValidRepository(r) {
-			return fmt.Errorf("%w: %q is not an owner/name repository", errUsage, r)
+		if len(targets) == 0 {
+			return fmt.Errorf("%w: name at least one repository, or set CCA_GITHUB_REPOS", errUsage)
+		}
+		for _, r := range targets {
+			if !github.ValidRepository(r) {
+				return fmt.Errorf("%w: %q is not an owner/name repository", errUsage, r)
+			}
 		}
 	}
 
@@ -146,27 +205,34 @@ func runCollect(ctx context.Context, args []string, stdout io.Writer) error {
 	if err := authz.Can(actor, authz.RunCollection, authz.Resource{}); err != nil {
 		return err
 	}
-	token, err := githubToken(ctx)
+	if provider == "github" {
+		if svc.Collectors, err = githubCollectors(ctx); err != nil {
+			return err
+		}
+	} else {
+		var api aws.API
+		if svc.Collectors, api, err = awsCollectors(ctx); err != nil {
+			return err
+		}
+		// The account is whichever one the credentials belong to.
+		account, err := api.AccountID(ctx)
+		if err != nil {
+			return fmt.Errorf("could not identify the AWS account: %w", err)
+		}
+		targets = []string{account}
+	}
+
+	queued, err := svc.RequestCollection(ctx, actor, provider, targets, nil)
 	if err != nil {
 		return err
 	}
-	svc.GitHub = &github.Client{Token: token}
-
-	runs, err := svc.CollectGitHub(ctx, actor, repos)
-	failed := 0
-	for _, r := range runs {
-		if !r.Succeeded {
-			failed++
-			fmt.Fprintf(stdout, "run %d  %s  FAILED  class=%s  %s\n", r.RunID, r.Repository, r.ErrorClass, r.ErrorDetail)
-			continue
+	for _, q := range queued {
+		if !q.Queued {
+			fmt.Fprintf(stdout, "run %d  %s  %s  already waiting; not queued again\n", q.RunID, q.Kind, q.Target)
 		}
-		coverage := "complete"
-		if !r.InventoryComplete {
-			coverage = "INCOMPLETE"
-		}
-		fmt.Fprintf(stdout, "run %d  %s  succeeded  coverage=%s  observation=%d  evidence=%s\n",
-			r.RunID, r.Repository, coverage, r.ObservationID, r.PayloadSHA256)
 	}
+	runs, err := svc.Work(ctx, actor, workerCount())
+	failed := printRuns(stdout, runs)
 	if err != nil {
 		return err
 	}
@@ -174,6 +240,122 @@ func runCollect(ctx context.Context, args []string, stdout io.Writer) error {
 		return fmt.Errorf("%d of %d collection runs failed; no result was changed by them", failed, len(runs))
 	}
 	return nil
+}
+
+// envDuration reads a duration from the environment, or returns def.
+func envDuration(name string, def time.Duration) (time.Duration, error) {
+	v := os.Getenv(name)
+	if v == "" {
+		return def, nil
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil || d <= 0 {
+		return 0, fmt.Errorf("%s=%q is not a positive duration such as 24h or 30s", name, v)
+	}
+	return d, nil
+}
+
+// runWorker schedules due collection, runs it and evaluates the new
+// evidence, once or until interrupted.
+func runWorker(ctx context.Context, args []string, stdout, stderr io.Writer) error {
+	once := len(args) == 1 && args[0] == "--once"
+	if len(args) > 1 || (len(args) == 1 && !once) {
+		return fmt.Errorf("%w: expected \"worker\" or \"worker --once\"", errUsage)
+	}
+	interval, err := envDuration("CCA_COLLECT_INTERVAL", 24*time.Hour)
+	if err != nil {
+		return err
+	}
+	tick, err := envDuration("CCA_WORKER_TICK", 30*time.Second)
+	if err != nil {
+		return err
+	}
+
+	svc, closeSvc, err := openService(ctx)
+	if err != nil {
+		return err
+	}
+	defer closeSvc()
+	actor, err := cliActor(ctx, svc)
+	if err != nil {
+		return err
+	}
+	for _, action := range []authz.Action{authz.RunCollection, authz.RunEvaluation} {
+		if err := authz.Can(actor, action, authz.Resource{}); err != nil {
+			return err
+		}
+	}
+
+	// A source whose credentials are missing is left out: its runs stay
+	// queued and show as waiting on the integration health page.
+	svc.Collectors = map[string]assurance.CollectFunc{}
+	if gh, err := githubCollectors(ctx); err != nil {
+		fmt.Fprintf(stderr, "worker: GitHub collection is off: %v\n", err)
+	} else {
+		maps.Copy(svc.Collectors, gh)
+	}
+	if awsc, _, err := awsCollectors(ctx); err != nil {
+		fmt.Fprintf(stderr, "worker: AWS collection is off: %v\n", err)
+	} else {
+		maps.Copy(svc.Collectors, awsc)
+	}
+	if len(svc.Collectors) == 0 {
+		return errors.New("no source has usable credentials")
+	}
+
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	pass := func() error {
+		queued, err := svc.ScheduleDue(ctx, actor, interval)
+		if err != nil {
+			return fmt.Errorf("schedule: %w", err)
+		}
+		n := 0
+		for _, q := range queued {
+			if q.Queued {
+				n++
+			}
+		}
+		if n > 0 {
+			fmt.Fprintf(stdout, "scheduled %d collection run(s)\n", n)
+		}
+		runs, err := svc.Work(ctx, actor, workerCount())
+		printRuns(stdout, runs)
+		if err != nil {
+			return fmt.Errorf("collect: %w", err)
+		}
+		evals, err := svc.Evaluate(ctx, actor)
+		for _, e := range evals {
+			line := fmt.Sprintf("evaluation %d  %s v%s  %s", e.EvaluationID, e.CheckKey, e.CheckVersion, e.Result)
+			if e.Finding != store.FindingUnchanged {
+				line += "  finding " + string(e.Finding)
+			}
+			fmt.Fprintln(stdout, line)
+		}
+		if err != nil {
+			return fmt.Errorf("evaluate: %w", err)
+		}
+		return nil
+	}
+
+	if once {
+		return pass()
+	}
+	fmt.Fprintf(stdout, "worker started: collecting every %s, checking the queue every %s (Ctrl-C to stop)\n", interval, tick)
+	ticker := time.NewTicker(tick)
+	defer ticker.Stop()
+	for {
+		if err := pass(); err != nil && ctx.Err() == nil {
+			// Keep going: a later pass may succeed, and the queue keeps the work.
+			fmt.Fprintf(stderr, "worker: %v\n", err)
+		}
+		select {
+		case <-ctx.Done():
+			fmt.Fprintln(stdout, "worker stopped")
+			return nil
+		case <-ticker.C:
+		}
+	}
 }
 
 func runEvaluate(ctx context.Context, args []string, stdout io.Writer) error {

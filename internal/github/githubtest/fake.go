@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/aelasmar01Lab/control-assurance/internal/github"
@@ -28,8 +29,24 @@ type Fake struct {
 	header map[string]string
 	// pageSize of the rules listing; 0 means everything on one page.
 	pageSize int
-	// malformed makes the rules endpoint return a body that is not JSON.
+	// malformed makes the listing endpoints return a body that is not JSON.
 	malformed bool
+	// alerts are the open Dependabot alerts; alertsDisabled turns them off.
+	alerts         []Alert
+	alertsDisabled bool
+	// files are the paths that exist on the default branch.
+	files map[string]bool
+	// requests counts the requests served; writes counts those that were
+	// not GET or HEAD.
+	requests int
+	writes   int
+}
+
+// Alert is a synthetic Dependabot alert.
+type Alert struct {
+	Number   int
+	Severity string
+	Created  string // RFC 3339
 }
 
 // FakeToken is the only bearer token a Fake accepts.
@@ -79,6 +96,45 @@ func (f *Fake) SetMalformed(on bool) {
 	f.malformed = on
 }
 
+// SetAlerts replaces the open Dependabot alerts and turns alerts on.
+func (f *Fake) SetAlerts(alerts ...Alert) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.alerts, f.alertsDisabled = alerts, false
+}
+
+// DisableAlerts makes the alerts endpoint answer as GitHub does when
+// Dependabot alerts are turned off for the repository.
+func (f *Fake) DisableAlerts() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.alertsDisabled = true
+}
+
+// SetFiles replaces the paths that exist on the default branch.
+func (f *Fake) SetFiles(paths ...string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.files = map[string]bool{}
+	for _, p := range paths {
+		f.files[p] = true
+	}
+}
+
+// Requests returns how many requests the fake has served.
+func (f *Fake) Requests() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.requests
+}
+
+// Writes returns how many requests were not reads.
+func (f *Fake) Writes() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.writes
+}
+
 // PullRequestRule returns a rule requiring the given number of approvals.
 func PullRequestRule(approvals int) github.Rule {
 	return github.Rule{
@@ -114,6 +170,10 @@ func FillerRule(n int) github.Rule {
 func (f *Fake) serve(w http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	f.requests++
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		f.writes++
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if f.status != http.StatusOK {
@@ -142,10 +202,53 @@ func (f *Fake) serve(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		f.serveRules(w, r)
+	case repoPath + "/dependabot/alerts":
+		f.serveAlerts(w, r)
 	default:
+		if path, ok := strings.CutPrefix(r.URL.Path, repoPath+"/contents/"); ok && f.files[path] {
+			body, _ := json.Marshal(map[string]any{"type": "file", "path": path, "sha": strings.Repeat("0", 40), "size": 120})
+			_, _ = w.Write(body) //nolint:gosec // a JSON test fixture, never rendered as HTML
+			return
+		}
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte(`{"message":"Not Found"}`))
 	}
+}
+
+func (f *Fake) serveAlerts(w http.ResponseWriter, r *http.Request) {
+	if f.alertsDisabled {
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`{"message":"Dependabot alerts are disabled for this repository.","status":"403"}`))
+		return
+	}
+	if f.malformed {
+		_, _ = w.Write([]byte(`<html>not json</html>`))
+		return
+	}
+	alerts := f.alerts
+	if f.pageSize > 0 {
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		if page < 1 {
+			page = 1
+		}
+		start := min((page-1)*f.pageSize, len(alerts))
+		end := min(start+f.pageSize, len(alerts))
+		if end < len(alerts) {
+			next := fmt.Sprintf("%s%s?page=%d", f.Server.URL, r.URL.Path, page+1)
+			w.Header().Set("Link", "<"+next+`>; rel="next"`)
+		}
+		alerts = alerts[start:end]
+	}
+	out := make([]map[string]any, 0, len(alerts))
+	for _, a := range alerts {
+		out = append(out, map[string]any{
+			"number": a.Number, "state": "open", "created_at": a.Created,
+			"dependency":        map[string]any{"package": map[string]string{"ecosystem": "npm", "name": "synthetic-package"}},
+			"security_advisory": map[string]string{"ghsa_id": fmt.Sprintf("GHSA-fake-%04d", a.Number), "severity": a.Severity},
+		})
+	}
+	body, _ := json.Marshal(out)
+	_, _ = w.Write(body)
 }
 
 func (f *Fake) serveRules(w http.ResponseWriter, r *http.Request) {

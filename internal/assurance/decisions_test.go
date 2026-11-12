@@ -3,6 +3,7 @@ package assurance_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -254,7 +255,7 @@ func TestAuditorReadsAndExportsButNeverWrites(t *testing.T) {
 	// Every write is denied, and leaves no trace.
 	logBefore := h.logCount()
 	writes := map[string]func() error{
-		"collect":         func() error { _, err := h.svc.CollectGitHub(ctx, h.auditor, h.repos); return err },
+		"collect":         func() error { _, err := h.svc.RequestCollection(ctx, h.auditor, "github", h.repos, nil); return err },
 		"evaluate":        func() error { _, err := h.svc.Evaluate(ctx, h.auditor); return err },
 		"load catalog":    func() error { _, err := h.svc.LoadCatalog(ctx, h.auditor, all); return err },
 		"submit evidence": func() error { _, err := h.svc.SubmitEvidence(ctx, h.auditor, h.upload()); return err },
@@ -313,8 +314,16 @@ func TestServiceEnforcesTheMatrix(t *testing.T) {
 			return err
 		},
 		authz.RunCollection: func(h *harness, a authz.Actor) error {
-			_, err := h.svc.CollectGitHub(context.Background(), a, h.repos)
-			return err
+			// Every way of starting collection is one action.
+			ctx := context.Background()
+			_, errRequest := h.svc.RequestCollection(ctx, a, "github", h.repos, nil)
+			_, errAll := h.svc.RequestAll(ctx, a)
+			_, errDue := h.svc.ScheduleDue(ctx, a, time.Hour)
+			_, errWork := h.svc.Work(ctx, a, 1)
+			if (errRequest == nil) != (errAll == nil) || (errAll == nil) != (errDue == nil) || (errDue == nil) != (errWork == nil) {
+				return fmt.Errorf("collection entry points disagree: %w", errors.Join(errRequest, errAll, errDue, errWork, errors.New("some allowed, some denied")))
+			}
+			return errRequest
 		},
 		authz.RunEvaluation: func(h *harness, a authz.Actor) error {
 			_, err := h.svc.Evaluate(context.Background(), a)

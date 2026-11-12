@@ -13,18 +13,20 @@ This README states only what is implemented.
 | Repository layout, Go module, `cca` binary | Implemented |
 | CI: tests with Postgres, lint, vulnerability scan, pack validation, migrations | Implemented |
 | MVSP framework pack (25 requirements, pinned source), schema validation, database import | Implemented |
-| GitHub collector: branch rules, classified errors, pagination completeness | Implemented |
+| GitHub collector: branch rules, Dependabot alerts, security policy file; classified errors, pagination completeness | Implemented |
+| AWS collector: IAM credential report, CloudTrail trails, Bedrock invocation logging; read-only assumed role | Implemented |
 | Evidence store: filesystem, content-addressed by SHA-256 | Implemented |
-| Checks GH-01 and GH-02 (automated) and REC-01 (manual evidence), versioned, with stated limits | Implemented |
+| Eight automated checks (GH-01 to GH-04, AWS-01 to AWS-04) and REC-01 (manual evidence), versioned, with stated limits | Implemented |
+| Job queue in PostgreSQL, worker pool, daily schedule, retries per error class, recovery of abandoned runs | Implemented |
 | Evaluations and findings, insert-only history | Implemented |
 | Accounts, sessions and four roles; one permission function with matrix tests | Implemented |
 | Manual evidence submission and review | Implemented |
 | Exceptions with mandatory expiry, remediation notes, decision log | Implemented |
-| Two internal controls with derived state (change management, backup and recovery) | Implemented |
-| Web interface: overview, findings, manual evidence, decision log | Implemented |
+| Eight internal controls with derived state and a 48 hour evidence window | Implemented |
+| Web interface: overview, findings, manual evidence, integration health, decision log | Implemented |
+| Fault table: every injected fault, its error class and retry behaviour, generated and tested | Implemented |
 | Current-state JSON export | Implemented |
-| The other six internal controls; state for all 25 MVSP requirements | Not started |
-| AWS collector, GH-03, GH-04, scheduler, retries | Not started |
+| A state for each of the 25 MVSP requirements; reviewed mappings | Not started |
 | Review package for a past period, S3 evidence store, deduplication study | Not started |
 
 ## The loop
@@ -37,12 +39,24 @@ bin/cca users seed                      # four lab users; passwords are printed 
 export CCA_USER=operator                # the user CLI commands act as
 
 bin/cca packs load                      # import the MVSP catalog
-bin/cca collect github owner/name       # read the active rules on the default branch
-bin/cca evaluate                        # apply GH-01 and GH-02 to the new evidence
+bin/cca collect github owner/name       # collect from a repository now
+AWS_PROFILE=cca-collector bin/cca collect aws   # collect from the account the credentials belong to
+bin/cca evaluate                        # apply every check to the new evidence
 bin/cca results                         # control states and current results
 bin/cca findings list                   # findings, with exceptions and notes
 bin/cca serve                           # the web interface at http://127.0.0.1:8080
 ```
+
+To keep evidence current, run the worker beside the site:
+
+```sh
+AWS_PROFILE=cca-collector bin/cca worker   # collects each job daily, retries failures, evaluates
+bin/cca worker --once                      # one pass, for cron
+```
+
+The first `collect` of a repository or account registers it as in scope.
+After that the worker collects it on schedule, and the operator can queue
+everything at once from the integration health page.
 
 In the browser, with a failing check:
 
@@ -65,10 +79,38 @@ What the results mean:
   to one stored observation. The [check guide](docs/checks.md) says what a
   pass does and does not establish.
 - A collection failure is none of the three. It is recorded on the run with
-  an error class (`auth`, `permission`, `rate_limited`, `not_found`,
-  `network`, `server`, `malformed_response`) and changes no result.
-- A rule listing that was not read to the end is `incomplete`; a check that
-  did not find its rule in it returns `not_evaluated`, not `fail`.
+  an error class and changes no result. The [fault table](docs/faults.md)
+  lists every fault the tests inject, the class each ends in, and how each
+  class is retried.
+- A listing that was not read to the end is `incomplete`; a check that did
+  not find what it looks for in it returns `not_evaluated`, not `fail`.
+- Dependabot alerts turned off is `not_evaluated`, never zero alerts.
+- A check that measures an age measures it to the moment the evidence
+  describes, not to the clock, so a stored evaluation gives the same answer
+  whenever it is repeated.
+
+## Collection jobs
+
+A job is one kind of evidence from one resource, such as
+`github.dependabot_alerts` from one repository. Each attempt is a row in
+`collection_runs`: queued, running, then succeeded or failed.
+
+- Workers claim queued attempts with `FOR UPDATE SKIP LOCKED`, so two
+  workers never take the same one, and a job has at most one unfinished
+  attempt, so asking twice queues once.
+- A failed attempt is retried according to its error class. A retry is a new
+  row that names the attempt it follows. Classes that need a person (`auth`,
+  `permission`, `not_found`) are not retried; the next scheduled collection
+  tries again.
+- A claimed attempt carries a five minute lease. If its worker is killed,
+  the next worker pass marks it `interrupted` and queues the retry.
+- A finished attempt cannot be changed or deleted; a database trigger
+  refuses it.
+
+The integration health page shows, for each job, the newest evidence and
+its age, the last attempt and anything waiting. A job with no new evidence
+for 48 hours is stale, whatever later failed attempts say, and the controls
+that rest on it become stale with it.
 
 A control's state is derived on read and never stored. The first match wins:
 
@@ -99,10 +141,22 @@ applies. See [decisions 9 and 13](docs/decisions.md).
 
 ## Credentials
 
-`cca collect` uses `GITHUB_TOKEN` when set, and otherwise the GitHub CLI's
-current login (`gh auth token`). The collector only issues `GET` requests and
-needs read access to repository metadata. A CLI login is much broader than
-that; see [decision 7](docs/decisions.md).
+Source credentials are held by `cca collect` and `cca worker` only. The web
+process (`cca serve`) holds none: its "queue collection" button adds rows
+for a worker to pick up.
+
+GitHub: `GITHUB_TOKEN` when set, otherwise the GitHub CLI's current login
+(`gh auth token`). The collector only issues `GET` requests and needs read
+access to repository metadata, contents and Dependabot alerts. A CLI login
+is much broader than that; see [decision 7](docs/decisions.md).
+
+AWS: the SDK's standard credential chain, so `AWS_PROFILE` selects the
+role and `AWS_REGION` or the profile selects the Region. The collector is
+meant to run as a role with the seven read-only actions in
+[`deploy/aws/collector-policy.json`](deploy/aws/collector-policy.json), plus
+`sts:GetCallerIdentity`, which needs no grant. It refuses to file evidence
+when the credentials belong to a different account from the one being
+collected.
 
 ## Layout
 
@@ -113,7 +167,9 @@ that; see [decision 7](docs/decisions.md).
 | `internal/authz` | Roles, actions and the one permission function |
 | `internal/auth` | Password hashing (argon2id) |
 | `internal/control` | Internal controls and the derivation of their state |
+| `internal/collect` | What collectors share: the snapshot and the classified error |
 | `internal/github` | The only code that talks to GitHub; read-only |
+| `internal/aws` | The only code that talks to AWS; read-only |
 | `internal/check` | Versioned checks and the generated check guide |
 | `internal/evidence` | Content-addressed evidence store |
 | `internal/store` | PostgreSQL access |
@@ -122,7 +178,7 @@ that; see [decision 7](docs/decisions.md).
 | `internal/db` | Migrations runner |
 | `migrations/` | SQL migrations (goose format), embedded in the binary |
 | `packs/` | Framework packs (YAML) and their JSON Schema, embedded in the binary |
-| `docs/` | Check guide and permission matrix (both generated), and decision records |
+| `docs/` | Check guide, permission matrix and fault table (all generated), and decision records |
 | `deploy/aws` | IAM policy for the read-only collector role |
 
 ## Development
@@ -136,11 +192,11 @@ make test      # run tests; database tests use throwaway schemas, so run db-up f
 make build     # build bin/cca
 make lint      # needs golangci-lint v2
 make vuln      # govulncheck
-make guide     # regenerate docs/checks.md and docs/permissions.md after changing a check or a permission
+make guide     # regenerate docs/checks.md, docs/permissions.md and docs/faults.md after changing a check, a permission, a fault or a retry policy
 ```
 
-Tests use a synthetic GitHub API (`internal/github/githubtest`); no test
-calls GitHub. Without `CCA_TEST_DATABASE_URL` the database tests are skipped
+Tests use a synthetic GitHub API (`internal/github/githubtest`) and a
+synthetic AWS account (`internal/aws/awstest`); no test calls GitHub or AWS. Without `CCA_TEST_DATABASE_URL` the database tests are skipped
 locally and fail in CI.
 
 ## Framework content

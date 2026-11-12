@@ -17,6 +17,7 @@ import (
 
 	"github.com/aelasmar01Lab/control-assurance/internal/assurance"
 	"github.com/aelasmar01Lab/control-assurance/internal/evidence"
+	"github.com/aelasmar01Lab/control-assurance/internal/github"
 	"github.com/aelasmar01Lab/control-assurance/internal/github/githubtest"
 	"github.com/aelasmar01Lab/control-assurance/internal/store"
 	"github.com/aelasmar01Lab/control-assurance/internal/testdb"
@@ -47,7 +48,7 @@ func newSite(t *testing.T) *site {
 	}
 	fake := githubtest.NewFake()
 	t.Cleanup(fake.Server.Close)
-	svc := &assurance.Service{Store: st, Evidence: ev, GitHub: fake.Client()}
+	svc := &assurance.Service{Store: st, Evidence: ev, Collectors: fake.Client().Collectors()}
 
 	users, err := svc.SeedLabUsers(ctx)
 	if err != nil {
@@ -72,7 +73,10 @@ func (s *site) failing() {
 		s.t.Fatal(err)
 	}
 	s.fake.SetRules(false)
-	if _, err := s.svc.CollectGitHub(ctx, op, []string{githubtest.FakeRepository}); err != nil {
+	if _, err := s.svc.RequestCollection(ctx, op, "github", []string{githubtest.FakeRepository}, []string{github.BranchRulesKind}); err != nil {
+		s.t.Fatal(err)
+	}
+	if _, err := s.svc.Work(ctx, op, 1); err != nil {
 		s.t.Fatal(err)
 	}
 	if _, err := s.svc.Evaluate(ctx, op); err != nil {
@@ -324,7 +328,7 @@ func TestAuditorInTheBrowser(t *testing.T) {
 	s.failing()
 	auditor := s.signedIn("auditor")
 
-	for _, path := range []string{"/", "/findings", "/evidence", "/log"} {
+	for _, path := range []string{"/", "/findings", "/evidence", "/integrations", "/log"} {
 		status, body := auditor.get(path)
 		if status != http.StatusOK {
 			t.Errorf("GET %s = %d", path, status)
@@ -357,6 +361,7 @@ func TestAuditorInTheBrowser(t *testing.T) {
 		"/findings/1/exceptions": {"justification": {"x"}, "expires": {time.Now().UTC().AddDate(0, 0, 3).Format("2006-01-02")}},
 		"/exceptions/1/decision": {"decision": {"approve"}, "reason": {"x"}},
 		"/evidence/1/review":     {"decision": {"accept"}, "reason": {"x"}},
+		"/integrations/collect":  {},
 	}
 	for path, form := range writes {
 		if status, body := auditor.post(path, form); status != http.StatusForbidden || !strings.Contains(body, "Nothing was changed") {
@@ -374,6 +379,74 @@ func TestAuditorInTheBrowser(t *testing.T) {
 	for _, v := range views {
 		if len(v.Notes) != 0 || len(v.Exceptions) != 0 {
 			t.Errorf("finding %d was changed by a refused write", v.ID)
+		}
+	}
+}
+
+// Integration health shows collection problems beside the results, and
+// lets only the operator queue collection.
+func TestIntegrationHealthInTheBrowser(t *testing.T) {
+	s := newSite(t)
+	s.failing()
+	ctx := context.Background()
+	op, err := s.svc.ActorByUsername(ctx, "operator")
+	if err != nil {
+		t.Fatal(err)
+	}
+	runsBefore, err := s.svc.Store.Runs(ctx, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// The source starts failing. The failure shows on the health page and
+	// as a flag on the overview; the result on the overview stays.
+	s.fake.SetFailure(http.StatusBadGateway, nil)
+	if _, err := s.svc.RequestCollection(ctx, op, "github", []string{githubtest.FakeRepository}, []string{github.BranchRulesKind}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.svc.Work(ctx, op, 1); err != nil {
+		t.Fatal(err)
+	}
+	operator := s.signedIn("operator")
+	status, body := operator.get("/integrations")
+	if status != http.StatusOK {
+		t.Fatalf("GET /integrations = %d", status)
+	}
+	for _, want := range []string{"github.branch_rules", "retrying", "<code>server</code>", "retry of #", "Queue collection now"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("the health page does not show %q", want)
+		}
+	}
+	_, overview := operator.get("/")
+	if !strings.Contains(overview, "Integration health:") || !strings.Contains(overview, "GH-01") {
+		t.Error("the overview does not flag the collection problem beside the results")
+	}
+
+	// The operator queues collection; a second click queues nothing more.
+	s.fake.SetFailure(http.StatusOK, nil)
+	if status, body := operator.post("/integrations/collect", url.Values{}); status != http.StatusOK || !strings.Contains(body, "Queued 2 collection run(s); 1 were already waiting") {
+		t.Errorf("queue collection = %d, flash missing: %v", status, strings.Contains(body, "Queued"))
+	}
+	if _, body := operator.post("/integrations/collect", url.Values{}); !strings.Contains(body, "Queued 0 collection run(s); 3 were already waiting") {
+		t.Error("a second request queued more runs")
+	}
+	runsAfter, err := s.svc.Store.Runs(ctx, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// One failed attempt, its retry, and the two newly queued kinds.
+	if got := len(runsAfter) - len(runsBefore); got != 4 {
+		t.Errorf("%d new runs, want 4", got)
+	}
+
+	// Everyone else may look but not queue.
+	for _, name := range []string{"control-owner", "reviewer", "auditor"} {
+		b := s.signedIn(name)
+		if _, body := b.get("/integrations"); strings.Contains(body, "Queue collection now") {
+			t.Errorf("%s is offered collection", name)
+		}
+		if status, _ := b.post("/integrations/collect", url.Values{}); status != http.StatusForbidden {
+			t.Errorf("%s POST /integrations/collect = %d, want 403", name, status)
 		}
 	}
 }

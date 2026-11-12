@@ -44,7 +44,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .dim { color: var(--dim); font-size: 13px; }
 .empty { color: var(--dim); padding: 12px; border: 1px dashed var(--line); border-radius: 6px; }
 code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
-.result, .run {
+.result, .run, .job {
   display: inline-block;
   padding: 1px 8px;
   border-radius: 10px;
@@ -52,9 +52,9 @@ code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
   font-weight: 600;
   white-space: nowrap;
 }
-.result.pass, .run.succeeded { background: var(--pass-bg); color: var(--pass-fg); }
-.result.fail, .run.failed { background: var(--fail-bg); color: var(--fail-fg); }
-.result.not_evaluated, .run.running { background: var(--unk-bg); color: var(--unk-fg); }
+.result.pass, .run.succeeded, .job.healthy { background: var(--pass-bg); color: var(--pass-fg); }
+.result.fail, .run.failed, .job.failing, .job.stale { background: var(--fail-bg); color: var(--fail-fg); }
+.result.not_evaluated, .run.running, .run.queued, .job.retrying, .job.pending { background: var(--unk-bg); color: var(--unk-fg); }
 
 /* --- M2: sign-in, navigation, forms --- */
 .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -90,3 +90,6 @@ button.plain { background: transparent; color: var(--fg); border-color: var(--li
 .state.supported { background: var(--pass-bg); color: var(--pass-fg); }
 .state.needs_attention { background: var(--fail-bg); color: var(--fail-fg); }
 .state.stale, .state.not_evaluated, .state.accepted_risk { background: var(--unk-bg); color: var(--unk-fg); }
+.health { padding: 10px 12px; margin: 16px 0 0; border-radius: 6px; background: var(--unk-bg); color: var(--unk-fg); }
+.health a { color: inherit; }
+form.inline { margin: 0 0 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }

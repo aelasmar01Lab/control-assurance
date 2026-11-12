@@ -45,6 +45,10 @@ type Control struct {
 	Mappings             []Mapping
 }
 
+// AutomatedFreshness is how old automated evidence may be before a control
+// that rests on it is stale.
+const AutomatedFreshness = 48 * time.Hour
+
 // All is every internal control defined so far. Controls live in code, so a
 // change to one is a reviewed commit.
 var All = []Control{
@@ -55,12 +59,99 @@ var All = []Control{
 		Owner:               "control-owner",
 		EvidenceExpectation: "Active branch rules on each in-scope repository, collected at least every 48 hours.",
 		Checks:              []string{"GH-01", "GH-02"},
-		Freshness:           48 * time.Hour,
+		Freshness:           AutomatedFreshness,
 		Mappings: []Mapping{{
 			Framework: "mvsp", Requirement: "3.5", Strength: "supporting",
 			Rationale:  "Required review and required status checks support a consistent, controlled build and release process.",
 			Limitation: "MVSP 3.5 asks for version control, build provenance and credentials kept out of source. It does not ask for pull-request approval, so this control does not establish 3.5.",
 		}},
+	},
+	{
+		Key:                 "dependency-remediation",
+		Title:               "Dependency remediation",
+		Risk:                "A dependency with a known vulnerability stays in use past the patch deadline.",
+		Owner:               "control-owner",
+		EvidenceExpectation: "Open Dependabot alerts on each in-scope repository, collected at least every 48 hours.",
+		Checks:              []string{"GH-03"},
+		Freshness:           AutomatedFreshness,
+		Mappings: []Mapping{
+			{
+				Framework: "mvsp", Requirement: "2.6", Strength: "partial",
+				Rationale:  "Open alerts within their deadline show that known-vulnerable third-party components are being patched.",
+				Limitation: "It covers only what Dependabot knows about in manifests it can read, and says nothing about keeping components otherwise up to date.",
+			},
+			{
+				Framework: "mvsp", Requirement: "3.4", Strength: "partial",
+				Rationale:  "MVSP 3.4 sets a 90 day limit for patching application vulnerabilities; the medium deadline matches it and the high deadline is shorter.",
+				Limitation: "MVSP 3.4 covers vulnerabilities in the application itself. This control sees only its dependencies.",
+			},
+		},
+	},
+	{
+		Key:                 "vulnerability-disclosure",
+		Title:               "Vulnerability disclosure",
+		Risk:                "Someone who finds a vulnerability has no stated way to report it.",
+		Owner:               "control-owner",
+		EvidenceExpectation: "A security policy file on the default branch of each in-scope repository, checked at least every 48 hours.",
+		Checks:              []string{"GH-04"},
+		Freshness:           AutomatedFreshness,
+		Mappings: []Mapping{{
+			Framework: "mvsp", Requirement: "1.1", Strength: "partial",
+			Rationale:  "A published security policy file is where a repository states how to report a vulnerability.",
+			Limitation: "The file's content is not read, so this shows nothing about a contact, a response time or safe-harbour wording, all of which MVSP 1.1 asks for.",
+		}},
+	},
+	{
+		Key:                 "human-access",
+		Title:               "Human access",
+		Risk:                "A stolen password alone is enough to sign in to the AWS account.",
+		Owner:               "control-owner",
+		EvidenceExpectation: "The IAM credential report and account summary, collected at least every 48 hours.",
+		Checks:              []string{"AWS-01"},
+		Freshness:           AutomatedFreshness,
+		Mappings: []Mapping{{
+			Framework: "mvsp", Requirement: "4.2", Strength: "partial",
+			Rationale:  "MFA on every console password limits what a stolen password allows.",
+			Limitation: "MVSP 4.2 covers logical access more widely: least privilege, access review and removal of unused accounts. Federated users are not seen.",
+		}},
+	},
+	{
+		Key:                 "credential-lifecycle",
+		Title:               "Credential lifecycle",
+		Risk:                "A credential nobody uses stays valid until someone else finds it.",
+		Owner:               "control-owner",
+		EvidenceExpectation: "The IAM credential report and account summary, collected at least every 48 hours.",
+		Checks:              []string{"AWS-02"},
+		Freshness:           AutomatedFreshness,
+		Mappings: []Mapping{{
+			Framework: "mvsp", Requirement: "4.2", Strength: "partial",
+			Rationale:  "Finding passwords and keys that have gone unused supports removing access that is no longer needed.",
+			Limitation: "It shows last use, not whether access is still needed, and it does not see roles or federated sessions.",
+		}},
+	},
+	{
+		Key:                 "audit-logging",
+		Title:               "Audit logging",
+		Risk:                "Actions in the AWS account leave no trustworthy record.",
+		Owner:               "control-owner",
+		EvidenceExpectation: "CloudTrail trail descriptions and status, collected at least every 48 hours.",
+		Checks:              []string{"AWS-03"},
+		Freshness:           AutomatedFreshness,
+		Mappings: []Mapping{{
+			Framework: "mvsp", Requirement: "2.7", Strength: "supporting",
+			Rationale:  "A validated multi-Region trail records management activity in the account that hosts the application.",
+			Limitation: "MVSP 2.7 asks for application logs of user and security events. CloudTrail records AWS API activity, which is a different thing.",
+		}},
+	},
+	{
+		Key:                 "ai-usage-logging",
+		Title:               "AI usage logging",
+		Risk:                "Model invocations in the account cannot be reviewed afterwards.",
+		Owner:               "control-owner",
+		EvidenceExpectation: "The Bedrock model invocation logging configuration in the lab Region, collected at least every 48 hours.",
+		Checks:              []string{"AWS-04"},
+		Freshness:           AutomatedFreshness,
+		// No framework in this release has a requirement this control maps to.
 	},
 	{
 		Key:                  "backup-recovery",

@@ -107,73 +107,6 @@ func (s *Store) UpsertResource(ctx context.Context, provider, kind, externalID, 
 	return id, err
 }
 
-// StartRun records the start of a collection attempt.
-func (s *Store) StartRun(ctx context.Context, integration string, resourceID int64, startedAt time.Time) (int64, error) {
-	var id int64
-	err := s.pool.QueryRow(ctx, `
-		INSERT INTO collection_runs (integration, resource_id, started_at, outcome)
-		VALUES ($1, $2, $3, 'running') RETURNING id`,
-		integration, resourceID, startedAt).Scan(&id)
-	return id, err
-}
-
-// FailRun marks a run as failed with an error class. A failed run has no
-// observation, so it cannot change any result.
-func (s *Store) FailRun(ctx context.Context, runID int64, finishedAt time.Time, errorClass, detail string) error {
-	_, err := s.pool.Exec(ctx, `
-		UPDATE collection_runs
-		SET outcome = 'failed', finished_at = $2, error_class = $3, error_detail = $4
-		WHERE id = $1 AND outcome = 'running'`,
-		runID, finishedAt, errorClass, detail)
-	return err
-}
-
-// NewObservation is what a successful run saw.
-type NewObservation struct {
-	ResourceID        int64
-	Kind              string
-	CollectedAt       time.Time
-	PayloadSHA256     string
-	PayloadSize       int64
-	PayloadMediaType  string
-	PayloadStorageRef string
-	NormalizerVersion string
-}
-
-// CompleteRun marks a run as succeeded and records its observation, together.
-func (s *Store) CompleteRun(ctx context.Context, runID int64, finishedAt time.Time, inventoryComplete bool, o NewObservation) (observationID int64, err error) {
-	err = s.inTx(ctx, func(tx pgx.Tx) error {
-		// Many observations may share one payload row.
-		_, err := tx.Exec(ctx, `
-			INSERT INTO evidence_payloads (sha256, size_bytes, media_type, storage_ref)
-			VALUES ($1, $2, $3, $4) ON CONFLICT (sha256) DO NOTHING`,
-			o.PayloadSHA256, o.PayloadSize, o.PayloadMediaType, o.PayloadStorageRef)
-		if err != nil {
-			return err
-		}
-		err = tx.QueryRow(ctx, `
-			INSERT INTO observations (run_id, resource_id, kind, collected_at, payload_sha256, normalizer_version)
-			VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-			runID, o.ResourceID, o.Kind, o.CollectedAt, o.PayloadSHA256, o.NormalizerVersion).Scan(&observationID)
-		if err != nil {
-			return err
-		}
-		tag, err := tx.Exec(ctx, `
-			UPDATE collection_runs
-			SET outcome = 'succeeded', finished_at = $2, inventory_complete = $3
-			WHERE id = $1 AND outcome = 'running'`,
-			runID, finishedAt, inventoryComplete)
-		if err != nil {
-			return err
-		}
-		if tag.RowsAffected() != 1 {
-			return fmt.Errorf("run %d is not running", runID)
-		}
-		return nil
-	})
-	return observationID, err
-}
-
 // SyncCheckVersion records a check version the first time it is used, and
 // refuses to continue if a recorded version no longer matches the code.
 func (s *Store) SyncCheckVersion(ctx context.Context, c check.Check) error {
@@ -204,13 +137,16 @@ type PendingObservation struct {
 	ID            int64
 	ResourceID    int64
 	PayloadSHA256 string
+	// AsOf is the source's own timestamp when it gave one, otherwise the
+	// time of collection.
+	AsOf time.Time
 }
 
 // PendingObservations returns the observations of c's kind that c has not
 // evaluated, oldest first.
 func (s *Store) PendingObservations(ctx context.Context, c check.Check) ([]PendingObservation, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT o.id, o.resource_id, o.payload_sha256
+		SELECT o.id, o.resource_id, o.payload_sha256, COALESCE(o.source_timestamp, o.collected_at)
 		FROM observations o
 		WHERE o.kind = $3
 		  AND NOT EXISTS (
