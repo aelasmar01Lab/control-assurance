@@ -11,8 +11,10 @@ import (
 
 	"github.com/aelasmar01Lab/control-assurance/internal/assurance"
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
+	"github.com/aelasmar01Lab/control-assurance/internal/control"
 	"github.com/aelasmar01Lab/control-assurance/internal/db"
 	"github.com/aelasmar01Lab/control-assurance/internal/pack"
+	"github.com/aelasmar01Lab/control-assurance/internal/selfassess"
 	"github.com/aelasmar01Lab/control-assurance/internal/study"
 	"github.com/aelasmar01Lab/control-assurance/packs"
 )
@@ -26,7 +28,11 @@ Usage:
   cca <command> [arguments]
 
 Commands:
+  demo                         Seed a clean database with a labelled synthetic history and serve it
   requirements list            List every requirement in the built-in framework packs
+  requirements status          Show every requirement's current state and what it rests on
+  controls guide               Print the control and mapping guide generated from the definitions
+  self-assessment              Print this project's own MVSP self-assessment
   packs validate [file]...     Validate pack files (the built-in packs when no file is given)
   checks guide                 Print the check guide generated from the check definitions
   permissions                  Print the permission matrix generated from the rules in force
@@ -62,7 +68,7 @@ Environment:
   CCA_WORKERS           Collection runs made at the same time (default 4)
   CCA_COOKIE_SECURE     Set to 1 when serving over HTTPS
 
-migrate, users and evidence are setup commands and take no CCA_USER.
+migrate, users, evidence and demo are setup commands and take no CCA_USER.
 `
 
 // errUsage marks an error caused by how the command was invoked.
@@ -84,7 +90,15 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	case "help", "-h", "--help":
 		fmt.Fprint(stdout, usage)
 	case "requirements":
-		err = runRequirements(args[1:], stdout)
+		if len(args) == 2 && args[1] == "status" {
+			err = runRequirementsStatus(ctx, stdout)
+		} else {
+			err = runRequirements(args[1:], stdout)
+		}
+	case "demo":
+		err = runDemo(ctx, args[1:], stdout)
+	case "controls", "self-assessment":
+		err = runGenerated(args, stdout)
 	case "packs":
 		if len(args) == 2 && args[1] == "load" {
 			err = runPacksLoad(ctx, stdout)
@@ -135,6 +149,27 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	return 1
+}
+
+// runGenerated prints a document generated from definitions in code.
+func runGenerated(args []string, stdout io.Writer) error {
+	all, err := pack.LoadFS(packs.FS)
+	if err != nil {
+		return err
+	}
+	switch {
+	case len(args) == 2 && args[0] == "controls" && args[1] == "guide":
+		fmt.Fprint(stdout, control.Guide(all))
+	case len(args) == 1 && args[0] == "self-assessment":
+		for _, p := range all {
+			if p.Framework.Key == "mvsp" {
+				fmt.Fprint(stdout, selfassess.Markdown(p))
+			}
+		}
+	default:
+		return fmt.Errorf("%w: expected \"controls guide\" or \"self-assessment\"", errUsage)
+	}
+	return nil
 }
 
 func runStudy(args []string, stdout io.Writer) error {

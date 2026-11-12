@@ -18,6 +18,9 @@ import (
 // returns is synthetic.
 type Fake struct {
 	Server *httptest.Server
+	// Repository is the repository served. It defaults to FakeRepository
+	// and must be set before the first request.
+	Repository string
 
 	mu sync.Mutex
 	// Rules are served by the rules-for-a-branch endpoint, PageSize per page.
@@ -57,7 +60,7 @@ const FakeRepository = "lab-org/lab-repo"
 
 // NewFake starts a fake GitHub API. Close its Server when done.
 func NewFake() *Fake {
-	f := &Fake{status: http.StatusOK}
+	f := &Fake{status: http.StatusOK, Repository: FakeRepository}
 	f.Server = httptest.NewServer(http.HandlerFunc(f.serve))
 	return f
 }
@@ -190,7 +193,7 @@ func (f *Fake) serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	const repoPath = "/repos/" + FakeRepository
+	repoPath := "/repos/" + f.Repository
 	switch r.URL.Path {
 	case repoPath:
 		_, _ = w.Write([]byte(`{"default_branch":"main"}`))

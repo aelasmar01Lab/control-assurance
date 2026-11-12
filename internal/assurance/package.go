@@ -25,7 +25,7 @@ import (
 
 // PackageFormat names the layout of a review package. A change to which
 // files exist or what they hold means a new format.
-const PackageFormat = "cca-review-package/1"
+const PackageFormat = "cca-review-package/2"
 
 const packageNotice = "A review package for one past period. Every result describes one check version applied to one stored observation; " +
 	"it is not a statement about any framework. Control states are as they stood at the end of the period."
@@ -241,8 +241,13 @@ func (s *Service) BuildPackage(ctx context.Context, actor authz.Actor, from, to 
 	exceptionsAtEnd := exceptionsBefore(allExceptions, to)
 	submissions := submissionsBefore(allSubmissions, to)
 
+	controlViews := deriveControls(to, results, findingsAtEnd, exceptionsAtEnd, submissions)
+	requirements, err := deriveRequirements(controlViews)
+	if err != nil {
+		return nil, err
+	}
 	var controls []PackageControl
-	for _, v := range deriveControls(to, results, findingsAtEnd, exceptionsAtEnd, submissions) {
+	for _, v := range controlViews {
 		c := v.Control
 		controls = append(controls, PackageControl{
 			Key: c.Key, Title: c.Title, Risk: c.Risk, Owner: c.Owner, EvidenceExpectation: c.EvidenceExpectation,
@@ -322,7 +327,7 @@ func (s *Service) BuildPackage(ctx context.Context, actor authz.Actor, from, to 
 		return nil
 	}
 	for path, v := range map[string]any{
-		"controls.json": controls, "checks.json": checks, "runs.json": runs, "observations.json": observations,
+		"controls.json": controls, "requirements.json": requirements, "checks.json": checks, "runs.json": runs, "observations.json": observations,
 		"evaluations.json": evaluations, "findings.json": findings, "exceptions.json": exceptions,
 		"remediation_notes.json": notes, "evidence_submissions.json": submissions, "decision_log.json": log,
 	} {
@@ -347,11 +352,20 @@ func (s *Service) BuildPackage(ctx context.Context, actor authz.Actor, from, to 
 		p.Files["evidence/"+sha] = data
 	}
 	p.Files["README.md"] = []byte(packageReadme(from, to))
+	exceptionRows := make([]PackageException, len(exceptions))
+	copy(exceptionRows, exceptions)
+	if p.Files["index.html"], err = renderPackageReport(packageReport{
+		Format: PackageFormat, Notice: packageNotice, From: from, To: to, Scope: scope,
+		Controls: controls, Requirements: requirements, Findings: findings, Exceptions: exceptionRows, Notes: notes,
+		Evaluations: evaluations, Runs: runs, Submissions: submissions, Log: log,
+	}); err != nil {
+		return nil, fmt.Errorf("render index.html: %w", err)
+	}
 
 	p.Manifest = Manifest{
 		Format: PackageFormat, Notice: packageNotice, PeriodFrom: from, PeriodTo: to, Scope: scope,
 		Counts: map[string]int{
-			"controls": len(controls), "runs": len(runs), "observations": len(observations), "evaluations": len(evaluations),
+			"controls": len(controls), "requirements": len(requirements), "runs": len(runs), "observations": len(observations), "evaluations": len(evaluations),
 			"findings": len(findings), "exceptions": len(exceptions), "remediation_notes": len(notes),
 			"evidence_submissions": len(submissions), "decision_log_entries": len(log), "evidence_files": len(evidence),
 		},
@@ -388,8 +402,10 @@ Format: %s
 
 | File | Holds |
 | --- | --- |
+| index.html | A reading copy of everything below, for a person. |
 | manifest.json | The period, the resources in scope, and the SHA-256 and size of every other file. The SHA-256 of this file identifies the package. |
 | controls.json | Each control, what it rests on, its framework mappings, and its state at the end of the period with the reasons. |
+| requirements.json | Every framework requirement and its state at the end of the period: through its mapped controls, or how it is tracked when no control covers it. |
 | checks.json | Each check version that produced a result here: its assertion, and what a pass does and does not establish. |
 | runs.json | Every collection attempt that finished in the period, including failures and retries, with error classes. |
 | observations.json | What each successful run saw: when, from which resource, and the hash of the evidence. |

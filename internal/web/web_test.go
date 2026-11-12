@@ -329,7 +329,7 @@ func TestAuditorInTheBrowser(t *testing.T) {
 	s.failing()
 	auditor := s.signedIn("auditor")
 
-	for _, path := range []string{"/", "/findings", "/evidence", "/integrations", "/log"} {
+	for _, path := range []string{"/", "/requirements", "/findings", "/evidence", "/integrations", "/log"} {
 		status, body := auditor.get(path)
 		if status != http.StatusOK {
 			t.Errorf("GET %s = %d", path, status)
@@ -490,6 +490,34 @@ func TestReviewPackageInTheBrowser(t *testing.T) {
 	// The download is in the decision log, with the manifest hash.
 	if _, log := auditor.get("/log"); !strings.Contains(log, "package.generated") || !strings.Contains(log, v.ManifestSHA256) {
 		t.Error("the download is not in the decision log")
+	}
+}
+
+// All 25 requirements appear, and none is shown as met.
+func TestRequirementsInTheBrowser(t *testing.T) {
+	s := newSite(t)
+	s.failing()
+	status, body := s.signedIn("auditor").get("/requirements")
+	if status != http.StatusOK {
+		t.Fatalf("GET /requirements = %d", status)
+	}
+	if n := strings.Count(body, "<strong>mvsp "); n != 25 {
+		t.Errorf("the page lists %d requirements, want 25", n)
+	}
+	for _, want := range []string{"needs attention", "not implemented", "out of scope", "tracked manually", "mapping not reviewed", "source note"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("the page does not show %q", want)
+		}
+	}
+	// Change management fails, so nothing that rests on evidence is
+	// positive, and nothing at all reads as met or supported.
+	for _, banned := range []string{`state partly_evidenced"`, `state supported"`, ">met<"} {
+		if strings.Contains(body, banned) {
+			t.Errorf("the page shows %q with no passing evidence behind it", banned)
+		}
+	}
+	if strings.Contains(body, "Every repository, account, user and record shown here is synthetic") {
+		t.Error("the demo banner shows outside demo mode")
 	}
 }
 

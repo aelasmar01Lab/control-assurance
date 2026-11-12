@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -21,6 +22,8 @@ import (
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/aws"
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
+	"github.com/aelasmar01Lab/control-assurance/internal/db"
+	"github.com/aelasmar01Lab/control-assurance/internal/demo"
 	"github.com/aelasmar01Lab/control-assurance/internal/evidence"
 	"github.com/aelasmar01Lab/control-assurance/internal/github"
 	"github.com/aelasmar01Lab/control-assurance/internal/pack"
@@ -729,6 +732,101 @@ func runChecks(args []string, stdout io.Writer) error {
 	}
 	fmt.Fprint(stdout, check.Guide())
 	return nil
+}
+
+func runRequirementsStatus(ctx context.Context, stdout io.Writer) error {
+	svc, closeSvc, err := openService(ctx)
+	if err != nil {
+		return err
+	}
+	defer closeSvc()
+	actor, err := cliActor(ctx, svc)
+	if err != nil {
+		return err
+	}
+	reqs, err := svc.Requirements(ctx, actor)
+	if err != nil {
+		return err
+	}
+	tw := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "REQUIREMENT\tSTATE\tRESTS ON")
+	for _, r := range reqs {
+		rests := "no control: " + r.Rationale
+		if len(r.Controls) > 0 {
+			var parts []string
+			for _, c := range r.Controls {
+				parts = append(parts, fmt.Sprintf("%s is %s (%s mapping)", c.Key, c.State, c.Strength))
+			}
+			rests = strings.Join(parts, "; ")
+		}
+		fmt.Fprintf(tw, "%s %s %s\t%s\t%s\n", r.Framework, r.ID, r.Title, r.State, rests)
+	}
+	return tw.Flush()
+}
+
+// runDemo seeds a clean database with the synthetic demo history, unless it
+// is already there, and serves it. It refuses a database holding anything else.
+func runDemo(ctx context.Context, args []string, stdout io.Writer) error {
+	if len(args) != 0 {
+		return fmt.Errorf("%w: \"demo\" takes no arguments", errUsage)
+	}
+	url := os.Getenv("DATABASE_URL")
+	if url == "" {
+		return errors.New("DATABASE_URL is not set")
+	}
+	if os.Getenv("CCA_EVIDENCE_S3_BUCKET") != "" {
+		return errors.New("the demo keeps its synthetic evidence in a local directory; unset CCA_EVIDENCE_S3_BUCKET")
+	}
+	if _, err := db.MigrateUp(ctx, url); err != nil {
+		return err
+	}
+	svc, closeSvc, err := openService(ctx)
+	if err != nil {
+		return err
+	}
+	defer closeSvc()
+
+	seeded, err := demo.Seeded(ctx, svc.Store)
+	if err != nil {
+		return err
+	}
+	if !seeded {
+		fmt.Fprintln(stdout, "Seeding the demo. Everything below is synthetic; nothing is collected from a real system.")
+		steps, err := demo.Seed(ctx, svc, time.Now())
+		if err != nil {
+			return fmt.Errorf("seed the demo: %w", err)
+		}
+		for _, s := range steps {
+			fmt.Fprintf(stdout, "  %s  %s\n", s.At.Format("2006-01-02 15:04 UTC"), s.Text)
+		}
+	}
+
+	addr := os.Getenv("CCA_ADDR")
+	if addr == "" {
+		addr = "127.0.0.1:8080"
+	}
+	shown := addr
+	if host, port, err := net.SplitHostPort(addr); err == nil && (host == "" || host == "0.0.0.0") {
+		shown = "127.0.0.1:" + port
+	}
+	fmt.Fprintf(stdout, "\nDemo ready at http://%s (Ctrl-C to stop). Synthetic data only.\n\n", shown)
+	tw := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "USERNAME\tPASSWORD\tCAN")
+	can := map[string]string{
+		"operator": "run collection and evaluation", "control-owner": "add notes, request exceptions, submit evidence",
+		"reviewer": "decide exceptions, review evidence", "auditor": "read, export and download review packages",
+	}
+	for _, name := range demo.Users {
+		fmt.Fprintf(tw, "%s\t%s\t%s\n", name, demo.Password(name), can[name])
+	}
+	if err := tw.Flush(); err != nil {
+		return err
+	}
+	fmt.Fprintln(stdout, "\nThese passwords are published. The demo holds no real data; do not put any in it.")
+
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	return web.Serve(ctx, addr, svc, web.Options{Demo: true})
 }
 
 func runServe(ctx context.Context, args []string, stdout io.Writer) error {

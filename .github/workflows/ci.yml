@@ -89,3 +89,14 @@ jobs:
         with:
           go-version-file: go.mod
       - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the demo image
+        run: docker build -t cca:ci .
+      - name: The binary runs as an unprivileged user
+        run: |
+          docker run --rm cca:ci version
+          test "$(docker run --rm --entrypoint id cca:ci -u)" != "0"

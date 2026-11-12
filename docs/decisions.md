@@ -247,3 +247,46 @@ source sometimes reorders the same rules. That assumption is stated in the
 report beside the numbers, with what happens when it is zero. Given up: a
 more impressive, unqualified ratio. Counts and bytes are fixed by the seed
 and checked by a test; read times are machine-dependent and labelled so.
+
+## 27. Every requirement is tracked, and "partly evidenced" is the ceiling
+
+All 25 MVSP requirements appear. Seven take the worst state among the
+controls mapped to them; the other eighteen have a tracking entry: manual,
+not implemented or out of scope, with a rationale. A test fails if a
+requirement has neither or both. The best state a requirement can show is
+*partly evidenced*, because every mapping here is partial or supporting.
+Given up: a coverage percentage, which would count partial mappings as
+coverage. "Tracked manually" is not a positive state either: it says the
+judgement is made elsewhere and no evidence of it is held here.
+
+## 28. Upstream's text is kept even where it is wrong
+
+The pinned MVSP catalog file gives requirement 2.1 the statement text of
+requirement 1.1. The pack reproduces upstream byte for byte, so the error is
+reproduced too, and a note beside 2.1 says so wherever it is shown. Given
+up: a correct text for 2.1 in the product. In exchange the pack's claim,
+"upstream's text, unmodified, at this commit and hash", stays true and
+checkable. The fix belongs upstream, or in a later pinned version.
+
+## 29. The demo replays history against synthetic sources
+
+`cca demo` does not load a dump. It runs the real service, with a clock set
+twelve days back, against the same synthetic GitHub and AWS the tests use,
+and plays the loop forward: failures, exceptions, a rejected token, an
+outage, the fix. So the demo data is produced by the code a visitor is
+about to read, and a test asserts what it leaves behind. It refuses a
+database holding anything else, and the compose profile gives it a
+throwaway one. Given up: live collection in the demo; once seeding ends the
+synthetic sources are gone, so queued collection has no worker. Demo
+passwords are published, which is acceptable only because the data is
+synthetic and the port is bound to loopback.
+
+## 30. The self-assessment is about the software, and says what it lacks
+
+`docs/self-assessment.md` assesses this application against MVSP and is
+generated from a table in code, with a test that every requirement has
+exactly one row. It is separate from what the application reports about the
+lab. It records two requirements as met, and that there is no single
+sign-on, no TLS, no vulnerability disclosure policy and no backup. Given
+up: nothing but a more flattering page. It is the author's own judgement;
+nobody independent has reviewed it.

@@ -1,0 +1,7 @@
+.git
+bin
+data
+.env
+.env.*
+*First-Release Plan.md
+.local

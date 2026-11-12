@@ -84,6 +84,7 @@ var pages = map[string]*template.Template{
 	"log":          mustPage("log.html"),
 	"integrations": mustPage("integrations.html"),
 	"package":      mustPage("package.html"),
+	"requirements": mustPage("requirements.html"),
 	"login":        mustPage("login.html"),
 	"error":        mustPage("error.html"),
 }
@@ -93,11 +94,14 @@ type Options struct {
 	// SecureCookies marks the session cookie Secure. Turn it on whenever
 	// the site is served over HTTPS.
 	SecureCookies bool
+	// Demo marks every page as showing synthetic data.
+	Demo bool
 }
 
 type server struct {
 	svc      *assurance.Service
 	sessions *scs.SessionManager
+	demo     bool
 }
 
 // Handler returns the site.
@@ -114,7 +118,7 @@ func Handler(svc *assurance.Service, opts Options) http.Handler {
 		log.Printf("web: session: %v", err)
 		http.Error(w, "The session could not be loaded.", http.StatusInternalServerError)
 	}
-	s := &server{svc: svc, sessions: sessions}
+	s := &server{svc: svc, sessions: sessions, demo: opts.Demo}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /style.css", s.stylesheet)
@@ -122,6 +126,7 @@ func Handler(svc *assurance.Service, opts Options) http.Handler {
 	mux.HandleFunc("POST /login", s.login)
 	mux.HandleFunc("POST /logout", s.logout)
 	mux.HandleFunc("GET /{$}", s.as(s.overview))
+	mux.HandleFunc("GET /requirements", s.as(s.requirements))
 	mux.HandleFunc("GET /findings", s.as(s.findings))
 	mux.HandleFunc("POST /findings/{id}/notes", s.as(s.addNote))
 	mux.HandleFunc("POST /findings/{id}/exceptions", s.as(s.requestException))
@@ -159,11 +164,13 @@ type view struct {
 	Actor *authz.Actor
 	Flash string
 	Now   time.Time
-	Data  any
+	// Demo is true when everything shown is synthetic.
+	Demo bool
+	Data any
 }
 
 func (s *server) render(w http.ResponseWriter, r *http.Request, status int, page, title string, actor *authz.Actor, data any) {
-	v := view{Title: title, Actor: actor, Now: time.Now(), Data: data}
+	v := view{Title: title, Actor: actor, Now: time.Now(), Demo: s.demo, Data: data}
 	if actor != nil {
 		v.Flash = s.sessions.PopString(r.Context(), sessionFlashKey)
 	}
@@ -396,6 +403,15 @@ func (s *server) evidenceFile(w http.ResponseWriter, r *http.Request, actor auth
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", name))
 	_, _ = w.Write(data) //nolint:gosec // sent as an octet-stream attachment with nosniff, so never rendered
+}
+
+func (s *server) requirements(w http.ResponseWriter, r *http.Request, actor authz.Actor) {
+	reqs, err := s.svc.Requirements(r.Context(), actor)
+	if err != nil {
+		s.fail(w, r, &actor, err)
+		return
+	}
+	s.render(w, r, http.StatusOK, "requirements", "Framework requirements", &actor, reqs)
 }
 
 func (s *server) packageForm(w http.ResponseWriter, r *http.Request, actor authz.Actor) {

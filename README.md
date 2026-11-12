@@ -6,6 +6,33 @@ exceptions, and export a review package for a past period.
 
 This README states only what is implemented.
 
+## Try it
+
+```sh
+git clone https://github.com/aelasmar01Lab/control-assurance && cd control-assurance
+make demo        # or: docker compose --profile demo up --build demo
+```
+
+That needs only Docker. It builds the binary, starts a throwaway database,
+seeds twelve days of **synthetic** history and serves it at
+<http://127.0.0.1:8080>. The terminal prints four sign-in names and their
+demo passwords. Every page carries a banner saying the data is synthetic;
+nothing is collected from a real system. If port 8080 is taken, set
+`CCA_DEMO_PORT` and use that port instead of the one the terminal prints.
+Stop it with Ctrl-C; `docker compose --profile demo down` removes it, and
+the next start seeds the same history afresh.
+
+The seeded history is the whole loop: checks fail and open findings, the
+control owner requests exceptions, the reviewer approves them, a token is
+rejected and a source has an outage (collection failures, not results), the
+problems are fixed, the checks pass and the findings close. One exception
+has lapsed and one check cannot be evaluated, so not everything is green.
+[docs/walkthrough.md](docs/walkthrough.md) is a ten-minute tour, including
+making a decision yourself and downloading a review package.
+
+To run it against a real lab instead, see
+[docs/operations.md](docs/operations.md).
+
 ## Status
 
 | Area | Status |
@@ -23,16 +50,34 @@ This README states only what is implemented.
 | Manual evidence submission and review | Implemented |
 | Exceptions with mandatory expiry, remediation notes, decision log | Implemented |
 | Eight internal controls with derived state and a 48 hour evidence window | Implemented |
-| Web interface: overview, findings, manual evidence, integration health, decision log | Implemented |
+| All 25 MVSP requirements, each covered in part by a control or tracked as manual, not implemented or out of scope with a reason | Implemented |
+| Web interface: overview, requirements, findings, manual evidence, integration health, review package, decision log | Implemented |
 | Fault table: every injected fault, its error class and retry behaviour, generated and tested | Implemented |
 | Current-state JSON export | Implemented |
 | Review package for a past period, with a manifest hash and an offline verifier | Implemented |
 | Check versions: a new version adds evaluations beside the old; every stored evaluation can be re-run | Implemented |
 | Deduplication case study on a documented synthetic dataset | Implemented |
-| A state for each of the 25 MVSP requirements; reviewed mappings | Not started |
-| Hosted demo, seeded demo data | Not started |
+| One-command seeded demo with labelled synthetic data | Implemented |
+| This project's own MVSP self-assessment, generated | Implemented |
+| Framework mappings reviewed by a second person | Not started |
+| Hosted demo, and a check of its own HTTPS and headers | Not started |
+| A second framework pack | Not started |
 
-## The loop
+## Documents
+
+| Document | What it is |
+| --- | --- |
+| [docs/walkthrough.md](docs/walkthrough.md) | A ten-minute tour of the demo |
+| [docs/controls.md](docs/controls.md) | The eight controls, their mappings and limits, and how each of the 25 requirements is tracked (generated) |
+| [docs/checks.md](docs/checks.md) | Each check: its assertion, source, and what a pass does and does not establish (generated) |
+| [docs/permissions.md](docs/permissions.md) | Who may do what (generated) |
+| [docs/faults.md](docs/faults.md) | Every injected fault, its error class and how it is retried (generated) |
+| [docs/dedup-study.md](docs/dedup-study.md) | The deduplication case study (generated) |
+| [docs/self-assessment.md](docs/self-assessment.md) | This project against MVSP, including what it does not meet (generated) |
+| [docs/operations.md](docs/operations.md) | Running it against a real lab: processes, credentials, health, backup, data handled |
+| [docs/decisions.md](docs/decisions.md) | Decision records: what was chosen and what was given up |
+
+## The loop against a real lab
 
 ```sh
 make db-up && make migrate && make build
@@ -129,6 +174,21 @@ A control's state is derived on read and never stored. The first match wins:
 *Supported* is always shown beside the assertions it rests on. Nothing in
 the product is called compliant.
 
+## Requirements
+
+`cca requirements status`, or the Requirements page, lists all 25 MVSP
+requirements. Seven are covered in part by a control and take the worst
+state among their controls; the best a requirement can read is *partly
+evidenced*, because no mapping in this release is stronger than partial.
+The other eighteen show how they are tracked: manually, not implemented, or
+out of scope, each with a reason. None of those is a positive state, and
+nothing is shown as met.
+
+One thing in the catalog is wrong at the source: the pinned upstream file
+gives requirement 2.1 (Single sign-on) the statement text of requirement
+1.1. The pack keeps upstream's text unmodified, and the product shows a
+note beside 2.1 saying so.
+
 ## History and the review package
 
 ```sh
@@ -216,6 +276,8 @@ collected.
 | `internal/check` | Versioned checks and the generated check guide |
 | `internal/evidence` | Content-addressed evidence store: local directory and S3 |
 | `internal/study` | The deduplication case study harness |
+| `internal/demo` | The seeded demo: a synthetic history played against synthetic sources |
+| `internal/selfassess` | This project's own MVSP self-assessment |
 | `internal/store` | PostgreSQL access |
 | `internal/web` | The web interface: sign-in, pages and forms |
 | `internal/pack` | Pack parsing and validation |
@@ -237,7 +299,8 @@ make build     # build bin/cca
 make lint      # needs golangci-lint v2
 make vuln      # govulncheck
 make study     # regenerate docs/dedup-study.md; needs no database
-make guide     # regenerate docs/checks.md, docs/permissions.md and docs/faults.md after changing a check, a permission, a fault or a retry policy
+make demo      # the seeded demo, in Docker
+make guide     # regenerate the generated documents in docs/ after changing a check, control, permission, fault or retry policy
 ```
 
 Tests use a synthetic GitHub API (`internal/github/githubtest`) and a

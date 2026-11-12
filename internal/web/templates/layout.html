@@ -20,6 +20,7 @@
   {{if .Actor}}
   <nav>
     <a href="/">Overview</a>
+    <a href="/requirements">Requirements</a>
     <a href="/findings">Findings</a>
     <a href="/evidence">Manual evidence</a>
     <a href="/integrations">Integration health</a>
@@ -29,6 +30,7 @@
   </nav>
   {{end}}
 </header>
+{{if .Demo}}<p class="demo" role="note"><strong>Demo.</strong> Every repository, account, user and record shown here is synthetic. Nothing was collected from a real system.</p>{{end}}
 <main>
 {{if .Flash}}<p class="flash" role="status">{{.Flash}}</p>{{end}}
 {{template "content" .}}

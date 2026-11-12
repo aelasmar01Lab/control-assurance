@@ -93,3 +93,6 @@ button.plain { background: transparent; color: var(--fg); border-color: var(--li
 .health { padding: 10px 12px; margin: 16px 0 0; border-radius: 6px; background: var(--unk-bg); color: var(--unk-fg); }
 .health a { color: inherit; }
 form.inline { margin: 0 0 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.demo { margin: 0; padding: 8px 16px; background: var(--unk-bg); color: var(--unk-fg); text-align: center; }
+.state.partly_evidenced { background: var(--pass-bg); color: var(--pass-fg); }
+.state.tracked_manually, .state.not_implemented, .state.out_of_scope, .state.untracked { background: var(--head); border: 1px solid var(--line); }

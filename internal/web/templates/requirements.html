@@ -1,0 +1,26 @@
+{{define "content"}}
+<section>
+  <h2>Framework requirements</h2>
+  <p class="note">Every requirement of the catalog. A requirement is shown as <em>partly evidenced</em> only when every control mapped to it is supported by current evidence; no mapping in this release is strong enough to say more. A requirement that no control covers shows how it is tracked instead, with the reason. Nothing here says a requirement is met.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Requirement</th><th>State</th><th>Rests on</th><th>Owner and applicability</th><th>Evidence expected</th></tr></thead>
+    <tbody>
+    {{range .Data}}
+    <tr>
+      <td><strong>{{.Framework}} {{.ID}}</strong> {{.Title}}<br><span class="dim">{{.Group}} · {{.FrameworkVersion}}</span>
+        {{if .Note}}<div class="tag">source note</div><div class="dim">{{.Note}}</div>{{end}}</td>
+      <td><span class="state {{.State}}">{{label .State}}</span></td>
+      <td>
+        {{range .Controls}}
+        <div>{{.Title}}: <span class="state {{.State}}">{{label .State}}</span></div>
+        <div class="dim">{{.Strength}} mapping{{if not .Reviewed}} <span class="tag">mapping not reviewed</span>{{end}}. {{.Limitation}}</div>
+        {{else}}<div class="dim">No control. {{.Rationale}}</div>{{end}}
+      </td>
+      <td>{{.Owner}}<br><span class="dim">{{.Applicability}}</span></td>
+      <td>{{.EvidenceExpectation}}</td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+</section>
+{{end}}

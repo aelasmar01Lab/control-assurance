@@ -1,4 +1,4 @@
-.PHONY: build test lint vuln db-up db-down migrate packs guide study serve
+.PHONY: demo build test lint vuln db-up db-down migrate packs guide study serve
 
 # Local development database; matches compose.yaml and .env.example.
 DATABASE_URL ?= postgres://cca:cca_local_only@127.0.0.1:5433/cca?sslmode=disable
@@ -7,6 +7,11 @@ export DATABASE_URL
 # Database tests run in their own throwaway schemas of the same database.
 CCA_TEST_DATABASE_URL ?= $(DATABASE_URL)
 export CCA_TEST_DATABASE_URL
+
+# One command: a seeded demo with synthetic data at http://127.0.0.1:8080.
+# Needs only Docker.
+demo:
+	docker compose --profile demo up --build demo
 
 build:
 	go build -o bin/cca ./cmd/cca
@@ -37,6 +42,8 @@ guide:
 	go run ./cmd/cca checks guide > docs/checks.md
 	go run ./cmd/cca permissions > docs/permissions.md
 	go run ./cmd/cca faults > docs/faults.md
+	go run ./cmd/cca controls guide > docs/controls.md
+	go run ./cmd/cca self-assessment > docs/self-assessment.md
 
 # Regenerate the deduplication case study. Needs no database and no network.
 study:
