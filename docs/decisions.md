@@ -322,3 +322,19 @@ and an entry edited after signing fails CI. Given up: the compiler
 checking a control's shape, and a single place to read all controls as
 code. Decision 12's label "mapping not reviewed" stays, now driven by the
 review block instead of an empty field.
+
+## 33. Workspaces are in the schema before they are in the interface
+
+A workspace is one separately tracked part of the organization. Every table
+that holds what was collected or decided (resources, runs, payloads,
+observations, evaluations, findings, submissions, exceptions, notes and the
+decision log) now has a `workspace_id`, and there is one workspace,
+`default`. A resource is unique within a workspace, and a payload is
+recorded once per workspace. Frameworks, check versions, control revisions,
+users and sessions are shared. The column goes in now because every later
+table would otherwise need the same migration. Given up for now: anything
+that uses it. The column has a default of the first workspace and the store
+neither sets nor filters by it, so a second workspace's rows would be mixed
+into every page. Creating a second workspace is not offered anywhere, and
+the default comes off when the store takes a workspace.
+

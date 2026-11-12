@@ -169,7 +169,7 @@ func (s *Store) CompleteRun(ctx context.Context, runID int64, finishedAt time.Ti
 		// Many observations may share one payload row.
 		_, err := tx.Exec(ctx, `
 			INSERT INTO evidence_payloads (sha256, size_bytes, media_type, storage_ref)
-			VALUES ($1, $2, $3, $4) ON CONFLICT (sha256) DO NOTHING`,
+			VALUES ($1, $2, $3, $4) ON CONFLICT (workspace_id, sha256) DO NOTHING`,
 			o.PayloadSHA256, o.PayloadSize, o.PayloadMediaType, o.PayloadStorageRef)
 		if err != nil {
 			return err

@@ -152,7 +152,7 @@ func (s *Store) CreateSubmission(ctx context.Context, actorID int64, n NewSubmis
 	err = s.inTx(ctx, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, `
 			INSERT INTO evidence_payloads (sha256, size_bytes, media_type, storage_ref)
-			VALUES ($1, $2, $3, $4) ON CONFLICT (sha256) DO NOTHING`,
+			VALUES ($1, $2, $3, $4) ON CONFLICT (workspace_id, sha256) DO NOTHING`,
 			n.PayloadSHA256, n.PayloadSize, n.PayloadMediaType, n.PayloadStorageRef)
 		if err != nil {
 			return err

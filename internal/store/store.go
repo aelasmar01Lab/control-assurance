@@ -115,7 +115,7 @@ func (s *Store) UpsertResource(ctx context.Context, provider, kind, externalID, 
 	err := s.pool.QueryRow(ctx, `
 		INSERT INTO resources (provider, kind, external_id, scope, decided_by, created_at)
 		VALUES ($1, $2, $3, 'in_scope', $4, $5)
-		ON CONFLICT (provider, kind, external_id) DO UPDATE SET provider = EXCLUDED.provider
+		ON CONFLICT (workspace_id, provider, kind, external_id) DO UPDATE SET provider = EXCLUDED.provider
 		RETURNING id`,
 		provider, kind, externalID, decidedBy, at).Scan(&id)
 	return id, err
