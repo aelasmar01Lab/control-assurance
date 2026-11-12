@@ -139,7 +139,7 @@ func requirementSegs(reqs []assurance.RequirementView) []seg {
 	for _, r := range reqs {
 		counts[string(r.State)]++
 	}
-	segs := countSegs(counts, "partly_evidenced", "accepted_risk", "not_evaluated", "stale", "needs_attention", "tracked_manually")
+	segs := countSegs(counts, "partly_evidenced", "accepted_risk", "not_evaluated", "stale", "needs_attention", "not_applicable", "tracked_manually")
 	if n := counts["not_implemented"]; n > 0 {
 		segs = append(segs, seg{"not implemented", n, "s-neutral"})
 	}
@@ -179,7 +179,7 @@ func buildOverview(ov *assurance.Overview, reqs []assurance.RequirementView, fin
 			tracked++
 		}
 	}
-	reqSegs := countSegs(evidenced, "partly_evidenced", "accepted_risk", "not_evaluated", "stale", "needs_attention")
+	reqSegs := countSegs(evidenced, "partly_evidenced", "accepted_risk", "not_evaluated", "stale", "needs_attention", "not_applicable")
 	if tracked > 0 {
 		reqSegs = append(reqSegs, seg{"tracked, with a reason", tracked, "s-neutral"})
 	}
@@ -207,7 +207,7 @@ func buildOverview(ov *assurance.Overview, reqs []assurance.RequirementView, fin
 	}
 	p.Summary = []summaryCard{
 		{"Controls", fmt.Sprint(len(ov.Controls)), "internal controls", "Details", "#controls",
-			countSegs(controls, "supported", "accepted_risk", "stale", "not_evaluated", "needs_attention")},
+			countSegs(controls, "supported", "accepted_risk", "stale", "not_evaluated", "needs_attention", "not_applicable")},
 		{"Framework requirements", fmt.Sprint(covered), fmt.Sprintf("of %d covered in part", len(reqs)), "View", "/requirements", reqSegs},
 		{"Findings", fmt.Sprint(open), "open", "View", "/findings",
 			[]seg{{"open", open, "s-fail"}, {"closed", closed, "s-pass"}}},

@@ -11,6 +11,7 @@ import (
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
 	"github.com/aelasmar01Lab/control-assurance/internal/collect"
+	"github.com/aelasmar01Lab/control-assurance/internal/control"
 	"github.com/aelasmar01Lab/control-assurance/internal/evidence"
 	"github.com/aelasmar01Lab/control-assurance/internal/store"
 )
@@ -23,6 +24,10 @@ type CollectFunc = func(ctx context.Context, target string) (*collect.Snapshot, 
 type Service struct {
 	Store    *store.Store
 	Evidence evidence.Store
+	// Organization is the organization this process shows: a key of a file
+	// under scope/. It decides which controls do not apply. Empty means
+	// the lab.
+	Organization string
 	// Collectors are the collectors this process can run, keyed by the
 	// kind of observation each produces. A worker claims only these kinds.
 	Collectors map[string]CollectFunc
@@ -33,6 +38,13 @@ type Service struct {
 	// Lease is how long a claimed attempt belongs to its worker. It must
 	// be longer than RunTimeout, and defaults to 5 minutes.
 	Lease time.Duration
+}
+
+func (s *Service) organization() string {
+	if s.Organization != "" {
+		return s.Organization
+	}
+	return control.DefaultOrganization
 }
 
 func (s *Service) now() time.Time {

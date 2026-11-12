@@ -99,7 +99,6 @@ type: automated
 checks: [AWS-03]
 evidence_expectation: Trail descriptions, collected every 48 hours.
 freshness_hours: 48
-applies_to_lab: "yes"
 review:
   status: draft
   drafted_by: agent

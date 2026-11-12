@@ -45,10 +45,6 @@ const (
 	NotAssessed TrackingStatus = content.NotAssessed
 )
 
-// LabScope describes what the tracked organization is. Every applicability
-// statement below is about this.
-const LabScope = "The lab is two public, nonsensitive repositories and one AWS account. It has no product, customers, staff or premises."
-
 // MappedControls returns the controls that map to a requirement, with the
 // mapping each uses, ordered by control key.
 func MappedControls(framework, requirement string) []MappedControl {
@@ -101,6 +97,9 @@ const (
 	ReqOutOfScope      RequirementState = "out_of_scope"
 	// ReqNotAssessed marks a requirement nobody has looked at yet.
 	ReqNotAssessed RequirementState = "not_assessed"
+	// ReqNotApplicable marks a requirement whose every mapped control is
+	// excluded, by a reviewed exclusion, for the organization being shown.
+	ReqNotApplicable RequirementState = "not_applicable"
 	// ReqUntracked marks a requirement with neither a control nor a
 	// tracking entry. The tests keep it from occurring.
 	ReqUntracked RequirementState = "untracked"
@@ -111,8 +110,21 @@ var severity = map[State]int{Supported: 0, AcceptedRisk: 1, NotEvaluated: 2, Sta
 
 // DeriveRequirement returns a requirement's state from the states of the
 // controls mapped to it, or from its tracking entry when there is none.
-// The worst control state decides.
+// The worst control state decides. A control that does not apply to the
+// organization is left out; when none is left, the requirement does not
+// apply either.
 func DeriveRequirement(states []State, tracking *Tracking) RequirementState {
+	mapped := len(states)
+	applicable := states[:0:0]
+	for _, s := range states {
+		if s != NotApplicable {
+			applicable = append(applicable, s)
+		}
+	}
+	states = applicable
+	if mapped > 0 && len(states) == 0 {
+		return ReqNotApplicable
+	}
 	if len(states) == 0 {
 		if tracking == nil {
 			return ReqUntracked

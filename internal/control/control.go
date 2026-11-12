@@ -70,9 +70,6 @@ type Control struct {
 	// ManualValidityMonths is how long accepted manual evidence counts,
 	// measured from the end of the period it covers.
 	ManualValidityMonths int
-	// AppliesToLab is yes, no or partly, with a reason when it is not yes.
-	AppliesToLab  string
-	AppliesReason string
 	// Review says whether a person has reviewed the control as it now reads.
 	Review content.Review
 	// ContentSHA256 identifies this wording of the control: its revision.
@@ -111,6 +108,7 @@ func init() {
 		return
 	}
 	All, Tracked = FromSet(set)
+	Scopes = set.Scopes
 }
 
 // FromSet turns content files into the controls and tracking entries the
@@ -125,9 +123,8 @@ func FromSet(set *content.Set) ([]Control, []Tracking) {
 		c := Control{
 			Key: f.Key, Title: f.Title, Domain: f.Domain, Type: f.Type, Statement: f.Statement,
 			Risk: f.Risk, Owner: f.OwnerRole, EvidenceExpectation: f.EvidenceExpectation,
-			Freshness:    time.Duration(f.FreshnessHours) * time.Hour,
-			AppliesToLab: f.AppliesToLab, AppliesReason: f.AppliesReason,
-			Review: f.Review, ContentSHA256: f.Hash(), Path: f.Path,
+			Freshness: time.Duration(f.FreshnessHours) * time.Hour,
+			Review:    f.Review, ContentSHA256: f.Hash(), Path: f.Path,
 		}
 		for _, k := range f.Checks {
 			if manual[k] {
@@ -205,8 +202,12 @@ func OwnersForCheck(checkKey string) []string {
 // State is a control's displayed state.
 type State string
 
-// The five states. The product never calls anything compliant.
+// The states. The product never calls anything compliant.
 const (
+	// NotApplicable means a reviewed exclusion says the control does not
+	// apply to the organization being shown. Derive never returns it; it
+	// replaces the derived state only where such an exclusion exists.
+	NotApplicable  State = "not_applicable"
 	NotEvaluated   State = "not_evaluated"
 	NeedsAttention State = "needs_attention"
 	Stale          State = "stale"
@@ -420,4 +421,51 @@ func Derive(c Control, in Input) (State, []string) {
 		rests = append(rests, fmt.Sprintf("%s: accepted evidence is valid until %s.", c.ManualCheck, in.ManualValidUntil.Format("2006-01-02")))
 	}
 	return Supported, rests
+}
+
+// DefaultOrganization is the organization a process shows unless told
+// otherwise: the real lab.
+const DefaultOrganization = "lab"
+
+// Scopes are the organizations the controls are applied to, read from the
+// scope files built into the binary.
+var Scopes []content.Scope
+
+// ScopeFor returns the organization with the given key.
+func ScopeFor(organization string) (content.Scope, bool) {
+	return scopeIn(Scopes, organization)
+}
+
+func scopeIn(scopes []content.Scope, organization string) (content.Scope, bool) {
+	for _, sc := range scopes {
+		if sc.Organization == organization {
+			return sc, true
+		}
+	}
+	return content.Scope{}, false
+}
+
+// ExclusionFor returns the entry that says a control does not apply to an
+// organization, if there is one. A draft exclusion is returned too; only a
+// reviewed one changes the control's state.
+func ExclusionFor(organization, controlKey string) (content.Exclusion, bool) {
+	sc, _ := ScopeFor(organization)
+	for _, x := range sc.Exclusions {
+		if x.Control == controlKey {
+			return x, true
+		}
+	}
+	return content.Exclusion{}, false
+}
+
+// ApplyScope returns the state to show for a control in an organization,
+// given the state its evidence gives it. A reviewed exclusion makes it not
+// applicable, with the reason. A draft exclusion changes nothing: a draft
+// is never allowed to take a control out of view.
+func ApplyScope(organization, controlKey string, state State, reasons []string) (State, []string) {
+	x, ok := ExclusionFor(organization, controlKey)
+	if !ok || !x.Review.IsReviewed() {
+		return state, reasons
+	}
+	return NotApplicable, []string{"Does not apply to this organization: " + x.Reason}
 }

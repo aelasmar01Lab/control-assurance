@@ -31,6 +31,10 @@ const (
 // Days is how far back the seeded history starts.
 const Days = 12
 
+// Organization is the key of the fictional company the demo shows; its
+// scope is scope/demo.yaml.
+const Organization = "demo"
+
 // Password returns the demo password for a username. Demo passwords are
 // published: the demo holds only synthetic data and listens on loopback.
 func Password(username string) string { return "demo-" + username + "-password" }

@@ -13,8 +13,6 @@ evidence_expectation: >-
   The policies attached to each IAM user, read from the cloud account at least
   every 48 hours.
 freshness_hours: 48
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: ""
 review:
   status: draft

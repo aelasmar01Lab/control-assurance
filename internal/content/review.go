@@ -35,6 +35,9 @@ func (m Mapping) Hash() string { return hashOf(m) }
 // Hash is the hash of the tracking entry's content, with its framework version.
 func (t Tracking) Hash() string { return hashOf(t) }
 
+// Hash is the hash of the exclusion's content, with its organization.
+func (x Exclusion) Hash() string { return hashOf(x) }
+
 // JSON is the control's content as hashed, for the record of revisions.
 func (c Control) JSON() []byte {
 	data, err := json.Marshal(c)
@@ -166,8 +169,29 @@ func Sign(data []byte, filePath string, set *Set, sel Selector, reviewer, date s
 				targets = append(targets, target{node, t.Requirement, t.Hash(), t.ReviewerNote})
 			}
 		}
+	case strings.HasPrefix(filePath, "scope/"):
+		if sel.Requirement != "" {
+			return nil, nil, errors.New("an exclusion names a control, not a requirement; use --control <key> or --all")
+		}
+		if sel.empty() {
+			return nil, nil, errors.New("say which exclusions: --control <key> or --all")
+		}
+		list := child(root, "exclusions")
+		for _, sc := range set.Scopes {
+			if sc.Path != filePath {
+				continue
+			}
+			for i, x := range sc.Exclusions {
+				if list == nil || i >= len(list.Content) {
+					return nil, nil, errors.New("the file changed while it was being read")
+				}
+				if sel.All || sel.Control == x.Control {
+					targets = append(targets, target{list.Content[i], x.Control + " in " + x.Organization, x.Hash(), x.ReviewerNote})
+				}
+			}
+		}
 	default:
-		return nil, nil, errors.New("only files under controls/, mappings/ and tracking/ are signed")
+		return nil, nil, errors.New("only files under controls/, mappings/, tracking/ and scope/ are signed")
 	}
 	if len(targets) == 0 {
 		return nil, nil, errors.New("nothing in the file matches")

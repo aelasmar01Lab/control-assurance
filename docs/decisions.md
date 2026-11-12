@@ -402,3 +402,43 @@ stops a framework staying not assessed indefinitely; the count is shown on
 every framework page instead. The review package keeps format 3 although
 its requirement list can now carry the state `not_assessed` and the basis
 `none`, which a reader written against the earlier packages has not seen.
+
+## 38. Controls are generic; each organization has its own scope file
+
+Controls describe a generic small company, and a control file no longer
+says whether it applies to the lab. There are two organizations, kept
+apart. The lab is real: one person, two repositories, one AWS account,
+live collection. The demo is a fictional company of about 25 people, fully
+synthetic and labelled so on every page, in its own database. Each has a
+file, `scope/lab.yaml` and `scope/demo.yaml`, that lists the controls that
+do not apply to it, each with a reason and a review block. A control not
+listed applies. A process shows one organization: the lab unless
+`CCA_ORGANIZATION` says otherwise, and `cca demo` is always the demo.
+
+A reviewed exclusion makes the control read *not applicable* in that
+organization, with the reason, and a requirement whose every mapped
+control is excluded reads not applicable too. A draft exclusion changes
+nothing: the control keeps the state its evidence gives it and the draft
+is shown beside it. This is the same rule as a draft `direct` mapping
+counting as partial; a draft must not be able to take a failing control
+out of view. Exclusions are signed with `cca review sign scope/<file>
+--control <key>` and sit in the review queue.
+
+The review package names its organization in the manifest and carries each
+control's exclusion, and is now format 4. That also covers the
+`not_assessed` state from decision 37.
+
+Given up, and still open:
+
+- Tracking entries are not per organization. `tracking/<framework>.yaml`
+  says how the lab tracks a requirement no control covers ("the lab has no
+  premises"), and the demo shows the same entries. For a 25-person company
+  some of them are wrong.
+- An exclusion is all or nothing. The old `partly` value has no
+  equivalent.
+- Exclusions have no history in the database. As with wording, a package
+  for a past period is derived with the scope files built into the binary
+  that makes it.
+- The demo company has no name yet and the demo's seeded history is
+  unchanged: it is still two synthetic repositories and one account, not
+  25 people.

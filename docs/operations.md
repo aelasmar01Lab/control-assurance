@@ -19,6 +19,12 @@ The site is plain HTTP and has no sign-in lockout or rate limit. Keep it on
 the loopback interface. Putting it on a network needs TLS and rate limiting
 in front of it, and `CCA_COOKIE_SECURE=1`.
 
+`CCA_ORGANIZATION` names the organization the process shows, a file under
+`scope/`. It defaults to `lab`. `cca demo` ignores it and always shows
+`demo`. The organization decides only which controls read *not
+applicable*; it does not separate data, so each organization needs its own
+database.
+
 ## First run against a lab
 
 ```sh

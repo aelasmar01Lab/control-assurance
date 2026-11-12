@@ -222,6 +222,17 @@ type ControlView struct {
 	Reasons          []string
 	Manual           control.ManualStatus
 	ManualValidUntil *time.Time
+	// Exclusion is the entry that says the control does not apply to the
+	// organization shown, if there is one. Only a reviewed one has changed
+	// State; a draft is shown beside the state it did not change.
+	Exclusion *ExclusionView
+}
+
+// ExclusionView is an exclusion as shown beside a control.
+type ExclusionView struct {
+	Reason   string `json:"reason"`
+	Reviewed bool   `json:"reviewed"`
+	Review   string `json:"review"`
 }
 
 // Overview is the front page: control states, current results and runs.
@@ -270,14 +281,14 @@ func (s *Service) overview(ctx context.Context) (*Overview, error) {
 		return nil, err
 	}
 	return &Overview{
-		Controls: deriveControls(now, results, findings, exceptions, submissions),
+		Controls: deriveControls(s.organization(), now, results, findings, exceptions, submissions),
 		Results:  results, Runs: runs, IntegrationProblems: problems,
 	}, nil
 }
 
 // deriveControls works out every control's state at the given moment from
 // the results, findings, exceptions and submissions as they stood then.
-func deriveControls(now time.Time, results []store.EvaluationRow, findings []store.FindingRow, exceptions []store.ExceptionRow, submissions []store.SubmissionRow) []ControlView {
+func deriveControls(organization string, now time.Time, results []store.EvaluationRow, findings []store.FindingRow, exceptions []store.ExceptionRow, submissions []store.SubmissionRow) []ControlView {
 	// The open finding for each check and resource, and its exception cover.
 	type key struct{ check, resource string }
 	openFinding := map[key]int64{}
@@ -335,10 +346,12 @@ func deriveControls(now time.Time, results []store.EvaluationRow, findings []sto
 			in.Manual, in.ManualValidUntil = control.ManualEvidence(subs, now)
 		}
 		state, reasons := control.Derive(c, in)
-		out = append(out, ControlView{
-			Control: c, State: state, Reasons: reasons,
-			Manual: in.Manual, ManualValidUntil: in.ManualValidUntil,
-		})
+		v := ControlView{Control: c, Manual: in.Manual, ManualValidUntil: in.ManualValidUntil}
+		v.State, v.Reasons = control.ApplyScope(organization, c.Key, state, reasons)
+		if x, ok := control.ExclusionFor(organization, c.Key); ok {
+			v.Exclusion = &ExclusionView{Reason: x.Reason, Reviewed: x.Review.IsReviewed(), Review: x.Review.Label()}
+		}
+		out = append(out, v)
 	}
 	return out
 }

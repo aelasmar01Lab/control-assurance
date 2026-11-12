@@ -17,8 +17,6 @@ manual_evidence:
 evidence_expectation: >-
   A dated list of every administrative identity in the cloud account and the
   code host, with its owner and purpose.
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: ""
 review:
   status: draft

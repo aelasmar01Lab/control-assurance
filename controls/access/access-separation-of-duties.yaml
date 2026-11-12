@@ -16,8 +16,6 @@ manual_evidence:
 evidence_expectation: >-
   The decision log, showing a different person as requester and approver on
   every decision.
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: ""
 review:
   status: draft

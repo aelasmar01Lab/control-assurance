@@ -15,6 +15,7 @@ import (
 type packageReport struct {
 	Format       string
 	Notice       string
+	Organization PackageOrganization
 	From, To     time.Time
 	Scope        []store.ScopeRow
 	Controls     []PackageControl
@@ -68,6 +69,7 @@ th { background: #f3f5f7; } .scroll { overflow-x: auto; } .dim { color: #57606a;
 <h1>Review package</h1>
 <p><strong>Period:</strong> {{when .From}} (inclusive) to {{when .To}} (exclusive). <span class="dim">Format {{.Format}}.</span></p>
 <p>{{.Notice}}</p>
+<p><strong>Organization:</strong> {{if .Organization.Name}}{{.Organization.Name}}{{else}}{{.Organization.Key}}{{end}}. {{.Organization.Description}}{{if .Organization.Synthetic}} <strong>Synthetic: this organization does not exist, and every record in this package is made up.</strong>{{end}}</p>
 <p class="dim">This page is a reading copy of the JSON files beside it. <code>manifest.json</code> lists the SHA-256 of every file, this one included; check the package with <code>cca package verify</code>.</p>
 
 <h2>Scope</h2>
@@ -82,7 +84,7 @@ th { background: #f3f5f7; } .scroll { overflow-x: auto; } .dim { color: #57606a;
 <tbody>{{range .Controls}}<tr>
 <td><strong>{{.Title}}</strong> <span class="tag">{{.ReviewLabel}}</span><br>{{.Statement}}<br><span class="dim">Owner: {{.Owner}}. {{if .RevisionAtPeriodEnd}}Wording <code>{{short .RevisionAtPeriodEnd.ContentSHA256}}</code> was in force at the end of the period{{if .WordingChangedSince}}; the control has been reworded since, and this page uses the new wording <code>{{short .ContentSHA256}}</code>{{end}}.{{else}}No wording of this control was on record before the end of the period; this page uses <code>{{short .ContentSHA256}}</code>.{{end}}</span></td>
 <td><span class="tag {{.StateAtPeriodEnd}}">{{label .StateAtPeriodEnd}}</span></td>
-<td>{{range .Reasons}}<div>{{.}}</div>{{end}}</td>
+<td>{{range .Reasons}}<div>{{.}}</div>{{end}}{{with .Exclusion}}<div class="dim">Exclusion {{.Review}}{{if not .Reviewed}}; it has no effect until it is reviewed. Proposed reason: {{.Reason}}{{end}}</div>{{end}}</td>
 <td>{{range .Checks}}<code>{{.}}</code> {{end}}{{if .ManualCheck}}<code>{{.ManualCheck}}</code> <span class="dim">manual</span>{{end}}</td>
 <td>{{range .Mappings}}<div>{{.Framework}} {{.Requirement}}, {{.EffectiveStrength}}{{if ne .EffectiveStrength .Strength}} <span class="dim">(written as {{.Strength}})</span>{{end}} <span class="tag">{{.Review.Label}}</span></div><div class="dim">{{.Limitation}}</div>{{else}}<span class="dim">none</span>{{end}}</td>
 </tr>{{end}}</tbody>

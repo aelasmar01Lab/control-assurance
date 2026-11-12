@@ -16,8 +16,6 @@ manual_evidence:
 evidence_expectation: >-
   A dated review record for each in-scope system, listing every account and
   the decision made about it.
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: ""
 review:
   status: draft

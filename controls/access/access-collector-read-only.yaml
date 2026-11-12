@@ -11,8 +11,6 @@ evidence_expectation: >-
   The policy documents attached to the collector role, read from the cloud
   account at least every 48 hours.
 freshness_hours: 48
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: ""
 review:
   status: draft

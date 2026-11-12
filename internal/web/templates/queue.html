@@ -35,7 +35,12 @@
 </section>
 
 <section class="section">
-  <div class="section-head"><h2>Drafts</h2><span class="hint">Controls first, then mappings and tracking entries framework by framework. Entries with a note come first in each group.</span></div>
+  <div class="section-head"><h2>Exclusions, by organization</h2><span class="hint">Controls that do not apply to an organization. An exclusion has no effect until it is reviewed.</span></div>
+  <div class="card table-card">{{template "counts" (counts "Organization" .Data.Scope)}}</div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Drafts</h2><span class="hint">Controls first, then mappings and tracking entries framework by framework, then exclusions. Entries with a note come first in each group.</span></div>
   <div class="card table-card">
     {{if .Data.Items}}
     <table class="table">

@@ -62,6 +62,7 @@ To run it against a real lab instead, see
 | NIST CSF 2.0 pack: 106 subcategories with NIST's text, imported from NIST's reference-data export by a script in `tools/import/nist-csf` | Implemented |
 | NIST CSF 2.0 mappings | Pilot only: PR.AA (6 subcategories) is mapped or tracked. The other 100 subcategories are marked *not assessed*: nobody has looked at them, nothing is claimed about them, and they are not in the review queue |
 | Controls, mappings and tracking entries as YAML files, validated against schemas and each other | Implemented |
+| Two organizations, the real lab and a fictional demo company, each with a scope file listing the controls that do not apply to it | Implemented for the lab. The demo company has a scope file but no name yet, and the demo's seeded history is unchanged: two synthetic repositories and one account. Tracking entries are still about the lab only |
 | Review contract: sign an entry, a signature covers its exact content, an edit after signing fails CI | Implemented |
 | Content reviewed by the maintainer | See [docs/review-queue.md](docs/review-queue.md) for the current count |
 | A record of every wording of every control that was loaded (control revisions), named in the review package | Implemented |
@@ -227,6 +228,7 @@ Controls, mappings and tracking entries are files, one control per file:
 | `controls/<domain>/<key>.yaml` | One control: its statement, risk, checks, evidence expectation |
 | `mappings/<framework>.yaml` | Every tie between a control and a requirement of that framework, with its strength, rationale and limitation |
 | `tracking/<framework>.yaml` | Each requirement no control covers, and how it is tracked |
+| `scope/<organization>.yaml` | One organization (`lab` or `demo`) and the controls that do not apply to it, each with a reason. A control not listed applies. An exclusion changes a state only once it is reviewed |
 
 Each entry ends in a `review` block. To review one:
 
@@ -235,6 +237,7 @@ $EDITOR controls/logging/audit-logging.yaml   # change anything that is wrong
 make content                                  # validate, rebuild docs/review-queue.md and docs/controls.md
 go run ./cmd/cca review sign controls/logging/audit-logging.yaml
 go run ./cmd/cca review sign mappings/mvsp.yaml --requirement 2.7   # or --control <key>, or --all
+go run ./cmd/cca review sign scope/lab.yaml --control access-role-change
 git commit -am "Review audit logging"
 ```
 
@@ -344,7 +347,7 @@ collected.
 | `internal/assurance` | The service layer: every entry point goes through it, and it checks permission first |
 | `internal/authz` | Roles, actions and the one permission function |
 | `internal/auth` | Password hashing (argon2id) |
-| `controls/`, `mappings/`, `tracking/` | The content the maintainer edits (YAML) and its JSON Schemas, embedded in the binary |
+| `controls/`, `mappings/`, `tracking/`, `scope/` | The content the maintainer edits (YAML) and its JSON Schemas, embedded in the binary |
 | `internal/content` | Reads and validates those files; review signing, verification and the review queue |
 | `internal/control` | Internal controls, built from the content files, and the derivation of their state |
 | `internal/collect` | What collectors share: the snapshot and the classified error |

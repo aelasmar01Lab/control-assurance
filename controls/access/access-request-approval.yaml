@@ -15,8 +15,6 @@ manual_evidence:
 evidence_expectation: >-
   For each grant of access in the period, a dated request and the owner's
   dated approval.
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: ""
 review:
   status: draft

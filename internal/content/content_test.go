@@ -38,8 +38,6 @@ type: automated
 checks: [AWS-01]
 evidence_expectation: The credential report, collected every 48 hours.
 freshness_hours: 48
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: ""
 review:
   status: draft
@@ -91,6 +89,20 @@ entries:
       content_sha256: ""
 `
 
+const fixtureScope = `organization: fixture-org
+description: An organization for tests.
+synthetic: true
+exclusions:
+  - control: access-console-mfa
+    reason: The organization has no console.
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+`
+
 func fixture(t *testing.T) (fstest.MapFS, content.Refs) {
 	t.Helper()
 	fsys := fstest.MapFS{
@@ -98,7 +110,7 @@ func fixture(t *testing.T) (fstest.MapFS, content.Refs) {
 		"mappings/fixture.yaml":                   {Data: []byte(fixtureMappings)},
 		"tracking/fixture.yaml":                   {Data: []byte(fixtureTracking)},
 	}
-	for _, schema := range []string{"controls/control.schema.json", "mappings/mapping.schema.json", "tracking/tracking.schema.json"} {
+	for _, schema := range []string{"controls/control.schema.json", "mappings/mapping.schema.json", "tracking/tracking.schema.json", "scope/scope.schema.json"} {
 		data, err := os.ReadFile("../../" + schema) //nolint:gosec // a fixed list of schema files
 		if err != nil {
 			t.Fatal(err)
@@ -150,7 +162,7 @@ func TestFixtureLoads(t *testing.T) {
 // Each case changes one thing in a valid fixture and names the problem it
 // must cause. Content that loads despite the change would reach the pages.
 func TestInvalidContentIsRejected(t *testing.T) {
-	const control, mappings, tracking = "controls/access/access-console-mfa.yaml", "mappings/fixture.yaml", "tracking/fixture.yaml"
+	const control, mappings, tracking, scope = "controls/access/access-console-mfa.yaml", "mappings/fixture.yaml", "tracking/fixture.yaml", "scope/fixture-org.yaml"
 	cases := []struct {
 		name, file, old, new, want string
 	}{
@@ -161,7 +173,6 @@ func TestInvalidContentIsRejected(t *testing.T) {
 		{"unknown check", control, "[AWS-01]", "[AWS-99]", `check "AWS-99" does not exist`},
 		{"no freshness", control, "freshness_hours: 48\n", "", "needs freshness_hours"},
 		{"manual without evidence", control, "type: automated\nchecks: [AWS-01]", "type: manual\nchecks: []", "needs manual_evidence"},
-		{"not applicable without reason", control, `applies_to_lab: "yes"`, `applies_to_lab: "no"`, "applies_reason says why"},
 		{"unknown field", control, "risk:", "risks:", "schema"},
 		{"draft with a reviewer", control, `reviewed_by: ""`, `reviewed_by: "someone"`, "a draft names no reviewer"},
 		{"reviewed without a hash", control, "status: draft", "status: reviewed", "names its reviewer"},
@@ -175,12 +186,17 @@ func TestInvalidContentIsRejected(t *testing.T) {
 		{"bad strength", mappings, "strength: supporting", "strength: strong", "schema"},
 		{"tracked and mapped", tracking, `requirement: "R3"`, `requirement: "R1"`, "needs no tracking entry"},
 		{"out of scope status typo", tracking, "status: not_implemented", "status: done", "schema"},
+		{"control says where it applies", control, "reviewer_note: \"\"", "applies_to_lab: \"yes\"\nreviewer_note: \"\"", "schema"},
+		{"exclusion of an unknown control", scope, "control: access-console-mfa", "control: access-nothing", `control "access-nothing" does not exist`},
+		{"exclusion without a reason", scope, "    reason: The organization has no console.\n", "", "schema"},
+		{"scope file misnamed", scope, "organization: fixture-org", "organization: other-org", "is scope/other-org.yaml"},
 		{"not assessed with a rationale", tracking, "status: not_implemented", "status: not_assessed", "schema"},
 		{"assessed without a review block", tracking, "    review:\n      status: draft\n      drafted_by: agent\n      reviewed_by: \"\"\n      reviewed_on: \"\"\n      content_sha256: \"\"\n", "", "schema"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			fsys, refs := fixture(t)
+			fsys[scope] = &fstest.MapFile{Data: []byte(fixtureScope)}
 			before := string(fsys[c.file].Data)
 			after := strings.Replace(before, c.old, c.new, 1)
 			if after == before {
@@ -257,6 +273,43 @@ func TestNotAssessedIsNotInTheQueueAndCannotBeSigned(t *testing.T) {
 	}
 	if _, _, err := content.Sign(fsys[file].Data, file, set, content.Selector{All: true}, "ali", "2026-11-12", false); err == nil {
 		t.Error("--all signed a file that holds only not assessed entries")
+	}
+}
+
+// An exclusion is reviewed like any other entry: it sits in the queue as a
+// draft, is signed by control, and an edit to its reason after signing is
+// caught.
+func TestExclusionsAreQueuedAndSigned(t *testing.T) {
+	const file = "scope/fixture-org.yaml"
+	fsys, refs := fixture(t)
+	fsys[file] = &fstest.MapFile{Data: []byte(fixtureScope)}
+	set, problems := content.Load(fsys, refs)
+	if len(problems) > 0 {
+		t.Fatal(problems)
+	}
+	sc, ok := set.Scope("fixture-org")
+	if !ok || !sc.Synthetic || len(sc.Exclusions) != 1 || sc.Exclusions[0].Review.IsReviewed() {
+		t.Fatalf("scope = %+v", sc)
+	}
+	q := content.BuildQueue(set)
+	last := q.Items[len(q.Items)-1]
+	if len(q.Scope) != 1 || q.Scope[0].Draft != 1 || last.Kind != "exclusion" || last.Sign != "cca review sign scope/fixture-org.yaml --control access-console-mfa" {
+		t.Errorf("queue scope = %+v, last item = %+v", q.Scope, last)
+	}
+	if _, _, err := content.Sign(fsys[file].Data, file, set, content.Selector{Requirement: "R1"}, "ali", "2026-11-12", false); err == nil {
+		t.Error("an exclusion was signed by requirement")
+	}
+	signed := sign(t, fsys, refs, file, content.Selector{Control: "access-console-mfa"}, false)
+	if len(signed) != 1 {
+		t.Fatalf("signed = %+v", signed)
+	}
+	set, problems = content.Load(fsys, refs)
+	if len(problems) > 0 || !set.Scopes[0].Exclusions[0].Review.IsReviewed() {
+		t.Fatalf("after signing: %v", problems)
+	}
+	fsys[file] = &fstest.MapFile{Data: []byte(strings.Replace(string(fsys[file].Data), "has no console", "has no console at all", 1))}
+	if _, problems = content.Load(fsys, refs); len(problems) != 1 || !problems[0].Review {
+		t.Errorf("an edit to a signed exclusion: problems = %v", problems)
 	}
 }
 

@@ -15,8 +15,6 @@ manual_evidence:
 evidence_expectation: >-
   The generated permission matrix and the output of the tests that try each
   action as each role.
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: ""
 review:
   status: draft

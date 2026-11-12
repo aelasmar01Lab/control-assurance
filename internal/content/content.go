@@ -97,8 +97,6 @@ type Control struct {
 	ManualEvidence      *ManualEvidence `yaml:"manual_evidence" json:"manual_evidence,omitempty"`
 	EvidenceExpectation string          `yaml:"evidence_expectation" json:"evidence_expectation"`
 	FreshnessHours      int             `yaml:"freshness_hours" json:"freshness_hours,omitempty"`
-	AppliesToLab        string          `yaml:"applies_to_lab" json:"applies_to_lab"`
-	AppliesReason       string          `yaml:"applies_reason" json:"applies_reason,omitempty"`
 	ReviewerNote        string          `yaml:"reviewer_note" json:"reviewer_note,omitempty"`
 	Review              Review          `yaml:"review" json:"-"`
 
@@ -177,6 +175,45 @@ type Set struct {
 	Controls []Control
 	Mappings []Mapping
 	Tracking []Tracking
+	// Scopes are the organizations the controls are applied to.
+	Scopes []Scope
+}
+
+// Scope is one organization the controls are applied to. Controls describe
+// a generic small company; a scope lists the ones that do not apply to this
+// organization. A control not listed applies.
+type Scope struct {
+	Organization string `yaml:"organization"`
+	// Name is what the organization is called, when it has a name.
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
+	// Synthetic marks an organization that does not exist: every record of
+	// it is made up, and every page about it says so.
+	Synthetic  bool        `yaml:"synthetic"`
+	Exclusions []Exclusion `yaml:"exclusions"`
+	Path       string      `yaml:"-"`
+}
+
+// Exclusion says a control does not apply to one organization, and why. It
+// takes effect only once reviewed: a draft exclusion changes no state.
+type Exclusion struct {
+	Control      string `yaml:"control" json:"control"`
+	Reason       string `yaml:"reason" json:"reason"`
+	ReviewerNote string `yaml:"reviewer_note" json:"reviewer_note,omitempty"`
+	Review       Review `yaml:"review" json:"-"`
+
+	Organization string `yaml:"-" json:"organization"`
+	Path         string `yaml:"-" json:"-"`
+}
+
+// Scope returns the organization with the given key.
+func (s *Set) Scope(organization string) (Scope, bool) {
+	for _, sc := range s.Scopes {
+		if sc.Organization == organization {
+			return sc, true
+		}
+	}
+	return Scope{}, false
 }
 
 // Problem is one thing wrong with the content.
@@ -228,6 +265,7 @@ const (
 	controlSchemaPath  = "controls/control.schema.json"
 	mappingSchemaPath  = "mappings/mapping.schema.json"
 	trackingSchemaPath = "tracking/tracking.schema.json"
+	scopeSchemaPath    = "scope/scope.schema.json"
 )
 
 // Load reads every content file under fsys and validates it. It returns
@@ -303,6 +341,35 @@ func Load(fsys fs.FS, refs Refs) (*Set, Problems) {
 			t.Framework, t.Version, t.Path = f.Framework, f.Version, p
 			trimTracking(&t)
 			set.Tracking = append(set.Tracking, t)
+		}
+	}
+
+	// Scope: one file per organization. A content root may have none.
+	files, _ = fs.Glob(fsys, "scope/*.yaml")
+	sort.Strings(files)
+	if len(files) > 0 {
+		scopeSchema, err := compile(fsys, scopeSchemaPath)
+		if err != nil {
+			add(scopeSchemaPath, "", "%v", err)
+			files = nil
+		}
+		for _, p := range files {
+			var sc Scope
+			if err := readFile(fsys, p, scopeSchema, &sc); err != nil {
+				add(p, "", "%v", err)
+				continue
+			}
+			if want := "scope/" + sc.Organization + ".yaml"; p != want {
+				add(p, "", "the file for organization %q is %s", sc.Organization, want)
+			}
+			sc.Path = p
+			sc.Name, sc.Description = strings.TrimSpace(sc.Name), strings.TrimSpace(sc.Description)
+			for i := range sc.Exclusions {
+				x := &sc.Exclusions[i]
+				x.Organization, x.Path = sc.Organization, p
+				x.Reason, x.ReviewerNote = strings.TrimSpace(x.Reason), strings.TrimSpace(x.ReviewerNote)
+			}
+			set.Scopes = append(set.Scopes, sc)
 		}
 	}
 
@@ -382,9 +449,6 @@ func (s *Set) check(refs Refs) Problems {
 			add(c.Path, "", "a manual control has no automated checks; its type is hybrid")
 		case (c.Type == "manual" || c.Type == "hybrid") && c.ManualEvidence == nil:
 			add(c.Path, "", "a %s control needs manual_evidence", c.Type)
-		}
-		if c.AppliesToLab != "yes" && c.AppliesReason == "" {
-			add(c.Path, "", "applies_to_lab is %q, so applies_reason says why", c.AppliesToLab)
 		}
 		review(c.Path, "", c.Review, c.ReviewerNote, c.Hash())
 	}
@@ -485,6 +549,20 @@ func (s *Set) check(refs Refs) Problems {
 		}
 	}
 
+	for _, sc := range s.Scopes {
+		seen := map[string]bool{}
+		for _, x := range sc.Exclusions {
+			if _, ok := controls[x.Control]; !ok {
+				add(sc.Path, x.Control, "control %q does not exist", x.Control)
+			}
+			if seen[x.Control] {
+				add(sc.Path, x.Control, "this control is excluded twice")
+			}
+			seen[x.Control] = true
+			review(sc.Path, x.Control, x.Review, x.ReviewerNote, x.Hash())
+		}
+	}
+
 	// Every requirement is mapped by a control or tracked with a reason.
 	// A profile's requirements are its parent's, and are covered there.
 	for _, p := range refs.Packs {
@@ -532,7 +610,7 @@ func containsWord(text, word string) bool {
 func isLetter(b byte) bool { return b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z' }
 
 func trimControl(c *Control) {
-	for _, s := range []*string{&c.Title, &c.Statement, &c.Risk, &c.EvidenceExpectation, &c.AppliesReason, &c.ReviewerNote} {
+	for _, s := range []*string{&c.Title, &c.Statement, &c.Risk, &c.EvidenceExpectation, &c.ReviewerNote} {
 		*s = strings.TrimSpace(*s)
 	}
 	if c.ManualEvidence != nil {

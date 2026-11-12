@@ -13,8 +13,6 @@ evidence_expectation: >-
   Active branch rules on each in-scope repository, collected at least every 48
   hours.
 freshness_hours: 48
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: >-
   This control joins two activities, an approving review (GH-01) and required
   status checks (GH-02). The writing rules would make it two controls. It is

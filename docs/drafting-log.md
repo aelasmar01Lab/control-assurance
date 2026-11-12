@@ -134,3 +134,27 @@ text. No crosswalk was used: every mapping's basis is `own_analysis`.
    ten mappings. That may be the right picture of a broad subcategory, or
    a sign that the controls are cut too fine.
 
+## 2026-11-12: scope files for the lab and the demo
+
+**What.** `applies_to_lab` and `applies_reason` removed from all 27
+control files; every one read "yes". `scope/lab.yaml` and
+`scope/demo.yaml` added (decision 38).
+
+**Counts.** Lab: 3 draft exclusions. Demo: none.
+
+**Sources opened.** None; nothing here comes from a framework.
+
+**Least sure of.** All three lab exclusions, `access-identity-proofing`,
+`access-offboarding-removal` and `access-role-change`. The maintainer did
+not say any control does not apply to the lab. The agent proposes these
+because each describes an event between two people, and the lab has one.
+Each carries a `reviewer_note`, and as drafts they change no state.
+`access-single-sign-on` is not proposed: the lab could have an identity
+provider and does not, which is a gap, not a difference in scope.
+
+**Reworded.** The reviewer notes on `access-offboarding-removal`,
+`access-role-change` and `access-password-length` asked for the value
+"the lab would keep"; they now ask for the one a small company would. The
+note on `access-identity-proofing` moved to its exclusion. Not reworded:
+`ai-usage-logging` still says "the lab Region" in its statement, and the
+note on `access-single-sign-on` still speaks of the lab.

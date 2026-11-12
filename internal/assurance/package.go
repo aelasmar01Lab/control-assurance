@@ -26,7 +26,7 @@ import (
 
 // PackageFormat names the layout of a review package. A change to which
 // files exist or what they hold means a new format.
-const PackageFormat = "cca-review-package/3"
+const PackageFormat = "cca-review-package/4"
 
 const packageNotice = "A review package for one past period. Every result describes one check version applied to one stored observation; " +
 	"it is not a statement about any framework. Control states are as they stood at the end of the period."
@@ -47,11 +47,23 @@ type Manifest struct {
 	// The period is From inclusive to To exclusive, in UTC.
 	PeriodFrom time.Time `json:"period_from"`
 	PeriodTo   time.Time `json:"period_to"`
+	// Organization is the organization the package is about.
+	Organization PackageOrganization `json:"organization"`
 	// Scope is every resource registered before the end of the period,
 	// including any with no evidence in it.
 	Scope  []store.ScopeRow `json:"scope"`
 	Counts map[string]int   `json:"counts"`
 	Files  []ManifestFile   `json:"files"`
+}
+
+// PackageOrganization names the organization a package is about.
+type PackageOrganization struct {
+	Key         string `json:"key"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description"`
+	// Synthetic is true when the organization does not exist and every
+	// record in the package is made up.
+	Synthetic bool `json:"synthetic"`
 }
 
 // Package is a review package held in memory.
@@ -102,6 +114,9 @@ type PackageControl struct {
 	Mappings            []control.Mapping `json:"mappings"`
 	StateAtPeriodEnd    control.State     `json:"state_at_period_end"`
 	Reasons             []string          `json:"reasons"`
+	// Exclusion is the entry that says the control does not apply to the
+	// organization the package is about, if there is one.
+	Exclusion *ExclusionView `json:"exclusion,omitempty"`
 }
 
 // PackageCheck is a check version that produced an evaluation in the package.
@@ -258,7 +273,11 @@ func (s *Service) BuildPackage(ctx context.Context, actor authz.Actor, from, to 
 	exceptionsAtEnd := exceptionsBefore(allExceptions, to)
 	submissions := submissionsBefore(allSubmissions, to)
 
-	controlViews := deriveControls(to, results, findingsAtEnd, exceptionsAtEnd, submissions)
+	org := PackageOrganization{Key: s.organization()}
+	if sc, ok := control.ScopeFor(org.Key); ok {
+		org.Name, org.Description, org.Synthetic = sc.Name, sc.Description, sc.Synthetic
+	}
+	controlViews := deriveControls(org.Key, to, results, findingsAtEnd, exceptionsAtEnd, submissions)
 	requirements, err := deriveRequirements(controlViews)
 	if err != nil {
 		return nil, err
@@ -285,7 +304,7 @@ func (s *Service) BuildPackage(ctx context.Context, actor authz.Actor, from, to 
 			RevisionAtPeriodEnd: rev, WordingChangedSince: rev == nil || rev.ContentSHA256 != c.ContentSHA256,
 			Key: c.Key, Title: c.Title, Risk: c.Risk, Owner: c.Owner, EvidenceExpectation: c.EvidenceExpectation,
 			Checks: append([]string{}, c.Checks...), ManualCheck: c.ManualCheck, FreshnessHours: int(c.Freshness.Hours()),
-			Mappings: append([]control.Mapping{}, c.Mappings...), StateAtPeriodEnd: v.State, Reasons: v.Reasons,
+			Mappings: append([]control.Mapping{}, c.Mappings...), StateAtPeriodEnd: v.State, Reasons: v.Reasons, Exclusion: v.Exclusion,
 		})
 	}
 
@@ -388,7 +407,7 @@ func (s *Service) BuildPackage(ctx context.Context, actor authz.Actor, from, to 
 	exceptionRows := make([]PackageException, len(exceptions))
 	copy(exceptionRows, exceptions)
 	if p.Files["index.html"], err = renderPackageReport(packageReport{
-		Format: PackageFormat, Notice: packageNotice, From: from, To: to, Scope: scope,
+		Format: PackageFormat, Notice: packageNotice, From: from, To: to, Scope: scope, Organization: org,
 		Controls: controls, Requirements: requirements, Findings: findings, Exceptions: exceptionRows, Notes: notes,
 		Evaluations: evaluations, Runs: runs, Submissions: submissions, Log: log,
 	}); err != nil {
@@ -396,7 +415,7 @@ func (s *Service) BuildPackage(ctx context.Context, actor authz.Actor, from, to 
 	}
 
 	p.Manifest = Manifest{
-		Format: PackageFormat, Notice: packageNotice, PeriodFrom: from, PeriodTo: to, Scope: scope,
+		Format: PackageFormat, Notice: packageNotice, PeriodFrom: from, PeriodTo: to, Scope: scope, Organization: org,
 		Counts: map[string]int{
 			"controls": len(controls), "requirements": len(requirements), "runs": len(runs), "observations": len(observations), "evaluations": len(evaluations),
 			"findings": len(findings), "exceptions": len(exceptions), "remediation_notes": len(notes),

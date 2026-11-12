@@ -56,7 +56,12 @@ func runContent(ctx context.Context, args []string, stdout io.Writer) error {
 			}
 			return fmt.Errorf("%d problems in the content files", len(problems))
 		}
-		fmt.Fprintf(stdout, "ok  %d controls, %d mappings, %d tracking entries\n", len(set.Controls), len(set.Mappings), len(set.Tracking))
+		exclusions := 0
+		for _, sc := range set.Scopes {
+			exclusions += len(sc.Exclusions)
+		}
+		fmt.Fprintf(stdout, "ok  %d controls, %d mappings, %d tracking entries, %d organizations with %d exclusions\n",
+			len(set.Controls), len(set.Mappings), len(set.Tracking), len(set.Scopes), exclusions)
 		return nil
 	case "load":
 		if len(args) != 1 {
@@ -147,7 +152,7 @@ func runReview(args []string, stdout io.Writer) error {
 		return nil
 	case "sign", "unsign":
 		if len(files) != 1 {
-			return fmt.Errorf("%w: name one file under controls/, mappings/ or tracking/", errUsage)
+			return fmt.Errorf("%w: name one file under controls/, mappings/, tracking/ or scope/", errUsage)
 		}
 		return signFile(stdout, *root, files[0], set, problems,
 			content.Selector{Requirement: *requirement, Control: *controlKey, All: *all}, *as, args[0] == "unsign")
@@ -250,7 +255,7 @@ func regenerateDocs(root string) ([]string, error) {
 	controls, tracked := control.FromSet(set)
 	docs := map[string]string{
 		"docs/review-queue.md": content.BuildQueue(set).Markdown(),
-		"docs/controls.md":     control.GuideFor(packsList, controls, tracked),
+		"docs/controls.md":     control.GuideFor(packsList, controls, tracked, set.Scopes),
 	}
 	var done []string
 	for _, name := range []string{"docs/review-queue.md", "docs/controls.md"} {

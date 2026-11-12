@@ -15,11 +15,9 @@ manual_evidence:
 evidence_expectation: >-
   For each departure in the period, the leaving date and the date each of the
   person's accounts was disabled or deleted.
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: >-
-  One business day is the agent's choice of deadline. Set the deadline the lab
-  would keep.
+  One business day is the agent's choice of deadline. Set the deadline a small
+  company would keep.
 review:
   status: draft
   drafted_by: agent

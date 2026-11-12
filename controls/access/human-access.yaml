@@ -12,8 +12,6 @@ evidence_expectation: >-
   The IAM credential report and account summary, collected at least every 48
   hours.
 freshness_hours: 48
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: >-
   The access pilot may draft narrower controls for IAM users and for the root
   user. If it does, this control overlaps them; decide which to keep.

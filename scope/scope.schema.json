@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/aelasmar01Lab/control-assurance/scope/scope.schema.json",
+  "title": "Organization scope",
+  "description": "One organization the controls are applied to, and the controls that do not apply to it. One file per organization, at scope/<organization>.yaml. A control not listed applies. An exclusion takes effect only once it is reviewed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["organization", "description", "synthetic", "exclusions"],
+  "properties": {
+    "organization": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "name": { "type": "string" },
+    "description": { "type": "string", "minLength": 1 },
+    "synthetic": { "type": "boolean" },
+    "exclusions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["control", "reason", "review"],
+        "properties": {
+          "control": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "reason": { "type": "string", "minLength": 1 },
+          "reviewer_note": { "type": "string" },
+          "review": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["status", "drafted_by", "reviewed_by", "reviewed_on", "content_sha256"],
+            "properties": {
+              "status": { "enum": ["draft", "reviewed"] },
+              "drafted_by": { "type": "string", "minLength": 1 },
+              "reviewed_by": { "type": "string" },
+              "reviewed_on": { "type": "string", "pattern": "^([0-9]{4}-[0-9]{2}-[0-9]{2})?$" },
+              "content_sha256": { "type": "string", "pattern": "^([0-9a-f]{64})?$" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

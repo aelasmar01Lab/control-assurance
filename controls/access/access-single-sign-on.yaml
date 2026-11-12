@@ -16,8 +16,6 @@ manual_evidence:
 evidence_expectation: >-
   The sign-in configuration of each in-scope system, showing the identity
   provider it trusts.
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: >-
   The lab has no identity provider yet; Phase 3 of the plan adds one. Until
   then this control reads needs attention, which is true. Decide whether to

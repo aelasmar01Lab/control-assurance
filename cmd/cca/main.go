@@ -32,11 +32,11 @@ Commands:
   requirements list            List every requirement in the built-in framework packs
   requirements status          Show every requirement's current state and what it rests on
   controls guide               Print the control and mapping guide generated from the content files
-  content validate             Check the files under controls/, mappings/ and tracking/ against their schemas and each other
+  content validate             Check the files under controls/, mappings/, tracking/ and scope/ against their schemas and each other
   content load                 Record the controls built into this binary as revisions in the database
   review status                Show how much of the content has been reviewed, by domain and by framework
   review queue                 Print the review queue: every draft, in the order to review it
-  review sign <file>           Mark entries as reviewed (--requirement, --control, --all for a mappings or tracking file; --as name)
+  review sign <file>           Mark entries as reviewed (--requirement, --control, --all for a mappings, tracking or scope file; --as name)
   review unsign <file>         Set entries back to draft (same options)
   review verify                Fail if any reviewed entry was edited after it was signed
   self-assessment              Print this project's own MVSP self-assessment
@@ -74,6 +74,7 @@ Environment:
   CCA_COLLECT_INTERVAL  How often the worker collects each job (default 24h)
   CCA_WORKERS           Collection runs made at the same time (default 4)
   CCA_COOKIE_SECURE     Set to 1 when serving over HTTPS
+  CCA_ORGANIZATION      The organization shown, a file under scope/ (default lab; the demo is always demo)
 
 migrate, users, evidence and demo are setup commands and take no CCA_USER.
 content validate and the review commands read the files in the current directory

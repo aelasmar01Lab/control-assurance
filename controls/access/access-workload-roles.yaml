@@ -16,8 +16,6 @@ manual_evidence:
 evidence_expectation: >-
   A dated list of every workload that calls the cloud account and the role
   each assumes.
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: >-
   This could become an automated control if every IAM user were tagged as a
   person or a workload. As drafted it rests on a list a person keeps.

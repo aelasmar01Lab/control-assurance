@@ -16,12 +16,7 @@ manual_evidence:
 evidence_expectation: >-
   For each account issued in the period, a dated record of who confirmed the
   person's identity and how.
-applies_to_lab: "yes"
-applies_reason: ""
-reviewer_note: >-
-  The lab has one person. This control describes what would be observed with
-  more than one; decide whether it applies to the lab as it is, or should read
-  applies_to_lab: no with a reason.
+reviewer_note: ""
 review:
   status: draft
   drafted_by: agent

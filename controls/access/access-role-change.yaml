@@ -16,11 +16,9 @@ manual_evidence:
 evidence_expectation: >-
   For each role change in the period, the date of the change and the date the
   permissions were adjusted.
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: >-
-  Five business days is the agent's choice of deadline. Set the deadline the
-  lab would keep.
+  Five business days is the agent's choice of deadline. Set the deadline a
+  small company would keep.
 review:
   status: draft
   drafted_by: agent

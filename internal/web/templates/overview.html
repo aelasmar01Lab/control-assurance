@@ -26,7 +26,7 @@
       <tr>
         <td><a class="row-link" href="/?control={{.Control.Key}}">{{.Control.Title}}</a><div class="sub">Owner: {{.Control.Owner}} · <span class="tag{{if .Control.Review.IsReviewed}} tag-ok{{end}}">{{.Control.Review.Label}}</span></div></td>
         <td><span class="pill t-{{tone .State}} state {{.State}}">{{label .State}}</span></td>
-        <td class="body">{{range .Reasons}}<div>{{.}}</div>{{end}}</td>
+        <td class="body">{{range .Reasons}}<div>{{.}}</div>{{end}}{{with .Exclusion}}<div class="sub"><span class="tag{{if .Reviewed}} tag-ok{{end}}">exclusion {{.Review}}</span>{{if not .Reviewed}} A draft exclusion changes nothing. Proposed reason: {{.Reason}}{{end}}</div>{{end}}</td>
         <td><div class="chips">{{range .Control.Checks}}<code class="chip">{{.}}</code>{{end}}{{if .Control.ManualCheck}}<code class="chip">{{.Control.ManualCheck}} · manual</code>{{end}}</div></td>
         <td><a class="caret" href="/?control={{.Control.Key}}" aria-label="Details of {{.Control.Title}}"><i class="ph ph-caret-right"></i></a></td>
       </tr>

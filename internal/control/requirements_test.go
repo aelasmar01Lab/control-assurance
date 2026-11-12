@@ -2,8 +2,10 @@ package control
 
 import (
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/aelasmar01Lab/control-assurance/internal/content"
 	"github.com/aelasmar01Lab/control-assurance/internal/pack"
 	"github.com/aelasmar01Lab/control-assurance/packs"
 )
@@ -87,6 +89,61 @@ func TestRequirementStateIsNeverPositiveWithoutEvidence(t *testing.T) {
 		if got := DeriveRequirement(tt.states, nil); got != tt.want {
 			t.Errorf("DeriveRequirement(%v) = %s, want %s", tt.states, got, tt.want)
 		}
+	}
+}
+
+// A reviewed exclusion makes a control not applicable in its organization
+// and nowhere else. A draft exclusion changes nothing: a draft may not take
+// a failing control out of view.
+func TestOnlyAReviewedExclusionChangesAState(t *testing.T) {
+	saved := Scopes
+	t.Cleanup(func() { Scopes = saved })
+	draft := content.Exclusion{Control: "a", Reason: "No such thing here.", Review: content.Review{Status: content.Draft}}
+	reviewed := content.Exclusion{Control: "b", Reason: "No such thing here.", Review: content.Review{Status: content.Reviewed, ReviewedBy: "ali", ReviewedOn: "2026-11-12"}}
+	Scopes = []content.Scope{{Organization: "one", Exclusions: []content.Exclusion{draft, reviewed}}, {Organization: "two"}}
+
+	why := []string{"GH-01 fails."}
+	if st, r := ApplyScope("one", "a", NeedsAttention, why); st != NeedsAttention || r[0] != why[0] {
+		t.Errorf("a draft exclusion changed the state to %s (%v)", st, r)
+	}
+	if st, r := ApplyScope("one", "b", NeedsAttention, why); st != NotApplicable || !strings.Contains(r[0], "No such thing here.") {
+		t.Errorf("a reviewed exclusion gave %s (%v)", st, r)
+	}
+	if st, _ := ApplyScope("two", "b", NeedsAttention, why); st != NeedsAttention {
+		t.Errorf("an exclusion in one organization changed another: %s", st)
+	}
+	if _, ok := ExclusionFor("one", "a"); !ok {
+		t.Error("the draft exclusion is not reported, so it could not be shown")
+	}
+
+	// A requirement ignores controls that do not apply, and does not apply
+	// itself when none is left. It is never positive for that reason.
+	tests := []struct {
+		states []State
+		want   RequirementState
+	}{
+		{[]State{NotApplicable}, ReqNotApplicable},
+		{[]State{NotApplicable, NotApplicable}, ReqNotApplicable},
+		{[]State{NotApplicable, NeedsAttention}, ReqNeedsAttention},
+		{[]State{NotApplicable, Supported}, ReqPartlyEvidenced},
+	}
+	for _, tt := range tests {
+		if got := DeriveRequirement(tt.states, nil); got != tt.want {
+			t.Errorf("DeriveRequirement(%v) = %s, want %s", tt.states, got, tt.want)
+		}
+	}
+}
+
+// The built-in organizations are the lab, which is real, and the demo,
+// which is not.
+func TestBuiltInOrganizations(t *testing.T) {
+	lab, ok := ScopeFor(DefaultOrganization)
+	if !ok || lab.Synthetic {
+		t.Errorf("lab = %+v, %v", lab, ok)
+	}
+	demo, ok := ScopeFor("demo")
+	if !ok || !demo.Synthetic {
+		t.Errorf("demo = %+v, %v", demo, ok)
 	}
 }
 

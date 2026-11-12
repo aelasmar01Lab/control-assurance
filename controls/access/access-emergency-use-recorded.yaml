@@ -15,8 +15,6 @@ manual_evidence:
 evidence_expectation: >-
   A log of root user use: date, person, reason. An empty log for a period with
   no root use is evidence too.
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: ""
 review:
   status: draft

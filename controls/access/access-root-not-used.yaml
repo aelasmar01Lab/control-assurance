@@ -12,8 +12,6 @@ evidence_expectation: >-
   The root user's last-used dates in the IAM credential report, collected at
   least every 48 hours.
 freshness_hours: 48
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: >-
   AWS-02 reads the same report but asserts something else (credentials that
   have gone unused). This control needs its own check; none is pointed at it

@@ -81,8 +81,6 @@ manual_evidence:                 # omit when none
   validity_months: 12
 evidence_expectation: IAM credential report, collected at least every 48 hours.
 freshness_hours: 48
-applies_to_lab: "yes"            # yes | no | partly, with a reason when not yes
-applies_reason: ""
 reviewer_note: ""                # the agent's doubt, if any; blocks signing until cleared
 review:
   status: draft
@@ -91,6 +89,11 @@ review:
   reviewed_on: ""
   content_sha256: ""
 ```
+
+A control describes a generic small company and does not say which
+organization it applies to. A control that does not apply to the lab or to
+the demo company is listed in `scope/lab.yaml` or `scope/demo.yaml`, with
+a reason (decision 38; the plan's `applies_to_lab` field is gone).
 
 ### Writing rules
 

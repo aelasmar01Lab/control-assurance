@@ -22,6 +22,7 @@ import (
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/aws"
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
+	"github.com/aelasmar01Lab/control-assurance/internal/control"
 	"github.com/aelasmar01Lab/control-assurance/internal/db"
 	"github.com/aelasmar01Lab/control-assurance/internal/demo"
 	"github.com/aelasmar01Lab/control-assurance/internal/evidence"
@@ -76,7 +77,15 @@ func openService(ctx context.Context) (*assurance.Service, func(), error) {
 		st.Close()
 		return nil, nil, err
 	}
-	return &assurance.Service{Store: st, Evidence: ev}, st.Close, nil
+	org := os.Getenv("CCA_ORGANIZATION")
+	if org == "" {
+		org = control.DefaultOrganization
+	}
+	if _, ok := control.ScopeFor(org); !ok {
+		st.Close()
+		return nil, nil, fmt.Errorf("CCA_ORGANIZATION is %q, and there is no scope/%s.yaml", org, org)
+	}
+	return &assurance.Service{Store: st, Evidence: ev, Organization: org}, st.Close, nil
 }
 
 // cliActor returns the user this invocation acts as, named by CCA_USER.
@@ -785,6 +794,8 @@ func runDemo(ctx context.Context, args []string, stdout io.Writer) error {
 		return err
 	}
 	defer closeSvc()
+	// The demo is always the fictional company, whatever the environment says.
+	svc.Organization = demo.Organization
 
 	seeded, err := demo.Seeded(ctx, svc.Store)
 	if err != nil {

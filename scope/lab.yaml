@@ -1,0 +1,57 @@
+# The lab: the real organization this application collects from.
+#
+# Controls describe a generic small company. This file lists the ones that
+# do not apply to the lab, each with a reason. A control not listed applies.
+# An exclusion changes nothing until it is reviewed: while it is a draft the
+# control keeps the state its evidence gives it.
+organization: lab
+name: Control assurance lab
+description: >-
+  A real one-person lab with live collection: two public, nonsensitive
+  repositories and one AWS account. It has no product, customers, staff or
+  premises.
+synthetic: false
+exclusions:
+
+  - control: access-identity-proofing
+    reason: >-
+      The lab has one person, who administers every system. No account is
+      issued to anyone else, so there is no request whose sender has to be
+      confirmed.
+    reviewer_note: >-
+      The agent proposes this exclusion; the maintainer has not said the
+      control does not apply. Delete the entry to keep the control in force.
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-offboarding-removal
+    reason: >-
+      The lab has one person and no staff. Nobody joins or leaves, so there
+      is no departure to act on.
+    reviewer_note: >-
+      The agent proposes this exclusion; the maintainer has not said the
+      control does not apply. Delete the entry to keep the control in force.
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-role-change
+    reason: >-
+      The lab has one person, who holds every role. Nobody moves between
+      roles, so there is no change of role to act on.
+    reviewer_note: >-
+      The agent proposes this exclusion; the maintainer has not said the
+      control does not apply. Delete the entry to keep the control in force.
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""

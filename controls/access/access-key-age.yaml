@@ -11,8 +11,6 @@ evidence_expectation: >-
   Access key creation dates in the IAM credential report, collected at least
   every 48 hours.
 freshness_hours: 48
-applies_to_lab: "yes"
-applies_reason: ""
 reviewer_note: >-
   AWS-02 asserts that keys are not unused; this asserts they are not old. They
   are different checks, and no check tests this one yet.
