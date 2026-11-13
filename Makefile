@@ -37,7 +37,7 @@ migrate:
 packs:
 	go run ./cmd/cca packs validate
 
-# After editing anything under controls/, mappings/ or tracking/: check it,
+# After editing anything under controls/, mappings/, tracking/ or scope/: check it,
 # then regenerate the two documents made from it. Sign what you reviewed
 # with "go run ./cmd/cca review sign <file>".
 content:

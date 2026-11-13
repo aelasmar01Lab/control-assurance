@@ -1,9 +1,9 @@
-# NIST CSF 2.0 subcategories that no control covers, and how each is tracked.
+# Pellwick, the fictional demo company: requirements of this framework that
+# no control covers.
 #
-# PILOT: only PR.AA has been assessed. Every other subcategory is marked
-# not_assessed: nobody has looked at it yet, nothing is claimed about it, and
-# there is nothing to review. Wave 1 replaces each with controls and
-# mappings, or with a tracking entry that says how it is tracked.
+# Every entry is not_assessed. The demo's tracking is not copied from the
+# lab's: what a one-person lab does about a requirement says nothing about
+# a company of 25. Each entry is written with its framework's wave.
 framework: nist-csf
 version: "2.0"
 entries:
@@ -165,39 +165,10 @@ entries:
     status: not_assessed
 
   - requirement: PR.AA-04
-    status: not_implemented
-    owner_role: control-owner
-    applicability: Applicable once the lab has an identity provider.
-    evidence_expectation: >-
-      The identity provider's signing configuration, and each system's
-      settings for verifying assertions.
-    rationale: >-
-      No identity provider issues assertions for the lab. Each system is
-      signed in to directly, so there is no assertion to protect, convey or
-      verify.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.AA-06
-    status: out_of_scope
-    owner_role: control-owner
-    applicability: Not applicable.
-    evidence_expectation: "None."
-    rationale: >-
-      The lab has no premises and owns no hardware. Physical access to the
-      data centres is the cloud providers'.
-    reviewer_note: ""
-    review:
-      status: draft
-      drafted_by: agent
-      reviewed_by: ""
-      reviewed_on: ""
-      content_sha256: ""
+    status: not_assessed
 
   - requirement: PR.AT-01
     status: not_assessed

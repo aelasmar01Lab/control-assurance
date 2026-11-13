@@ -17,9 +17,9 @@ func GuideFor(packs []*pack.Pack, controls []Control, tracked []Tracking, scopes
 	mappedControls := func(framework, requirement string) []MappedControl {
 		return mappedIn(controls, framework, requirement)
 	}
-	trackingFor := func(framework, requirement string) (Tracking, bool) {
+	trackingFor := func(organization, framework, requirement string) (Tracking, bool) {
 		for _, t := range tracked {
-			if t.Framework == framework && t.Requirement == requirement {
+			if t.Organization == organization && t.Framework == framework && t.Requirement == requirement {
 				return t, true
 			}
 		}
@@ -98,7 +98,7 @@ func GuideFor(packs []*pack.Pack, controls []Control, tracked []Tracking, scopes
 		b.WriteString("\n## Organizations\n\n")
 		b.WriteString("The controls are applied to each organization below. A control applies unless the organization's file under `scope/` excludes it with a reason. ")
 		b.WriteString("An exclusion takes effect only once it is reviewed: while it is a draft, the control keeps the state its evidence gives it. ")
-		b.WriteString("The tracking entries further down are about the lab.\n")
+		b.WriteString("Tracking entries are kept per organization, under `tracking/<organization>/`.\n")
 		for _, sc := range scopes {
 			name := sc.Organization
 			if sc.Name != "" {
@@ -122,36 +122,72 @@ func GuideFor(packs []*pack.Pack, controls []Control, tracked []Tracking, scopes
 		}
 	}
 
+	// Tracking is per organization. A content root without scope files has
+	// one unnamed organization.
+	type org struct{ key, name string }
+	var orgs []org
+	seenOrg := map[string]bool{}
+	for _, sc := range scopes {
+		name := "`" + sc.Organization + "`"
+		if sc.Name != "" {
+			name = sc.Name + " (`" + sc.Organization + "`)"
+		}
+		orgs, seenOrg[sc.Organization] = append(orgs, org{sc.Organization, name}), true
+	}
+	for _, t := range tracked {
+		if !seenOrg[t.Organization] {
+			orgs, seenOrg[t.Organization] = append(orgs, org{t.Organization, "`" + t.Organization + "`"}), true
+		}
+	}
 	for _, p := range packs {
 		fmt.Fprintf(&b, "\n## Every %s requirement (%s)\n\n", p.Framework.Title, p.Framework.Version)
-		b.WriteString("Each requirement is either covered in part by a control, or tracked with a reason. ")
-		b.WriteString("\"Tracked manually\" means the work is done or judged outside this system, with no evidence held here. None of the tracking statuses is a positive state. \"Not assessed\" means nobody has looked at the requirement yet; such an entry says nothing else and is not reviewed.\n\n")
-		b.WriteString("| Requirement | Covered by | Tracking | Review | Owner | Applicability | Evidence expected | Rationale |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n")
+		b.WriteString("Each requirement is either covered in part by a control, or tracked with a reason by each organization. ")
+		b.WriteString("\"Tracked manually\" means the work is done or judged outside this system, with no evidence held here. None of the tracking statuses is a positive state. \"Not assessed\" means nobody has looked at the requirement for that organization yet; such an entry says nothing else and is not reviewed.\n\n")
+		b.WriteString("### Covered by a control\n\n")
+		b.WriteString("| Requirement | Covered by | Owner |\n| --- | --- | --- |\n")
+		var uncovered []pack.Requirement
 		for _, r := range p.Assessed() {
+			mapped := mappedControls(p.Framework.Key, r.ID)
+			if len(mapped) == 0 {
+				uncovered = append(uncovered, r)
+				continue
+			}
 			var covered []string
-			for _, m := range mappedControls(p.Framework.Key, r.ID) {
+			for _, m := range mapped {
 				covered = append(covered, fmt.Sprintf("%s (%s; %s)", m.Control.Title, m.Mapping.EffectiveStrength(), m.Mapping.Review.Label()))
 			}
-			if len(covered) > 0 {
-				first := mappedControls(p.Framework.Key, r.ID)[0].Control
-				fmt.Fprintf(&b, "| %s %s | %s | | | %s | Applicable. | See the control. | |\n", r.ID, requirementName(r), strings.Join(covered, ", "), first.Owner)
+			fmt.Fprintf(&b, "| %s %s | %s | %s |\n", r.ID, requirementName(r), strings.Join(covered, ", "), mapped[0].Control.Owner)
+		}
+		for _, o := range orgs {
+			fmt.Fprintf(&b, "\n### No control: how %s tracks it\n\n", o.name)
+			assessed := 0
+			for _, r := range uncovered {
+				if t, ok := trackingFor(o.key, p.Framework.Key, r.ID); !ok || t.Status != NotAssessed {
+					assessed++
+				}
+			}
+			if assessed == 0 {
+				fmt.Fprintf(&b, "None of the %d requirements that no control covers has been assessed for this organization yet. Nothing is claimed about them.\n", len(uncovered))
 				continue
 			}
-			t, ok := trackingFor(p.Framework.Key, r.ID)
-			if !ok {
-				fmt.Fprintf(&b, "| %s %s | | **untracked** | | | | | |\n", r.ID, requirementName(r))
-				continue
+			b.WriteString("| Requirement | Tracking | Review | Owner | Applicability | Evidence expected | Rationale |\n| --- | --- | --- | --- | --- | --- | --- |\n")
+			for _, r := range uncovered {
+				t, ok := trackingFor(o.key, p.Framework.Key, r.ID)
+				if !ok {
+					fmt.Fprintf(&b, "| %s %s | **untracked** | | | | | |\n", r.ID, requirementName(r))
+					continue
+				}
+				if t.Status == NotAssessed {
+					fmt.Fprintf(&b, "| %s %s | not assessed | | | | | |\n", r.ID, requirementName(r))
+					continue
+				}
+				rationale := t.Rationale
+				if t.Note != "" {
+					rationale += " **Source note:** " + t.Note
+				}
+				fmt.Fprintf(&b, "| %s %s | %s | %s | %s | %s | %s | %s |\n", r.ID, requirementName(r),
+					strings.ReplaceAll(string(t.Status), "_", " "), t.Review.Label(), t.Owner, t.Applicability, t.EvidenceExpectation, rationale)
 			}
-			if t.Status == NotAssessed {
-				fmt.Fprintf(&b, "| %s %s | | not assessed | | | | | |\n", r.ID, requirementName(r))
-				continue
-			}
-			rationale := t.Rationale
-			if t.Note != "" {
-				rationale += " **Source note:** " + t.Note
-			}
-			fmt.Fprintf(&b, "| %s %s | | %s | %s | %s | %s | %s | %s |\n", r.ID, requirementName(r),
-				strings.ReplaceAll(string(t.Status), "_", " "), t.Review.Label(), t.Owner, t.Applicability, t.EvidenceExpectation, rationale)
 		}
 	}
 	return b.String()

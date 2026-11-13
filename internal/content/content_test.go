@@ -108,7 +108,7 @@ func fixture(t *testing.T) (fstest.MapFS, content.Refs) {
 	fsys := fstest.MapFS{
 		"controls/access/access-console-mfa.yaml": {Data: []byte(fixtureControl)},
 		"mappings/fixture.yaml":                   {Data: []byte(fixtureMappings)},
-		"tracking/fixture.yaml":                   {Data: []byte(fixtureTracking)},
+		"tracking/fixture-org/fixture.yaml":       {Data: []byte(fixtureTracking)},
 	}
 	for _, schema := range []string{"controls/control.schema.json", "mappings/mapping.schema.json", "tracking/tracking.schema.json", "scope/scope.schema.json"} {
 		data, err := os.ReadFile("../../" + schema) //nolint:gosec // a fixed list of schema files
@@ -162,7 +162,7 @@ func TestFixtureLoads(t *testing.T) {
 // Each case changes one thing in a valid fixture and names the problem it
 // must cause. Content that loads despite the change would reach the pages.
 func TestInvalidContentIsRejected(t *testing.T) {
-	const control, mappings, tracking, scope = "controls/access/access-console-mfa.yaml", "mappings/fixture.yaml", "tracking/fixture.yaml", "scope/fixture-org.yaml"
+	const control, mappings, tracking, scope = "controls/access/access-console-mfa.yaml", "mappings/fixture.yaml", "tracking/fixture-org/fixture.yaml", "scope/fixture-org.yaml"
 	cases := []struct {
 		name, file, old, new, want string
 	}{
@@ -211,11 +211,47 @@ func TestInvalidContentIsRejected(t *testing.T) {
 	}
 }
 
+// Tracking is kept per organization. A file outside an organization's
+// directory is refused, an organization with tracking needs a scope file,
+// and one organization's entries do not answer for another.
+func TestTrackingIsPerOrganization(t *testing.T) {
+	const tracking = "tracking/fixture-org/fixture.yaml"
+	fsys, refs := fixture(t)
+	fsys["tracking/fixture.yaml"] = fsys[tracking]
+	delete(fsys, tracking)
+	if _, problems := content.Load(fsys, refs); !strings.Contains(problems.Error(), "tracking is kept per organization") {
+		t.Errorf("a tracking file outside an organization: problems = %q", problems.Error())
+	}
+
+	fsys, refs = fixture(t)
+	fsys["scope/other-org.yaml"] = &fstest.MapFile{Data: []byte(strings.Replace(fixtureScope, "fixture-org", "other-org", 1))}
+	_, problems := content.Load(fsys, refs)
+	for _, want := range []string{
+		`organization "fixture-org" has no file under scope/`,
+		"tracking/other-org/fixture.yaml: fixture v1: 1 requirements have neither a mapping nor a tracking entry: R3",
+	} {
+		if !strings.Contains(problems.Error(), want) {
+			t.Errorf("problems = %q, want one containing %q", problems.Error(), want)
+		}
+	}
+
+	fsys[tracking] = &fstest.MapFile{Data: fsys[tracking].Data}
+	fsys["scope/fixture-org.yaml"] = &fstest.MapFile{Data: []byte(fixtureScope)}
+	fsys["tracking/other-org/fixture.yaml"] = &fstest.MapFile{Data: []byte("framework: fixture\nversion: v1\nentries:\n  - requirement: \"R3\"\n    status: not_assessed\n")}
+	set, problems := content.Load(fsys, refs)
+	if len(problems) > 0 {
+		t.Fatalf("two organizations, each tracking R3: %v", problems)
+	}
+	if len(set.Tracking) != 2 || set.Tracking[0].Organization == set.Tracking[1].Organization || set.Tracking[0].Hash() == set.Tracking[1].Hash() {
+		t.Errorf("tracking = %+v", set.Tracking)
+	}
+}
+
 // Every requirement is mapped by a control or tracked. One that is neither
 // is a problem, named.
 func TestEveryRequirementIsMappedOrTracked(t *testing.T) {
 	fsys, refs := fixture(t)
-	fsys["tracking/fixture.yaml"] = &fstest.MapFile{Data: []byte("framework: fixture\nversion: v1\nentries: []\n")}
+	fsys["tracking/fixture-org/fixture.yaml"] = &fstest.MapFile{Data: []byte("framework: fixture\nversion: v1\nentries: []\n")}
 	_, problems := content.Load(fsys, refs)
 	if !strings.Contains(problems.Error(), "1 requirements have neither a mapping nor a tracking entry: R3") {
 		t.Errorf("problems = %q", problems.Error())
@@ -242,7 +278,7 @@ func sign(t *testing.T, fsys fstest.MapFS, refs content.Refs, file string, sel c
 // satisfies "mapped or tracked", but it is not a draft: it is not in the
 // review queue, not counted as waiting, and cannot be signed.
 func TestNotAssessedIsNotInTheQueueAndCannotBeSigned(t *testing.T) {
-	const file = "tracking/fixture.yaml"
+	const file = "tracking/fixture-org/fixture.yaml"
 	fsys, refs := fixture(t)
 	fsys[file] = &fstest.MapFile{Data: []byte("framework: fixture\nversion: v1\nentries:\n  - requirement: \"R3\"\n    status: not_assessed\n")}
 	set, problems := content.Load(fsys, refs)
@@ -264,7 +300,7 @@ func TestNotAssessedIsNotInTheQueueAndCannotBeSigned(t *testing.T) {
 	if q.Drafts() != 3 {
 		t.Errorf("%d drafts waiting, want the control and its two mappings", q.Drafts())
 	}
-	if md := q.Markdown(); strings.Contains(md, "**R3**") || !strings.Contains(md, "1 requirements are marked `not_assessed`") {
+	if md := q.Markdown(); strings.Contains(md, "**R3**") || !strings.Contains(md, "1 tracking entries are marked `not_assessed`") {
 		t.Errorf("the queue document:\n%s", md)
 	}
 	_, _, err := content.Sign(fsys[file].Data, file, set, content.Selector{Requirement: "R3"}, "ali", "2026-11-12", false)
@@ -420,7 +456,7 @@ func TestSignMappingsBySelector(t *testing.T) {
 // An entry with an open reviewer note cannot be signed: the note is a doubt
 // the agent recorded, and signing over it would bury it.
 func TestSignRefusesAnOpenNote(t *testing.T) {
-	const file = "tracking/fixture.yaml"
+	const file = "tracking/fixture-org/fixture.yaml"
 	fsys, refs := fixture(t)
 	fsys[file] = &fstest.MapFile{Data: []byte(strings.Replace(fixtureTracking,
 		"    review:", "    reviewer_note: Is R3 really in scope for the lab?\n    review:", 1))}

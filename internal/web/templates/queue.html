@@ -24,14 +24,14 @@
   <div class="card table-card">{{template "counts" (counts "Framework" .Data.Mappings)}}</div>
 </section>
 <section class="section">
-  <div class="section-head"><h2>Tracking entries, by framework</h2></div>
+  <div class="section-head"><h2>Tracking entries, by organization and framework</h2></div>
   <div class="card table-card">
     <table class="table">
-      <thead><tr><th>Framework</th><th>Reviewed</th><th>Draft</th><th>Blocked by a note</th><th>Not assessed</th></tr></thead>
+      <thead><tr><th>Organization: framework</th><th>Reviewed</th><th>Draft</th><th>Blocked by a note</th><th>Not assessed</th></tr></thead>
       <tbody>{{range .Data.Tracking}}<tr><td class="strong">{{.Name}}</td><td>{{.Reviewed}}</td><td>{{.Draft}}</td><td>{{.Noted}}</td><td>{{.NotAssessed}}</td></tr>{{end}}</tbody>
     </table>
   </div>
-  {{if .Data.NotAssessed}}<p class="small muted">{{.Data.NotAssessed}} requirements are marked not assessed: nobody has looked at them yet, so there is nothing to review and they are not listed below.</p>{{end}}
+  {{if .Data.NotAssessed}}<p class="small muted">{{.Data.NotAssessed}} tracking entries are marked not assessed: nobody has looked at that requirement for that organization yet, so there is nothing to review and they are not listed below.</p>{{end}}
 </section>
 
 <section class="section">

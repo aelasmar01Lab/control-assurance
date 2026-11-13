@@ -7,16 +7,19 @@ import (
 )
 
 // Tracking says how a framework requirement that no control covers is
-// tracked. Every requirement of the catalog is either mapped by a control or
-// has a Tracking entry; none is left out.
+// tracked by one organization. For each organization, every requirement of
+// the catalog is either mapped by a control or has a Tracking entry; none
+// is left out.
 type Tracking struct {
-	Framework   string
-	Version     string
-	Requirement string
+	// Organization is the organization the entry is about.
+	Organization string
+	Framework    string
+	Version      string
+	Requirement  string
 	// Status is manual, not_implemented, out_of_scope or not_assessed.
 	Status TrackingStatus
 	Owner  string
-	// Applicability says whether the requirement applies to the lab, and why.
+	// Applicability says whether the requirement applies to the organization, and why.
 	Applicability string
 	// EvidenceExpectation is what evidence would support the requirement.
 	EvidenceExpectation string
@@ -70,10 +73,11 @@ type MappedControl struct {
 	Mapping Mapping
 }
 
-// TrackingFor returns the tracking entry for a requirement, if it has one.
-func TrackingFor(framework, requirement string) (Tracking, bool) {
+// TrackingFor returns an organization's tracking entry for a requirement,
+// if it has one.
+func TrackingFor(organization, framework, requirement string) (Tracking, bool) {
 	for _, t := range Tracked {
-		if t.Framework == framework && t.Requirement == requirement {
+		if t.Organization == organization && t.Framework == framework && t.Requirement == requirement {
 			return t, true
 		}
 	}

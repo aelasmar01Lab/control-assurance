@@ -1,0 +1,63 @@
+# Pellwick, the fictional demo company: requirements of this framework that
+# no control covers.
+#
+# Every entry is not_assessed. The demo's tracking is not copied from the
+# lab's: what a one-person lab does about a requirement says nothing about
+# a company of 25. Each entry is written with its framework's wave.
+framework: mvsp
+version: v3.0-20231109
+entries:
+
+  - requirement: "1.2"
+    status: not_assessed
+
+  - requirement: "1.3"
+    status: not_assessed
+
+  - requirement: "1.4"
+    status: not_assessed
+
+  - requirement: "1.5"
+    status: not_assessed
+
+  - requirement: "1.6"
+    status: not_assessed
+
+  - requirement: "1.7"
+    status: not_assessed
+
+  - requirement: "1.8"
+    status: not_assessed
+
+  - requirement: "2.1"
+    status: not_assessed
+
+  - requirement: "2.2"
+    status: not_assessed
+
+  - requirement: "2.3"
+    status: not_assessed
+
+  - requirement: "2.4"
+    status: not_assessed
+
+  - requirement: "2.5"
+    status: not_assessed
+
+  - requirement: "2.8"
+    status: not_assessed
+
+  - requirement: "3.1"
+    status: not_assessed
+
+  - requirement: "3.2"
+    status: not_assessed
+
+  - requirement: "3.3"
+    status: not_assessed
+
+  - requirement: "4.1"
+    status: not_assessed
+
+  - requirement: "4.3"
+    status: not_assessed

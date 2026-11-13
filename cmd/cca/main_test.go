@@ -156,7 +156,7 @@ func reviewRoot(t *testing.T) string {
 	write("packs/fixture/v1.yaml", reviewPack)
 	write("controls/logging/logging-trail.yaml", reviewControl)
 	write("mappings/fixture.yaml", reviewMappings)
-	write("tracking/fixture.yaml", reviewTracking)
+	write("tracking/fixture-org/fixture.yaml", reviewTracking)
 	write("docs/review-queue.md", "stale\n")
 	write("docs/controls.md", "stale\n")
 	return root
@@ -205,7 +205,7 @@ func TestReviewCommands(t *testing.T) {
 	contains(cca(0, "review", "sign", filepath.Join(root, "mappings", "fixture.yaml"), "--requirement", "R1", "--as", "sam"), "logging-trail -> R1: signed as sam")
 	// Selecting nothing is refused, and so is an entry with an open note.
 	contains(cca(1, "review", "sign", filepath.Join(root, "mappings", "fixture.yaml")), "say which mappings")
-	contains(cca(1, "review", "sign", filepath.Join(root, "tracking", "fixture.yaml"), "--all"), "open reviewer_note")
+	contains(cca(1, "review", "sign", filepath.Join(root, "tracking", "fixture-org", "fixture.yaml"), "--all"), "open reviewer_note")
 
 	// Edit the signed control: verification fails, and says who signed what.
 	data, err := os.ReadFile(controlFile) //nolint:gosec // a file this test wrote

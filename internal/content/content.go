@@ -153,9 +153,12 @@ type Tracking struct {
 	ReviewerNote        string `yaml:"reviewer_note" json:"reviewer_note,omitempty"`
 	Review              Review `yaml:"review" json:"-"`
 
-	Framework string `yaml:"-" json:"framework"`
-	Version   string `yaml:"-" json:"version"`
-	Path      string `yaml:"-" json:"-"`
+	// Organization is the organization the entry is about: tracking is
+	// kept per organization, at tracking/<organization>/<framework>.yaml.
+	Organization string `yaml:"-" json:"organization"`
+	Framework    string `yaml:"-" json:"framework"`
+	Version      string `yaml:"-" json:"version"`
+	Path         string `yaml:"-" json:"-"`
 }
 
 type mappingFile struct {
@@ -177,6 +180,9 @@ type Set struct {
 	Tracking []Tracking
 	// Scopes are the organizations the controls are applied to.
 	Scopes []Scope
+	// trackingOrganizations are the organizations that have a tracking
+	// file, whether or not it has an entry.
+	trackingOrganizations []string
 }
 
 // Scope is one organization the controls are applied to. Controls describe
@@ -326,7 +332,15 @@ func Load(fsys fs.FS, refs Refs) (*Set, Problems) {
 			set.Mappings = append(set.Mappings, m)
 		}
 	}
-	files, _ = fs.Glob(fsys, "tracking/*.yaml")
+	// Tracking is kept per organization: what one organization does about
+	// a requirement says nothing about another.
+	if stray, _ := fs.Glob(fsys, "tracking/*.yaml"); len(stray) > 0 {
+		sort.Strings(stray)
+		for _, p := range stray {
+			add(p, "", "tracking is kept per organization, at tracking/<organization>/%s", path.Base(p))
+		}
+	}
+	files, _ = fs.Glob(fsys, "tracking/*/*.yaml")
 	sort.Strings(files)
 	for _, p := range files {
 		var f trackingFile
@@ -334,11 +348,13 @@ func Load(fsys fs.FS, refs Refs) (*Set, Problems) {
 			add(p, "", "%v", err)
 			continue
 		}
-		if want := "tracking/" + f.Framework + ".yaml"; p != want {
+		organization := path.Base(path.Dir(p))
+		set.trackingOrganizations = append(set.trackingOrganizations, organization)
+		if want := "tracking/" + organization + "/" + f.Framework + ".yaml"; p != want {
 			add(p, "", "the file for framework %q is %s", f.Framework, want)
 		}
 		for _, t := range f.Entries {
-			t.Framework, t.Version, t.Path = f.Framework, f.Version, p
+			t.Organization, t.Framework, t.Version, t.Path = organization, f.Framework, f.Version, p
 			trimTracking(&t)
 			set.Tracking = append(set.Tracking, t)
 		}
@@ -525,7 +541,32 @@ func (s *Set) check(refs Refs) Problems {
 		review(m.Path, entry, m.Review, m.ReviewerNote, m.Hash())
 	}
 
-	seenTracking := map[pair]bool{}
+	// Every organization answers for every requirement: the ones with a
+	// scope file and the ones with tracking files.
+	type orgPair struct {
+		organization string
+		pair
+	}
+	var organizations []string
+	isOrganization := map[string]bool{}
+	for _, sc := range s.Scopes {
+		isOrganization[sc.Organization] = true
+		organizations = append(organizations, sc.Organization)
+	}
+	for _, o := range s.trackingOrganizations {
+		if !isOrganization[o] {
+			isOrganization[o] = true
+			organizations = append(organizations, o)
+			if len(s.Scopes) > 0 {
+				add("tracking/"+o, "", "organization %q has no file under scope/", o)
+			}
+		}
+	}
+	if len(organizations) == 0 {
+		// Nothing names an organization, so nothing is tracked at all.
+		organizations = []string{"<organization>"}
+	}
+	seenTracking := map[orgPair]bool{}
 	for _, t := range s.Tracking {
 		if badFile[t.Path] {
 			continue
@@ -537,10 +578,10 @@ func (s *Set) check(refs Refs) Problems {
 		}
 		requirement(t.Path, t.Requirement, t.Framework, t.Version, t.Requirement)
 		k := pair{t.Framework, t.Version, t.Requirement}
-		if seenTracking[k] {
+		if seenTracking[orgPair{t.Organization, k}] {
 			add(t.Path, t.Requirement, "this requirement is tracked twice")
 		}
-		seenTracking[k] = true
+		seenTracking[orgPair{t.Organization, k}] = true
 		if mapped[k] {
 			add(t.Path, t.Requirement, "a control maps to this requirement, so it needs no tracking entry")
 		}
@@ -563,28 +604,32 @@ func (s *Set) check(refs Refs) Problems {
 		}
 	}
 
-	// Every requirement is mapped by a control or tracked with a reason.
-	// A profile's requirements are its parent's, and are covered there.
-	for _, p := range refs.Packs {
-		if p.Framework.ProfileOf != "" {
-			continue
-		}
-		var missing []string
-		for _, r := range p.Assessed() {
-			k := pair{p.Framework.Key, p.Framework.Version, r.ID}
-			if !mapped[k] && !seenTracking[k] {
-				missing = append(missing, r.ID)
+	// Every requirement is mapped by a control or tracked with a reason,
+	// for each organization. A profile's requirements are its parent's, and
+	// are covered there.
+	sort.Strings(organizations)
+	for _, organization := range organizations {
+		for _, p := range refs.Packs {
+			if p.Framework.ProfileOf != "" {
+				continue
 			}
-		}
-		if len(missing) > 0 {
-			const show = 12
-			list := strings.Join(missing[:min(show, len(missing))], ", ")
-			if len(missing) > show {
-				list += fmt.Sprintf(" and %d more", len(missing)-show)
+			var missing []string
+			for _, r := range p.Assessed() {
+				k := pair{p.Framework.Key, p.Framework.Version, r.ID}
+				if !mapped[k] && !seenTracking[orgPair{organization, k}] {
+					missing = append(missing, r.ID)
+				}
 			}
-			add("tracking/"+p.Framework.Key+".yaml", "",
-				"%s %s: %d requirements have neither a mapping nor a tracking entry: %s",
-				p.Framework.Key, p.Framework.Version, len(missing), list)
+			if len(missing) > 0 {
+				const show = 12
+				list := strings.Join(missing[:min(show, len(missing))], ", ")
+				if len(missing) > show {
+					list += fmt.Sprintf(" and %d more", len(missing)-show)
+				}
+				add("tracking/"+organization+"/"+p.Framework.Key+".yaml", "",
+					"%s %s: %d requirements have neither a mapping nor a tracking entry: %s",
+					p.Framework.Key, p.Framework.Version, len(missing), list)
+			}
 		}
 	}
 	return problems

@@ -1,4 +1,4 @@
-# MVSP requirements that no control covers, and how each is tracked.
+# The lab: MVSP requirements that no control covers, and how each is tracked.
 # None of the three statuses is a positive state.
 # Edit freely; sign what you have reviewed with "cca review sign".
 framework: mvsp

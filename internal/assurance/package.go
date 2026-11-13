@@ -278,7 +278,7 @@ func (s *Service) BuildPackage(ctx context.Context, actor authz.Actor, from, to 
 		org.Name, org.Description, org.Synthetic = sc.Name, sc.Description, sc.Synthetic
 	}
 	controlViews := deriveControls(org.Key, to, results, findingsAtEnd, exceptionsAtEnd, submissions)
-	requirements, err := deriveRequirements(controlViews)
+	requirements, err := deriveRequirements(org.Key, controlViews)
 	if err != nil {
 		return nil, err
 	}

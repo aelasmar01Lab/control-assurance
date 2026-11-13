@@ -188,7 +188,8 @@ because keys are never renamed); a `partial` or `supporting` mapping
 without a limitation; a `derived` mapping stronger than `supporting` or
 without its path; a `published_crosswalk` mapping without a URL; a mapping
 or tracking entry that names a control, requirement or framework version
-that does not exist; and a requirement that is neither mapped nor tracked.
+that does not exist; and a requirement that is neither mapped nor tracked
+for an organization (tracking is kept per organization, decision 39).
 A draft `direct` mapping is counted as `partial` by the code, not by
 convention.
 

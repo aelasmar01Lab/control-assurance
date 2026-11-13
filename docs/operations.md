@@ -21,8 +21,9 @@ in front of it, and `CCA_COOKIE_SECURE=1`.
 
 `CCA_ORGANIZATION` names the organization the process shows, a file under
 `scope/`. It defaults to `lab`. `cca demo` ignores it and always shows
-`demo`. The organization decides only which controls read *not
-applicable*; it does not separate data, so each organization needs its own
+`demo`. The organization decides which controls read *not
+applicable* and whose tracking entries, under
+`tracking/<organization>/`, are shown; it does not separate data, so each organization needs its own
 database.
 
 ## First run against a lab

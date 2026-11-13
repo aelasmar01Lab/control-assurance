@@ -28,6 +28,19 @@ exclusions:
       reviewed_on: ""
       content_sha256: ""
 
+  - control: access-request-approval
+    reason: >-
+      The lab has one person, who owns every system and holds all access to
+      it. Nobody else asks for access, so there is no request for an owner
+      to approve.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
   - control: access-offboarding-removal
     reason: >-
       The lab has one person and no staff. Nobody joins or leaves, so there

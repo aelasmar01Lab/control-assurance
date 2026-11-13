@@ -59,7 +59,7 @@ type QueueItem struct {
 type Queue struct {
 	Controls []Counts // by domain
 	Mappings []Counts // by framework
-	Tracking []Counts // by framework
+	Tracking []Counts // by organization and framework
 	Scope    []Counts // exclusions, by organization
 	// Items are the drafts: controls first, then mappings and tracking
 	// entries wave by wave and framework by framework. Within each group,
@@ -81,8 +81,8 @@ func (q Queue) Reviewed() int {
 	return n
 }
 
-// NotAssessed is how many requirements carry a tracking entry that says
-// only that nobody has looked at them.
+// NotAssessed is how many tracking entries say only that nobody has looked
+// at the requirement for that organization.
 func (q Queue) NotAssessed() int {
 	n := 0
 	for _, c := range q.Tracking {
@@ -168,6 +168,9 @@ func BuildQueue(s *Set) Queue {
 	}
 	tracking := append([]Tracking(nil), s.Tracking...)
 	sort.SliceStable(tracking, func(i, j int) bool {
+		if tracking[i].Organization != tracking[j].Organization {
+			return tracking[i].Organization < tracking[j].Organization
+		}
 		if less, same := byFramework(tracking[i].Framework, tracking[j].Framework); !same {
 			return less
 		}
@@ -175,20 +178,21 @@ func BuildQueue(s *Set) Queue {
 	})
 	idx = map[string]int{}
 	for _, t := range tracking {
+		group := t.Organization + ": " + t.Framework
 		if !t.Assessed() {
-			i, ok := idx[t.Framework]
+			i, ok := idx[group]
 			if !ok {
 				i = len(q.Tracking)
-				idx[t.Framework] = i
-				q.Tracking = append(q.Tracking, Counts{Name: t.Framework})
+				idx[group] = i
+				q.Tracking = append(q.Tracking, Counts{Name: group})
 			}
 			q.Tracking[i].NotAssessed++
 			continue
 		}
-		tally(&q.Tracking, idx, t.Framework, t.Review, t.ReviewerNote)
+		tally(&q.Tracking, idx, group, t.Review, t.ReviewerNote)
 		if !t.Review.IsReviewed() {
 			q.Items = append(q.Items, QueueItem{
-				Kind: "tracking", Group: t.Framework, Path: t.Path, Entry: t.Requirement,
+				Kind: "tracking", Group: group, Path: t.Path, Entry: t.Requirement,
 				Summary: strings.ReplaceAll(t.Status, "_", " ") + ". " + t.Rationale, Note: t.ReviewerNote,
 				Sign: fmt.Sprintf("cca review sign %s --requirement %s", t.Path, shellArg(t.Requirement)),
 			})
@@ -247,11 +251,11 @@ func (q Queue) StatusText() string {
 	}
 	section("Controls, by domain", q.Controls)
 	section("Mappings, by framework", q.Mappings)
-	section("Tracking entries, by framework", q.Tracking)
+	section("Tracking entries, by organization and framework", q.Tracking)
 	section("Exclusions, by organization", q.Scope)
 	fmt.Fprintf(&b, "\n%d reviewed, %d waiting\n", q.Reviewed(), q.Drafts())
 	if n := q.NotAssessed(); n > 0 {
-		fmt.Fprintf(&b, "%d requirements not assessed yet; nothing to review for them\n", n)
+		fmt.Fprintf(&b, "%d tracking entries not assessed yet; nothing to review for them\n", n)
 	}
 	return b.String()
 }
@@ -266,7 +270,7 @@ func (q Queue) Markdown() string {
 	b.WriteString("An entry with a **note** carries a doubt the agent recorded; clear the `reviewer_note` once it is settled, or the entry cannot be signed.\n\n")
 	fmt.Fprintf(&b, "**%d reviewed, %d waiting.**\n\n", q.Reviewed(), q.Drafts())
 	if n := q.NotAssessed(); n > 0 {
-		fmt.Fprintf(&b, "%d requirements are marked `not_assessed`: nobody has looked at them yet, so there is nothing to review and they are not listed below.\n\n", n)
+		fmt.Fprintf(&b, "%d tracking entries are marked `not_assessed`: nobody has looked at that requirement for that organization yet, so there is nothing to review and they are not listed below.\n\n", n)
 	}
 
 	table := func(title, head string, list []Counts) {
@@ -282,7 +286,7 @@ func (q Queue) Markdown() string {
 	table("Controls", "Domain", q.Controls)
 	table("Mappings", "Framework", q.Mappings)
 	if len(q.Tracking) > 0 {
-		b.WriteString("## Tracking entries\n\n| Framework | Reviewed | Draft | Blocked by a note | Not assessed |\n| --- | --- | --- | --- | --- |\n")
+		b.WriteString("## Tracking entries\n\n| Organization: framework | Reviewed | Draft | Blocked by a note | Not assessed |\n| --- | --- | --- | --- | --- |\n")
 		for _, c := range q.Tracking {
 			fmt.Fprintf(&b, "| %s | %d | %d | %d | %d |\n", c.Name, c.Reviewed, c.Draft, c.Noted, c.NotAssessed)
 		}

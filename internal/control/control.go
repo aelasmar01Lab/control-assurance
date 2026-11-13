@@ -166,7 +166,8 @@ func FromSet(set *content.Set) ([]Control, []Tracking) {
 	var tracked []Tracking
 	for _, t := range set.Tracking {
 		tracked = append(tracked, Tracking{
-			Framework: t.Framework, Version: t.Version, Requirement: t.Requirement,
+			Organization: t.Organization,
+			Framework:    t.Framework, Version: t.Version, Requirement: t.Requirement,
 			Status: TrackingStatus(t.Status), Owner: t.OwnerRole, Applicability: t.Applicability,
 			EvidenceExpectation: t.EvidenceExpectation, Rationale: t.Rationale, Note: t.Note, Review: t.Review,
 		})

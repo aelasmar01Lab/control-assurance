@@ -19,26 +19,22 @@ func TestEveryRequirementIsMappedOrTracked(t *testing.T) {
 	}
 	known := map[string]bool{}
 	total := 0
-	for _, p := range all {
-		// Headings give the hierarchy and are not assessed.
-		for _, r := range p.Assessed() {
-			total++
-			known[p.Framework.Key+" "+r.ID] = true
-			mapped := len(MappedControls(p.Framework.Key, r.ID)) > 0
-			tr, tracked := TrackingFor(p.Framework.Key, r.ID)
-			switch {
-			case mapped == tracked:
-				t.Errorf("%s %s: mapped = %v, tracked = %v; want exactly one", p.Framework.Key, r.ID, mapped, tracked)
-			case tracked && tr.Status == NotAssessed:
-				// Nobody has looked: the entry says nothing else, by rule.
-				if tr.Owner != "" || tr.Applicability != "" || tr.EvidenceExpectation != "" || tr.Rationale != "" || tr.Review.Status != "" {
-					t.Errorf("%s %s: a not assessed entry says more than that: %+v", p.Framework.Key, r.ID, tr)
-				}
-			case tracked && (tr.Owner == "" || tr.Applicability == "" || tr.EvidenceExpectation == "" || tr.Rationale == ""):
-				t.Errorf("%s %s: tracking entry is incomplete: %+v", p.Framework.Key, r.ID, tr)
+	if len(Scopes) < 2 {
+		t.Fatalf("%d organizations are defined, want the lab and the demo", len(Scopes))
+	}
+	for _, sc := range Scopes {
+		for _, p := range all {
+			// Headings give the hierarchy and are not assessed.
+			for _, r := range p.Assessed() {
+				total++
+				known[p.Framework.Key+" "+r.ID] = true
+				mapped := len(MappedControls(p.Framework.Key, r.ID)) > 0
+				tr, tracked := TrackingFor(sc.Organization, p.Framework.Key, r.ID)
+				checkTracking(t, sc.Organization+" "+p.Framework.Key+" "+r.ID, mapped, tracked, tr)
 			}
 		}
 	}
+	total /= len(Scopes)
 	if total < 25 {
 		t.Errorf("catalog has %d requirements, want at least MVSP's 25", total)
 	}
@@ -57,6 +53,21 @@ func TestEveryRequirementIsMappedOrTracked(t *testing.T) {
 	}
 	if len(All) < 8 {
 		t.Errorf("%d controls are defined, want at least the first release's 8", len(All))
+	}
+}
+
+func checkTracking(t *testing.T, name string, mapped, tracked bool, tr Tracking) {
+	t.Helper()
+	switch {
+	case mapped == tracked:
+		t.Errorf("%s: mapped = %v, tracked = %v; want exactly one", name, mapped, tracked)
+	case tracked && tr.Status == NotAssessed:
+		// Nobody has looked: the entry says nothing else, by rule.
+		if tr.Owner != "" || tr.Applicability != "" || tr.EvidenceExpectation != "" || tr.Rationale != "" || tr.Review.Status != "" {
+			t.Errorf("%s: a not assessed entry says more than that: %+v", name, tr)
+		}
+	case tracked && (tr.Owner == "" || tr.Applicability == "" || tr.EvidenceExpectation == "" || tr.Rationale == ""):
+		t.Errorf("%s: tracking entry is incomplete: %+v", name, tr)
 	}
 }
 

@@ -442,3 +442,28 @@ Given up, and still open:
 - The demo company has no name yet and the demo's seeded history is
   unchanged: it is still two synthetic repositories and one account, not
   25 people.
+
+## 39. Tracking is per organization
+
+How a requirement that no control covers is tracked is a fact about one
+organization, so tracking files moved from `tracking/<framework>.yaml` to
+`tracking/<organization>/<framework>.yaml`. The lab keeps its entries
+unchanged. The demo company's entries all start as `not_assessed`: nothing
+is copied from the lab, and each is written with its framework's wave. An
+entry's organization is part of what a signature covers. Every
+organization with a scope file must map or track every requirement, and an
+organization with tracking files must have a scope file. A process shows
+the tracking of the organization it shows.
+
+This closes the first open point of decision 38. Its last point is closed
+by the demo company, Pellwick, in the same unit of work.
+
+Given up:
+
+- The demo shows most requirements as *not assessed* until Wave 1,
+  including the MVSP requirements the walkthrough used to show as tracked
+  with a reason.
+- Mappings are still shared: a control maps to a requirement for every
+  organization alike. Only a reviewed exclusion makes that differ.
+- The review queue counts not-assessed entries per organization, so the
+  same requirement counts once for each.

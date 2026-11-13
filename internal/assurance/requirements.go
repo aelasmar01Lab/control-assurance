@@ -76,8 +76,9 @@ var builtInContent = sync.OnceValues(func() (*content.Set, error) {
 })
 
 // deriveRequirements gives every requirement of every built-in pack a
-// state, from the control states given.
-func deriveRequirements(controls []ControlView) ([]RequirementView, error) {
+// state for one organization, from the control states given and that
+// organization's tracking entries.
+func deriveRequirements(organization string, controls []ControlView) ([]RequirementView, error) {
 	all, err := builtInPacks()
 	if err != nil {
 		return nil, err
@@ -112,7 +113,7 @@ func deriveRequirements(controls []ControlView) ([]RequirementView, error) {
 				v.EvidenceExpectation += m.Control.EvidenceExpectation
 			}
 			var tracking *control.Tracking
-			if t, ok := control.TrackingFor(p.Framework.Key, r.ID); ok {
+			if t, ok := control.TrackingFor(organization, p.Framework.Key, r.ID); ok {
 				tracking = &t
 				if len(states) == 0 {
 					v.Owner, v.Applicability, v.EvidenceExpectation = t.Owner, t.Applicability, t.EvidenceExpectation
@@ -159,7 +160,7 @@ func (s *Service) Requirements(ctx context.Context, actor authz.Actor) ([]Requir
 	if err != nil {
 		return nil, err
 	}
-	return deriveRequirements(ov.Controls)
+	return deriveRequirements(s.organization(), ov.Controls)
 }
 
 // FrameworkView is one framework pack and how much of it rests on what.

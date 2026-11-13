@@ -6,7 +6,7 @@ package contentfs
 import "embed"
 
 // FS holds controls/<domain>/<key>.yaml, mappings/<framework>.yaml,
-// tracking/<framework>.yaml and scope/<organization>.yaml, each directory
+// tracking/<organization>/<framework>.yaml and scope/<organization>.yaml, each directory
 // with its schema beside them.
 //
 //go:embed controls mappings tracking scope
