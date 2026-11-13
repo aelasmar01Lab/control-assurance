@@ -1,6 +1,7 @@
-// Package demo seeds a database with a labelled synthetic history: the full
-// loop from a failing check to a verified fix, played out against synthetic
-// sources. Nothing in it touches GitHub or AWS.
+// Package demo seeds a database with a labelled synthetic history of a
+// fictional company, Pellwick: the full loop from a failing check to a
+// verified fix, played out against synthetic sources. Nothing in it touches
+// GitHub or AWS.
 package demo
 
 import (
@@ -22,9 +23,11 @@ import (
 	"github.com/aelasmar01Lab/control-assurance/packs"
 )
 
-// Repository and Account are the synthetic resources the demo collects from.
+// Repository and Account are the synthetic resources the demo collects
+// from. The repository's owner carries "example" so that it cannot be taken
+// for a real GitHub organization.
 const (
-	Repository = "synthetic-org/demo-service"
+	Repository = "pellwick-example/scheduling-api"
 	Account    = awstest.FakeAccount
 )
 
@@ -135,10 +138,7 @@ func Seed(ctx context.Context, svc *assurance.Service, now time.Time) ([]Step, e
 		recent := clock.Add(-6 * time.Hour).Format(time.RFC3339)
 		account.Set(func(f *awstest.Fake) {
 			f.ReportGenerated = clock.Add(-20 * time.Minute)
-			f.Users = []awstest.User{
-				{Name: "synthetic-admin", PasswordEnabled: true, MFA: true, PasswordLastUsed: recent},
-				{Name: "synthetic-deployer", Key1Active: true, Key1LastUsed: recent, Key1LastRotated: recent},
-			}
+			f.Users = iamUsers(recent)
 		})
 		if _, err := svc.RequestCollection(ctx, operator, "github", []string{Repository}, nil); err != nil {
 			return err
@@ -178,7 +178,7 @@ func Seed(ctx context.Context, svc *assurance.Service, now time.Time) ([]Step, e
 	if err := collect(); err != nil {
 		return nil, err
 	}
-	say("First collection. GH-01, GH-02, GH-04 and AWS-04 fail; each opens a finding.")
+	say("First collection from %s and AWS account %s. GH-01, GH-02, GH-04 and AWS-04 fail; each opens a finding.", Repository, Account)
 
 	day(0, 11)
 	exceptions := map[string]int64{}
@@ -187,12 +187,12 @@ func Seed(ctx context.Context, svc *assurance.Service, now time.Time) ([]Step, e
 		if err != nil {
 			return nil, err
 		}
-		note := "Branch ruleset is being rolled out to this repository this week."
-		justification := "The ruleset rollout is scheduled; the repository has one maintainer until then."
+		note := "Bastien Mwangi is rolling the branch ruleset out to this repository this week."
+		justification := "The ruleset rollout is scheduled. Until then Marisol Trevanion reviews every change to the scheduling API by hand."
 		expires := clock.Add(10 * 24 * time.Hour)
 		if key == "AWS-04" {
 			note = "Waiting on a log bucket from the platform team."
-			justification = "No model is invoked in this account yet."
+			justification = "The scheduling assistant is in internal pilot. No clinic's requests reach a model in this account until the log bucket exists."
 			expires = clock.Add(5 * 24 * time.Hour) // this one will lapse
 		}
 		if _, err := svc.AddRemediationNote(ctx, owner, id, note); err != nil {
@@ -212,10 +212,14 @@ func Seed(ctx context.Context, svc *assurance.Service, now time.Time) ([]Step, e
 		}
 	}
 	say("The reviewer approves them. Change management reads accepted risk; the checks still read fail.")
-	record := []byte("SYNTHETIC RECORD\n\nRecovery exercise: restored the demo database from the nightly backup to a scratch host.\nResult: restore completed; row counts matched.\nThis file is synthetic demo data.\n")
 	submission, err := svc.SubmitEvidence(ctx, owner, assurance.EvidenceUpload{
 		ControlKey: "backup-recovery", PeriodStart: clock.AddDate(0, -1, 0), PeriodEnd: clock.AddDate(0, 0, -1),
-		Filename: "recovery-exercise.txt", Note: "Quarterly restore test.", Data: record,
+		Filename: "recovery-exercise.txt", Note: "Quarterly restore test.",
+		Data: record("recovery exercise",
+			"Run by: "+person("Bastien Mwangi").Name+", "+person("Bastien Mwangi").Title,
+			"Date: "+clock.AddDate(0, 0, -3).Format("2006-01-02"),
+			"Restored the scheduling database from the nightly backup to a scratch host.",
+			"Result: restore completed; appointment and clinic row counts matched production."),
 	})
 	if err != nil {
 		return nil, err
@@ -258,6 +262,51 @@ func Seed(ctx context.Context, svc *assurance.Service, now time.Time) ([]Step, e
 	}
 	say("The ruleset and a security policy are in place. GH-01, GH-02 and GH-04 pass and their findings close.")
 
+	// Two records from a company with people in it: the access requests
+	// of the month, which the reviewer accepts, and a leaver's record,
+	// which is still waiting for review when the demo opens.
+	accessRequests := func() error {
+		requests, err := svc.SubmitEvidence(ctx, owner, assurance.EvidenceUpload{
+			ControlKey: "access-request-approval", PeriodStart: clock.AddDate(0, -1, 0), PeriodEnd: clock.AddDate(0, 0, -1),
+			Filename: "access-requests.txt", Note: "Access requests for the month, exported from the ticket queue.",
+			Data: record("access requests and approvals",
+				"Period: "+clock.AddDate(0, -1, 0).Format("2006-01-02")+" to "+clock.AddDate(0, 0, -1).Format("2006-01-02"),
+				"Exported by: "+person("Thandiwe Castellano").Name+", "+person("Thandiwe Castellano").Title,
+				"",
+				"1. "+person("Yusra Halvorsen").Email()+": AWS console, Bedrock read access.",
+				"   Requested "+clock.AddDate(0, 0, -19).Format("2006-01-02")+". Approved "+clock.AddDate(0, 0, -18).Format("2006-01-02")+" by "+person("Tobias Achterberg").Name+", owner of the AWS account.",
+				"2. "+person("Annika Montrose").Email()+": support console, EU clinics.",
+				"   Requested "+clock.AddDate(0, 0, -12).Format("2006-01-02")+". Approved "+clock.AddDate(0, 0, -12).Format("2006-01-02")+" by "+person("Calista Ferreira").Name+", owner of the support console.",
+				"3. "+person("Henrik Abernathy").Email()+": write access to "+Repository+".",
+				"   Requested "+clock.AddDate(0, 0, -5).Format("2006-01-02")+". Approved "+clock.AddDate(0, 0, -4).Format("2006-01-02")+" by "+person("Kwabena Lindqvist").Name+", owner of the code host."),
+		})
+		if err != nil {
+			return err
+		}
+		clock = clock.Add(2 * time.Hour)
+		if err := svc.ReviewEvidence(ctx, reviewer, requests, true, "Each grant has a dated request and a dated approval by the system's owner."); err != nil {
+			return err
+		}
+		say("The month's access requests are submitted with their approvals, and accepted.")
+		return nil
+	}
+	leaver := func() error {
+		if _, err := svc.SubmitEvidence(ctx, owner, assurance.EvidenceUpload{
+			ControlKey: "access-offboarding-removal", PeriodStart: clock.AddDate(0, -1, 0), PeriodEnd: clock.AddDate(0, 0, -1),
+			Filename: "leaver-checklist.txt", Note: "One leaver this month.",
+			Data: record("leaver checklist",
+				"Leaver: a contract support specialist, last day "+clock.AddDate(0, 0, -8).Format("2006-01-02")+".",
+				"Completed by: "+person("Ingrid Santoro").Name+", "+person("Ingrid Santoro").Title,
+				"Support console account disabled "+clock.AddDate(0, 0, -8).Format("2006-01-02")+".",
+				"Mailbox closed "+clock.AddDate(0, 0, -7).Format("2006-01-02")+".",
+				"Laptop returned "+clock.AddDate(0, 0, -6).Format("2006-01-02")+"."),
+		}); err != nil {
+			return err
+		}
+		say("A leaver's checklist is submitted for offboarding. Nobody has reviewed it yet, so the control needs attention.")
+		return nil
+	}
+
 	// Days 5 to 11. Daily collection. From day 8 Dependabot alerts are
 	// turned off, which is not the same as having none.
 	for n := 5; n < Days; n++ {
@@ -267,6 +316,16 @@ func Seed(ctx context.Context, svc *assurance.Service, now time.Time) ([]Step, e
 			say("Dependabot alerts are turned off on the repository. GH-03 reads not evaluated, not pass.")
 		}
 		if err := collect(); err != nil {
+			return nil, err
+		}
+		clock = clock.Add(5 * time.Hour)
+		if n == 6 {
+			err = accessRequests()
+		}
+		if n == 9 {
+			err = leaver()
+		}
+		if err != nil {
 			return nil, err
 		}
 	}

@@ -25,6 +25,7 @@ import (
 	"github.com/aelasmar01Lab/control-assurance/internal/assurance"
 	"github.com/aelasmar01Lab/control-assurance/internal/authz"
 	"github.com/aelasmar01Lab/control-assurance/internal/content"
+	"github.com/aelasmar01Lab/control-assurance/internal/control"
 	"github.com/aelasmar01Lab/control-assurance/internal/store"
 )
 
@@ -201,6 +202,8 @@ type view struct {
 	Now   time.Time
 	// Demo is true when everything shown is synthetic.
 	Demo bool
+	// DemoName is the name of the fictional organization shown, if it has one.
+	DemoName string
 	// Page is the page's key, Meta its heading, Nav the sidebar, and Host
 	// the address the site was reached at.
 	Page string
@@ -214,6 +217,11 @@ func (s *server) render(w http.ResponseWriter, r *http.Request, status int, page
 	v := view{Title: title, Actor: actor, Now: time.Now(), Demo: s.demo, Page: page, Meta: pageMetas[page], Host: r.Host, Data: data}
 	if v.Meta.Title == "" {
 		v.Meta.Title = title
+	}
+	if s.demo {
+		if sc, ok := control.ScopeFor(s.svc.Organization); ok && sc.Synthetic {
+			v.DemoName = sc.Name
+		}
 	}
 	if actor != nil {
 		v.Flash = s.sessions.PopString(r.Context(), sessionFlashKey)

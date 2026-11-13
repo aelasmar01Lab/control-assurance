@@ -23,8 +23,11 @@ make demo        # or: docker compose --profile demo up --build demo
 That needs only Docker. It builds the binary, starts a throwaway database,
 seeds twelve days of **synthetic** history and serves it at
 <http://127.0.0.1:8080>. The terminal prints four sign-in names and their
-demo passwords. Every page carries a banner saying the data is synthetic;
-nothing is collected from a real system. If port 8080 is taken, set
+demo passwords. The history belongs to Pellwick, a fictional company of 25
+people that sells scheduling software to outpatient clinics. Pellwick does
+not exist: its people, repository and AWS account are made up, and its
+addresses use the reserved domain `pellwick.example`. Every page carries a
+banner saying so; nothing is collected from a real system. If port 8080 is taken, set
 `CCA_DEMO_PORT` and use that port instead of the one the terminal prints.
 Stop it with Ctrl-C; `docker compose --profile demo down` removes it, and
 the next start seeds the same history afresh.
@@ -33,7 +36,8 @@ The seeded history is the whole loop: checks fail and open findings, the
 control owner requests exceptions, the reviewer approves them, a token is
 rejected and a source has an outage (collection failures, not results), the
 problems are fixed, the checks pass and the findings close. One exception
-has lapsed and one check cannot be evaluated, so not everything is green.
+has lapsed, one check cannot be evaluated and one record is waiting for
+review, so not everything is green.
 [docs/walkthrough.md](docs/walkthrough.md) is a ten-minute tour, including
 making a decision yourself and downloading a review package.
 
@@ -62,12 +66,12 @@ To run it against a real lab instead, see
 | NIST CSF 2.0 pack: 106 subcategories with NIST's text, imported from NIST's reference-data export by a script in `tools/import/nist-csf` | Implemented |
 | NIST CSF 2.0 mappings | Pilot only: PR.AA (6 subcategories) is mapped or tracked. The other 100 subcategories are marked *not assessed*: nobody has looked at them, nothing is claimed about them, and they are not in the review queue |
 | Controls, mappings and tracking entries as YAML files, validated against schemas and each other | Implemented |
-| Two organizations, the real lab and a fictional demo company, each with a scope file listing the controls that do not apply to it | Implemented for the lab. The demo company has a scope file but no name yet, and the demo's seeded history is unchanged: two synthetic repositories and one account. Tracking entries are still about the lab only |
+| Two organizations, the real lab and a fictional demo company, each with a scope file listing the controls that do not apply to it | Implemented. Tracking entries are kept per organization. The demo company is Pellwick, with 25 synthetic people |
 | Review contract: sign an entry, a signature covers its exact content, an edit after signing fails CI | Implemented |
 | Content reviewed by the maintainer | See [docs/review-queue.md](docs/review-queue.md) for the current count |
 | A record of every wording of every control that was loaded (control revisions), named in the review package | Implemented |
 | Workspaces | Schema only: every organization table has a workspace, there is one, and nothing uses it yet |
-| All 25 MVSP requirements, each covered in part by a control or tracked as manual, not implemented or out of scope with a reason | Implemented |
+| All 25 MVSP requirements, each covered in part by a control or tracked as manual, not implemented or out of scope with a reason | Implemented for the lab. For the demo company the 18 that no control covers read *not assessed* |
 | Web interface: overview, frameworks and their requirements, findings, manual evidence, integration health, review package, decision log, review queue | Implemented |
 | Fault table: every injected fault, its error class and retry behaviour, generated and tested | Implemented |
 | Current-state JSON export | Implemented |
@@ -203,9 +207,11 @@ the product is called compliant.
 of every pack. For MVSP that is all 25. Seven are covered in part by a control and take the worst
 state among their controls; the best a requirement can read is *partly
 evidenced*, because no mapping in this release is stronger than partial.
-The other eighteen show how they are tracked: manually, not implemented, or
-out of scope, each with a reason. None of those is a positive state, and
-nothing is shown as met.
+The other eighteen show how the organization tracks them. For the lab that
+is manually, not implemented, or out of scope, each with a reason. None of
+those is a positive state, and nothing is shown as met. For the demo
+company they read *not assessed*: its tracking is written with each
+framework's wave, not copied from the lab's.
 
 NIST CSF 2.0 is partway in. Its 106 subcategories are all listed, with
 NIST's text. Only the six under PR.AA (identity management, authentication
@@ -227,7 +233,7 @@ Controls, mappings and tracking entries are files, one control per file:
 | --- | --- |
 | `controls/<domain>/<key>.yaml` | One control: its statement, risk, checks, evidence expectation |
 | `mappings/<framework>.yaml` | Every tie between a control and a requirement of that framework, with its strength, rationale and limitation |
-| `tracking/<framework>.yaml` | Each requirement no control covers, and how it is tracked |
+| `tracking/<organization>/<framework>.yaml` | Each requirement no control covers, and how that organization tracks it. The lab's entries are written; the demo company's all read *not assessed* until each framework's wave |
 | `scope/<organization>.yaml` | One organization (`lab` or `demo`) and the controls that do not apply to it, each with a reason. A control not listed applies. An exclusion changes a state only once it is reviewed |
 
 Each entry ends in a `review` block. To review one:
@@ -381,7 +387,7 @@ make lint      # needs golangci-lint v2
 make vuln      # govulncheck
 make study     # regenerate docs/dedup-study.md; needs no database
 make demo      # the seeded demo, in Docker
-make content   # after editing controls/, mappings/ or tracking/: validate, and rebuild the review queue and control guide
+make content   # after editing controls/, mappings/, tracking/ or scope/: validate, and rebuild the review queue and control guide
 make guide     # regenerate the generated documents in docs/ after changing a check, permission, fault or retry policy
 ```
 

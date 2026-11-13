@@ -803,6 +803,7 @@ func runDemo(ctx context.Context, args []string, stdout io.Writer) error {
 	}
 	if !seeded {
 		fmt.Fprintln(stdout, "Seeding the demo. Everything below is synthetic; nothing is collected from a real system.")
+		fmt.Fprintf(stdout, "%s Its %d people have addresses at %s, a domain reserved for examples.\n\n", demo.Business, len(demo.People), demo.Domain)
 		steps, err := demo.Seed(ctx, svc, time.Now())
 		if err != nil {
 			return fmt.Errorf("seed the demo: %w", err)

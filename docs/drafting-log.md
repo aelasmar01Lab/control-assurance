@@ -158,3 +158,34 @@ provider and does not, which is a gap, not a difference in scope.
 note on `access-identity-proofing` moved to its exclusion. Not reworded:
 `ai-usage-logging` still says "the lab Region" in its statement, and the
 note on `access-single-sign-on` still speaks of the lab.
+
+## 2026-11-12: tracking per organization, and the demo company
+
+**What.** Tracking files moved to `tracking/<organization>/` (decision
+39). The lab's entries are unchanged apart from the first comment line of
+each file. `tracking/demo/mvsp.yaml` and `tracking/demo/nist-csf.yaml` are
+new and hold only `not_assessed` entries. `scope/demo.yaml` now names the
+company, Pellwick, and describes its business as the maintainer gave it.
+`scope/lab.yaml` gains a draft exclusion for `access-request-approval`, at
+the maintainer's request; the reason is the agent's wording.
+
+**Counts.** Lab: 18 MVSP and 102 NIST CSF tracking entries, as before, and
+4 draft exclusions. Demo: 18 and 102 entries, all not assessed; no
+exclusions.
+
+**Sources opened.** None; nothing here comes from a framework.
+
+**Reworded.** `ai-usage-logging`: "the lab Region" is now "the
+organization's Region" in the statement and the evidence expectation. The
+agent read that as a change of name only, since both are one Region. A
+reviewer note was added all the same, because a company may invoke models
+in several Regions and AWS-04 reads one.
+
+**Not reworded.** The reviewer note on `access-single-sign-on` still
+speaks of the lab. It states a fact about the lab (it has no identity
+provider), and saying "the organization" there would make it a claim about
+every organization.
+
+**Least sure of.** Whether Pellwick should exclude nothing. The agent
+found no control so far that a 25-person software company would not
+operate, so `scope/demo.yaml` lists none.

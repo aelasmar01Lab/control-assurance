@@ -32,7 +32,7 @@
     </form>
   </aside>
   <div class="main-col">
-    {{if .Demo}}<p class="demo" role="note"><i class="ph ph-flask"></i><span><strong>Demo.</strong> Every repository, account, user and record shown here is synthetic. Nothing was collected from a real system.</span></p>{{end}}
+    {{if .Demo}}<p class="demo" role="note"><i class="ph ph-flask"></i><span><strong>Demo.</strong> {{if .DemoName}}{{.DemoName}} is a fictional company. {{end}}Every repository, account, person and record shown here is synthetic. Nothing was collected from a real system.</span></p>{{end}}
     <main class="page">
       {{if .Flash}}<p class="flash" role="status"><i class="ph ph-info accent"></i><span>{{.Flash}}</span></p>{{end}}
       <header class="page-head">
@@ -46,7 +46,7 @@
 </div>
 {{else}}
 <div class="signed-out">
-  {{if .Demo}}<p class="demo" role="note"><i class="ph ph-flask"></i><span><strong>Demo.</strong> Every repository, account, user and record shown here is synthetic. Nothing was collected from a real system.</span></p>{{end}}
+  {{if .Demo}}<p class="demo" role="note"><i class="ph ph-flask"></i><span><strong>Demo.</strong> {{if .DemoName}}{{.DemoName}} is a fictional company. {{end}}Every repository, account, person and record shown here is synthetic. Nothing was collected from a real system.</span></p>{{end}}
   <div class="center">
     <div class="auth">
       <div class="brand">

@@ -404,9 +404,9 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 
 The controls are applied to each organization below. A control applies unless the organization's file under `scope/` excludes it with a reason. An exclusion takes effect only once it is reviewed: while it is a draft, the control keeps the state its evidence gives it. Tracking entries are kept per organization, under `tracking/<organization>/`.
 
-### `demo`
+### Pellwick (`demo`)
 
-Fictional: every record of it is synthetic. A fictional company of about 25 people. It does not exist: every repository, account, person and record shown for it is synthetic.
+Fictional: every record of it is synthetic. A fictional company of about 25 people that sells appointment scheduling software to outpatient clinics, with an AI scheduling assistant built on Amazon Bedrock. It has customers in the United States and the European Union and takes card payments through a payment processor. Pellwick does not exist: every repository, account, person and record shown for it is synthetic, and its addresses use the reserved domain pellwick.example.
 
 No control is excluded.
 
@@ -437,7 +437,7 @@ Each requirement is either covered in part by a control, or tracked with a reaso
 | 4.2 Logical access | Credential lifecycle (partial; draft, not reviewed), Human access (partial; draft, not reviewed) | control-owner |
 | 4.4 Backup and disaster recovery | Backup and recovery (partial; draft, not reviewed) | control-owner |
 
-### No control: how `demo` tracks it
+### No control: how Pellwick (`demo`) tracks it
 
 None of the 18 requirements that no control covers has been assessed for this organization yet. Nothing is claimed about them.
 
@@ -477,7 +477,7 @@ Each requirement is either covered in part by a control, or tracked with a reaso
 | PR.AA-03 Users, services, and hardware are authenticated | Two-factor required on the code host (partial; draft, not reviewed), Minimum password length of 14 (supporting; draft, not reviewed), Sign-in through one identity provider (partial; draft, not reviewed), Automation uses roles, not user keys (partial; draft, not reviewed), Human access (partial; draft, not reviewed) | control-owner |
 | PR.AA-05 Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties | Every application action checked against a role (partial; draft, not reviewed), Collector role is read-only (partial; draft, not reviewed), Emergency access recorded (supporting; draft, not reviewed), No policy allowing everything (partial; draft, not reviewed), Permissions granted through groups or roles (partial; draft, not reviewed), Named list of administrators (partial; draft, not reviewed), Quarterly access review (partial; draft, not reviewed), Access adjusted when a role changes (partial; draft, not reviewed), Root user not used (supporting; draft, not reviewed), Requester cannot approve their own request (partial; draft, not reviewed) | control-owner |
 
-### No control: how `demo` tracks it
+### No control: how Pellwick (`demo`) tracks it
 
 None of the 102 requirements that no control covers has been assessed for this organization yet. Nothing is claimed about them.
 

@@ -1,12 +1,17 @@
-# The demo: a fictional company, used by "make demo".
+# The demo: Pellwick, a fictional company, used by "make demo".
 #
 # Controls describe a generic small company. This file lists the ones that
-# do not apply to the demo company, each with a reason. A control not listed
-# applies. Nothing is listed yet: the company has not been named or seeded.
+# do not apply to Pellwick, each with a reason. A control not listed applies.
+# None is listed: every control written so far describes something a company
+# of this size and business does.
 organization: demo
-name: ""
+name: Pellwick
 description: >-
-  A fictional company of about 25 people. It does not exist: every
-  repository, account, person and record shown for it is synthetic.
+  A fictional company of about 25 people that sells appointment scheduling
+  software to outpatient clinics, with an AI scheduling assistant built on
+  Amazon Bedrock. It has customers in the United States and the European
+  Union and takes card payments through a payment processor. Pellwick does
+  not exist: every repository, account, person and record shown for it is
+  synthetic, and its addresses use the reserved domain pellwick.example.
 synthetic: true
 exclusions: []

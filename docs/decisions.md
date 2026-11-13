@@ -467,3 +467,31 @@ Given up:
   organization alike. Only a reviewed exclusion makes that differ.
 - The review queue counts not-assessed entries per organization, so the
   same requirement counts once for each.
+
+## 40. The demo company is Pellwick
+
+The maintainer chose the name and the business: Pellwick sells scheduling
+software to outpatient clinics, has an AI scheduling assistant built on
+Amazon Bedrock, has customers in the United States and the European Union,
+and takes card payments through a processor. It has 25 invented people,
+listed in `internal/demo/company.go`, with addresses at `pellwick.example`,
+a domain reserved for examples. Its repository is
+`pellwick-example/scheduling-api`; the owner carries "example" so it cannot
+be taken for a real GitHub organization. Its AWS account is the all-zero
+test account. Every page names the company and says it is fictional.
+
+The seeded history is the same loop as before, told with Pellwick's
+people. Two records were added so the company shows as one with staff: the
+month's access requests, accepted, and a leaver's checklist that is still
+waiting for review.
+
+Given up:
+
+- *Access granted on recorded approval* reads *supported* in the demo
+  while the control is still a draft. It carries the draft label wherever
+  it appears, but a visitor sees a positive state on unreviewed wording.
+- The business is described, not modelled. Nothing in the demo yet shows
+  the EU customers, the card payments or the clinics' data; those matter
+  when the privacy and payment frameworks arrive.
+- One web search found no company called Pellwick. That is not a
+  trademark check.

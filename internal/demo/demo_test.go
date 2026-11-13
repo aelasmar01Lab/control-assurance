@@ -71,8 +71,12 @@ func TestSeededDemoReplaysTheLoop(t *testing.T) {
 		"credential-lifecycle":     control.Supported,
 		"audit-logging":            control.Supported,
 		"backup-recovery":          control.Supported,
-		"dependency-remediation":   control.NotEvaluated,
-		"ai-usage-logging":         control.NeedsAttention,
+		// Records from a company with people in it: one accepted, one
+		// still waiting for review.
+		"access-request-approval":    control.Supported,
+		"access-offboarding-removal": control.NeedsAttention,
+		"dependency-remediation":     control.NotEvaluated,
+		"ai-usage-logging":           control.NeedsAttention,
 	}
 	seen := 0
 	for _, c := range ov.Controls {
@@ -95,6 +99,18 @@ func TestSeededDemoReplaysTheLoop(t *testing.T) {
 	}
 	if seen != len(want) {
 		t.Errorf("the demo shows %d of the %d controls it plays a history for", seen, len(want))
+	}
+	// The company is the one scope/demo.yaml describes, and is fictional.
+	sc, ok := control.ScopeFor(demo.Organization)
+	if !ok || !sc.Synthetic || sc.Name != demo.Company || len(demo.People) != 25 {
+		t.Errorf("the demo company is %+v with %d people, want the fictional %s with 25", sc, len(demo.People), demo.Company)
+	}
+	seenLogin := map[string]bool{}
+	for _, p := range demo.People {
+		if seenLogin[p.Login()] || !strings.HasSuffix(p.Email(), "@pellwick.example") {
+			t.Errorf("%s: login %s, address %s", p.Name, p.Login(), p.Email())
+		}
+		seenLogin[p.Login()] = true
 	}
 	if ov.IntegrationProblems != 0 {
 		t.Errorf("the demo ends with %d integration problems", ov.IntegrationProblems)
