@@ -15,7 +15,7 @@ import (
 type pageMeta struct{ Group, Title, Note string }
 
 var pageMetas = map[string]pageMeta{
-	"overview":     {"Monitor", "Overview", "Each control has a state and, beside it, the reasons. Supported always lists the checks it rests on, and says nothing about any framework."},
+	"overview":     {"Monitor", "Overview", "Each control has a state and, beside it, the reasons. Supported always lists the checks it rests on, and says nothing about any framework. A control that is still a draft never reads supported: at best it reads passing, not reviewed."},
 	"frameworks":   {"Monitor", "Frameworks", "Every framework pack built into this release. For each, two numbers are kept apart: the requirements whose mappings and controls the maintainer has reviewed, and the requirements that still rest on a draft. Controls and mappings are drafted by an AI agent, and nothing here has been reviewed by an auditor."},
 	"requirements": {"Monitor", "Framework requirements", "Every requirement of this framework. A requirement is partly evidenced only when every control mapped to it is supported by current evidence. A requirement that no control covers shows how it is tracked instead, with the reason, or reads not assessed when nobody has looked at it yet. Each mapping says whether it has been reviewed; a direct mapping that is still a draft counts as partial."},
 	"queue":        {"Audit", "Review queue", "Controls, mappings and tracking entries are drafted by an AI agent. Each is a draft until the maintainer reads it, edits it and signs it, and a signature covers the entry's exact content: an entry edited after signing fails verification until it is signed again. This page lists what is still a draft."},
@@ -65,7 +65,7 @@ var tones = map[string]string{
 	"approved": "pass", "accepted": "pass", "closed": "pass", "complete": "pass",
 	"needs_attention": "fail", "fail": "fail", "failed": "fail", "failing": "fail", "rejected": "fail",
 	"expired": "fail", "open": "fail",
-	"stale": "warn", "not_evaluated": "warn", "accepted_risk": "warn", "queued": "warn", "running": "warn",
+	"stale": "warn", "not_evaluated": "warn", "passing_not_reviewed": "warn", "accepted_risk": "warn", "queued": "warn", "running": "warn",
 	"retrying": "warn", "requested": "warn", "pending": "warn", "incomplete": "warn",
 }
 
@@ -107,7 +107,12 @@ func bar(segs []seg) template.HTML {
 	return template.HTML(b.String()) //nolint:gosec // built from numbers and an escaped class name
 }
 
-func label(v any) string { return strings.ReplaceAll(fmt.Sprint(v), "_", " ") }
+func label(v any) string {
+	if fmt.Sprint(v) == string(control.PassingNotReviewed) {
+		return "passing, not reviewed"
+	}
+	return strings.ReplaceAll(fmt.Sprint(v), "_", " ")
+}
 
 // countSegs turns counts by state into segments, in the given order.
 func countSegs(counts map[string]int, order ...string) []seg {
@@ -139,7 +144,7 @@ func requirementSegs(reqs []assurance.RequirementView) []seg {
 	for _, r := range reqs {
 		counts[string(r.State)]++
 	}
-	segs := countSegs(counts, "partly_evidenced", "accepted_risk", "not_evaluated", "stale", "needs_attention", "not_applicable", "tracked_manually")
+	segs := countSegs(counts, "partly_evidenced", "passing_not_reviewed", "accepted_risk", "not_evaluated", "stale", "needs_attention", "not_applicable", "tracked_manually")
 	if n := counts["not_implemented"]; n > 0 {
 		segs = append(segs, seg{"not implemented", n, "s-neutral"})
 	}
@@ -179,7 +184,7 @@ func buildOverview(ov *assurance.Overview, reqs []assurance.RequirementView, fin
 			tracked++
 		}
 	}
-	reqSegs := countSegs(evidenced, "partly_evidenced", "accepted_risk", "not_evaluated", "stale", "needs_attention", "not_applicable")
+	reqSegs := countSegs(evidenced, "partly_evidenced", "passing_not_reviewed", "accepted_risk", "not_evaluated", "stale", "needs_attention", "not_applicable")
 	if tracked > 0 {
 		reqSegs = append(reqSegs, seg{"tracked, with a reason", tracked, "s-neutral"})
 	}
@@ -207,7 +212,7 @@ func buildOverview(ov *assurance.Overview, reqs []assurance.RequirementView, fin
 	}
 	p.Summary = []summaryCard{
 		{"Controls", fmt.Sprint(len(ov.Controls)), "internal controls", "Details", "#controls",
-			countSegs(controls, "supported", "accepted_risk", "stale", "not_evaluated", "needs_attention", "not_applicable")},
+			countSegs(controls, "supported", "passing_not_reviewed", "accepted_risk", "stale", "not_evaluated", "needs_attention", "not_applicable")},
 		{"Framework requirements", fmt.Sprint(covered), fmt.Sprintf("of %d covered in part", len(reqs)), "View", "/requirements", reqSegs},
 		{"Findings", fmt.Sprint(open), "open", "View", "/findings",
 			[]seg{{"open", open, "s-fail"}, {"closed", closed, "s-pass"}}},

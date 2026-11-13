@@ -26,7 +26,7 @@ import (
 
 // PackageFormat names the layout of a review package. A change to which
 // files exist or what they hold means a new format.
-const PackageFormat = "cca-review-package/4"
+const PackageFormat = "cca-review-package/5"
 
 const packageNotice = "A review package for one past period. Every result describes one check version applied to one stored observation; " +
 	"it is not a statement about any framework. Control states are as they stood at the end of the period."

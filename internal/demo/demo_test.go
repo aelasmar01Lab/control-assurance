@@ -64,16 +64,20 @@ func TestSeededDemoReplaysTheLoop(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// A draft control's best state is passing, not reviewed; a reviewed
+	// one's is supported. The demo must hold whichever the maintainer has
+	// made of each control.
+	const best = control.State("best")
 	want := map[string]control.State{
-		"change-management":        control.Supported,
-		"vulnerability-disclosure": control.Supported,
-		"human-access":             control.Supported,
-		"credential-lifecycle":     control.Supported,
-		"audit-logging":            control.Supported,
-		"backup-recovery":          control.Supported,
+		"change-management":        best,
+		"vulnerability-disclosure": best,
+		"human-access":             best,
+		"credential-lifecycle":     best,
+		"audit-logging":            best,
+		"backup-recovery":          best,
 		// Records from a company with people in it: one accepted, one
 		// still waiting for review.
-		"access-request-approval":    control.Supported,
+		"access-request-approval":    best,
 		"access-offboarding-removal": control.NeedsAttention,
 		"dependency-remediation":     control.NotEvaluated,
 		"ai-usage-logging":           control.NeedsAttention,
@@ -90,6 +94,12 @@ func TestSeededDemoReplaysTheLoop(t *testing.T) {
 			continue
 		}
 		seen++
+		if wanted == best {
+			wanted = c.Control.BestState()
+		}
+		if !c.Control.Review.IsReviewed() && c.State == control.Supported {
+			t.Errorf("%s is a draft and reads supported", c.Control.Key)
+		}
 		if c.State != wanted {
 			t.Errorf("%s is %s (%v), want %s", c.Control.Key, c.State, c.Reasons, wanted)
 		}

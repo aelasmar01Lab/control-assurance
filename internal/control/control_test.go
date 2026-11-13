@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aelasmar01Lab/control-assurance/internal/check"
+	"github.com/aelasmar01Lab/control-assurance/internal/content"
 )
 
 var now = time.Date(2026, 11, 12, 12, 0, 0, 0, time.UTC)
@@ -17,11 +18,62 @@ func res(key string, result check.Result, age time.Duration, cover Cover) CheckR
 	}
 }
 
+// reviewedForTest is a review block that reads as reviewed. It signs
+// nothing: it is set on a copy of a control inside a test.
+var reviewedForTest = content.Review{Status: content.Reviewed, DraftedBy: "agent", ReviewedBy: "a test", ReviewedOn: "2026-11-12"}
+
+// A draft control never reads supported. Given everything it could ask
+// for, every check passing on fresh evidence and manual evidence accepted,
+// it reads passing, not reviewed, and says why. The same control reads
+// supported once reviewed. This holds for every control defined.
+func TestDraftControlNeverReadsSupported(t *testing.T) {
+	until := now.AddDate(0, 6, 0)
+	tested := 0
+	for _, c := range All {
+		in := Input{Now: now, Manual: ManualAccepted, ManualValidUntil: &until}
+		for _, k := range c.Checks {
+			in.Results = append(in.Results, res(k, check.Pass, time.Hour, 0))
+		}
+		if len(c.Checks) == 0 && c.ManualCheck == "" {
+			continue // nothing tests it, so it reads not evaluated either way
+		}
+		tested++
+		draft, reviewed := c, c
+		draft.Review = content.Review{Status: content.Draft, DraftedBy: "agent"}
+		reviewed.Review = reviewedForTest
+
+		got, reasons := Derive(draft, in)
+		if got != PassingNotReviewed || draft.BestState() != PassingNotReviewed {
+			t.Errorf("%s as a draft reads %s (best %s), want passing_not_reviewed", c.Key, got, draft.BestState())
+		}
+		if !strings.Contains(strings.Join(reasons, " "), "draft") {
+			t.Errorf("%s: reasons %v do not say the control is a draft", c.Key, reasons)
+		}
+		if got, _ := Derive(reviewed, in); got != Supported || reviewed.BestState() != Supported {
+			t.Errorf("%s once reviewed reads %s, want supported", c.Key, got)
+		}
+		// Being a draft changes only the best state.
+		in.Manual, in.Results = ManualRejected, nil
+		for _, k := range c.Checks {
+			in.Results = append(in.Results, res(k, check.Fail, time.Hour, NoException))
+		}
+		if got, _ := Derive(draft, in); got != NeedsAttention {
+			t.Errorf("%s as a failing draft reads %s, want needs_attention", c.Key, got)
+		}
+	}
+	if tested < 8 {
+		t.Errorf("only %d controls have something that tests them", tested)
+	}
+}
+
 func TestDeriveAutomatedControl(t *testing.T) {
 	c, ok := Lookup("change-management")
 	if !ok {
 		t.Fatal("change-management control not defined")
 	}
+	// The rules are those of a reviewed control; a draft's best state is
+	// tested in TestDraftControlNeverReadsSupported.
+	c.Review = reviewedForTest
 	hour := time.Hour
 
 	tests := []struct {
@@ -66,6 +118,7 @@ func TestDeriveManualControl(t *testing.T) {
 	if !ok {
 		t.Fatal("backup-recovery control not defined")
 	}
+	c.Review = reviewedForTest
 	until := now.AddDate(0, 6, 0)
 	past := now.AddDate(0, -1, 0)
 

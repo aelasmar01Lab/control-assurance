@@ -61,7 +61,7 @@ To run it against a real lab instead, see
 | Accounts, sessions and four roles; one permission function with matrix tests | Implemented |
 | Manual evidence submission and review | Implemented |
 | Exceptions with mandatory expiry, remediation notes, decision log | Implemented |
-| Eight internal controls backed by checks or reviewed evidence, with derived state and a 48 hour evidence window | Implemented |
+| Eight internal controls backed by checks or reviewed evidence, with derived state and a 48 hour evidence window | Implemented. All eight are drafts, so the best any reads is *passing, not reviewed* |
 | Nineteen further controls in the access domain (the pilot), all drafts | Drafted. None has a check yet: the automated ones read *not evaluated*, the manual ones *needs attention* until evidence is submitted |
 | NIST CSF 2.0 pack: 106 subcategories with NIST's text, imported from NIST's reference-data export by a script in `tools/import/nist-csf` | Implemented |
 | NIST CSF 2.0 mappings | Pilot only: PR.AA (6 subcategories) is mapped or tracked. The other 100 subcategories are marked *not assessed*: nobody has looked at them, nothing is claimed about them, and they are not in the review queue |
@@ -142,7 +142,8 @@ In the browser, with a failing check:
 2. Sign in as `reviewer`: approve the request. The control reads *accepted
    risk*, and the check still reads *fail*.
 3. Fix the branch rule, then collect and evaluate. The check passes, the
-   finding is closed by that evaluation, and the control reads *supported*.
+   finding is closed by that evaluation, and the control reads *passing, not
+   reviewed* (*supported* once the maintainer has reviewed the control).
 4. Sign in as `auditor`: every page and the export are readable, and no form
    is offered. A hand-built write is refused with 403.
 
@@ -197,10 +198,13 @@ A control's state is derived on read and never stored. The first match wins:
 | Stale | The newest evidence is older than the control's window, or accepted manual evidence is past its validity date |
 | Accepted risk | Every current failure is covered by an approved, unexpired exception |
 | Not evaluated | A check's current result could not be determined |
-| Supported | Every check passes on current evidence and manual evidence is accepted and valid |
+| Supported | Every check passes on current evidence and manual evidence is accepted and valid, and the control has been reviewed |
+| Passing, not reviewed | The same, for a control that is still a draft |
 
-*Supported* is always shown beside the assertions it rests on. Nothing in
-the product is called compliant.
+A draft control never reads *supported*. All 27 controls are drafts today,
+so none does; the best any reads is *passing, not reviewed*. *Supported*
+is always shown beside the assertions it rests on. Nothing in the product
+is called compliant.
 
 ## Requirements
 
@@ -208,6 +212,8 @@ the product is called compliant.
 of every pack. For MVSP that is all 25. Seven are covered in part by a control and take the worst
 state among their controls; the best a requirement can read is *partly
 evidenced*, because no mapping in this release is stronger than partial.
+A requirement with a draft control among those mapped to it reads
+*passing, not reviewed* at best, which today is every one of the seven.
 The other eighteen show how the organization tracks them. For the lab that
 is manually, not implemented, or out of scope, each with a reason. None of
 those is a positive state, and nothing is shown as met. For the demo

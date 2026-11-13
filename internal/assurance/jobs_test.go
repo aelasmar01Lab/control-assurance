@@ -95,7 +95,7 @@ func TestAllEightChecksRun(t *testing.T) {
 	}
 	for _, c := range control.All {
 		if len(c.Checks) > 0 {
-			h.wantState(c.Key, control.Supported)
+			h.wantBest(c.Key)
 		}
 	}
 
@@ -669,7 +669,7 @@ func TestIntegrationHealth(t *testing.T) {
 	if got := h.result("GH-01").Result; got != "pass" {
 		t.Errorf("GH-01 = %q after a failed run, want the earlier pass", got)
 	}
-	h.wantState("change-management", control.Supported)
+	h.wantBest("change-management")
 
 	// A fault that is not retried: the job is failing.
 	h.fake.SetFailure(http.StatusOK, nil)

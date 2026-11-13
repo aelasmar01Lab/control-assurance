@@ -95,6 +95,12 @@ func TestRequirementStateIsNeverPositiveWithoutEvidence(t *testing.T) {
 		{[]State{Supported, AcceptedRisk}, ReqAcceptedRisk},
 		{[]State{AcceptedRisk, NeedsAttention, Supported}, ReqNeedsAttention},
 		{[]State{NotEvaluated}, ReqNotEvaluated},
+		// One draft control is enough to keep a requirement from reading
+		// partly evidenced.
+		{[]State{PassingNotReviewed}, ReqPassingNotReviewed},
+		{[]State{Supported, PassingNotReviewed}, ReqPassingNotReviewed},
+		{[]State{PassingNotReviewed, AcceptedRisk}, ReqAcceptedRisk},
+		{[]State{PassingNotReviewed, NeedsAttention}, ReqNeedsAttention},
 	}
 	for _, tt := range tests {
 		if got := DeriveRequirement(tt.states, nil); got != tt.want {

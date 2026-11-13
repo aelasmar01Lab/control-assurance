@@ -57,7 +57,8 @@ func GuideFor(packs []*pack.Pack, controls []Control, tracked []Tracking, scopes
 	b.WriteString("| Stale | The newest evidence is older than the control's window, or accepted manual evidence is past its validity date |\n")
 	b.WriteString("| Accepted risk | Every current failure is covered by an approved, unexpired exception |\n")
 	b.WriteString("| Not evaluated | A check's current result could not be determined |\n")
-	b.WriteString("| Supported | Every check passes on current evidence and manual evidence is accepted and valid |\n\n")
+	b.WriteString("| Supported | Every check passes on current evidence and manual evidence is accepted and valid, and the control has been reviewed |\n")
+	b.WriteString("| Passing, not reviewed | The same, for a control that is still a draft. A draft control never reads supported |\n\n")
 	b.WriteString("A collection failure is not an input. It adds no evidence, so the previous results stand and age toward stale.\n\n")
 
 	b.WriteString("## Controls\n")

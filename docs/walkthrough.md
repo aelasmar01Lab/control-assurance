@@ -17,8 +17,10 @@ their demo passwords.
 
 Sign in as `auditor`. On **Overview**:
 
-- Each control has a state and, beside it, the reasons. *Supported* always
-  lists the checks it rests on. Nothing says "compliant".
+- Each control has a state and, beside it, the reasons. The best state
+  you will see is *passing, not reviewed*: every control is still a draft,
+  and a draft never reads *supported*. It lists the checks it rests on.
+  Nothing says "compliant".
 - Under **Current results**, each row is one check version applied to one
   stored piece of evidence, with the hash of that evidence.
 - `dependency-remediation` reads **not evaluated**: Dependabot alerts were
@@ -71,7 +73,8 @@ request: there is none, and the database would refuse it too.
 
 Open **Frameworks**, then **Requirements** on Minimum Viable Secure
 Product. All 25 MVSP requirements are listed. Seven are
-covered in part by a control and show that control's state. The other
+covered in part by a control and show that control's state; the best any
+reads is *passing, not reviewed*. The other
 eighteen read *not assessed*: nobody has yet written down how Pellwick
 tracks them, and the page claims nothing about them. (The lab's own
 entries say manually, not implemented or out of scope, each with a
@@ -82,8 +85,7 @@ The overview lists more controls than the demo plays a history for. The
 access controls are drafts with no check behind them yet, so they read
 *not evaluated* or *needs attention*. Two have a record from Pellwick's
 staff. *Access granted on recorded approval* holds the month's access
-requests, accepted by the reviewer, and reads *supported*, still labelled
-a draft. *Access removed when a person leaves* holds a leaver's checklist
+requests, accepted by the reviewer, and reads *passing, not reviewed*. *Access removed when a person leaves* holds a leaver's checklist
 that nobody has reviewed, so it reads *needs attention*. Sign in as
 `reviewer` and open **Manual evidence** to accept or reject it.
 

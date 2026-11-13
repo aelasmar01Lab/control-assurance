@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aelasmar01Lab/control-assurance/internal/control"
 	"github.com/aelasmar01Lab/control-assurance/internal/store"
 )
 
@@ -30,8 +31,13 @@ type packageReport struct {
 }
 
 var reportFuncs = template.FuncMap{
-	"when":  func(t time.Time) string { return t.UTC().Format("2006-01-02 15:04 UTC") },
-	"label": func(v any) string { return strings.ReplaceAll(fmt.Sprint(v), "_", " ") },
+	"when": func(t time.Time) string { return t.UTC().Format("2006-01-02 15:04 UTC") },
+	"label": func(v any) string {
+		if fmt.Sprint(v) == string(control.PassingNotReviewed) {
+			return "passing, not reviewed"
+		}
+		return strings.ReplaceAll(fmt.Sprint(v), "_", " ")
+	},
 	"short": func(sha string) string { return sha[:min(12, len(sha))] },
 	"whenPtr": func(t *time.Time) string {
 		if t == nil {
@@ -61,7 +67,7 @@ th { background: #f3f5f7; } .scroll { overflow-x: auto; } .dim { color: #57606a;
 .tag { display: inline-block; padding: 0 7px; border-radius: 10px; font-weight: 600; font-size: 13px; background: #f3f5f7; border: 1px solid #d0d7de; white-space: nowrap; }
 .pass, .supported, .partly_evidenced, .succeeded { background: #dafbe1; color: #116329; border-color: transparent; }
 .fail, .needs_attention, .failed { background: #ffe1e0; color: #a40e26; border-color: transparent; }
-.not_evaluated, .stale, .accepted_risk { background: #fff3c4; color: #6b4e00; border-color: transparent; }
+.not_evaluated, .stale, .accepted_risk, .passing_not_reviewed { background: #fff3c4; color: #6b4e00; border-color: transparent; }
 @media (prefers-color-scheme: dark) { body { background: #0d1117; color: #e6edf3; } th { background: #161b22; } th, td, h2 { border-color: #30363d; } .dim { color: #9198a1; } .tag { background: #161b22; border-color: #30363d; } }
 </style>
 </head>
@@ -91,7 +97,7 @@ th { background: #f3f5f7; } .scroll { overflow-x: auto; } .dim { color: #57606a;
 </table></div>
 
 <h2>Framework requirements at the end of the period</h2>
-<p class="dim">Partly evidenced means every control mapped to the requirement was supported by current evidence. It does not mean the requirement is met. Controls and mappings are drafted by an AI agent; each is a draft until the maintainer has reviewed it, and is labelled either way.</p>
+<p class="dim">Partly evidenced means every control mapped to the requirement was reviewed and supported by current evidence. It does not mean the requirement is met. Passing, not reviewed means the evidence passed but a control is still a draft. Controls and mappings are drafted by an AI agent; each is a draft until the maintainer has reviewed it, and is labelled either way.</p>
 <div class="scroll"><table>
 <thead><tr><th>Requirement</th><th>State</th><th>Rests on</th></tr></thead>
 <tbody>{{range .Requirements}}<tr>

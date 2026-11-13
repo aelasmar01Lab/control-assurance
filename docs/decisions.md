@@ -495,3 +495,30 @@ Given up:
   when the privacy and payment frameworks arrive.
 - One web search found no company called Pellwick. That is not a
   trademark check.
+
+## 41. A draft control never reads supported
+
+A control whose evidence all passes reads *supported* only once the
+maintainer has reviewed it. While it is a draft it reads *passing, not
+reviewed*, with a reason that says so. A requirement reads *partly
+evidenced* only when every control mapped to it is reviewed and supported;
+with a draft among them it reads *passing, not reviewed* at best. Every
+other state is unchanged: a draft that fails still needs attention.
+
+This replaces the first "given up" point of decision 40. The draft label
+beside a positive state was not enough: the state itself was the claim.
+It applies to all 27 controls, which are all drafts today, so nothing in
+the lab or the demo reads supported or partly evidenced until a control is
+signed. The demo's two seeded records stay as they are.
+
+The review package is now format 5, because the same history gives a
+different state than under format 4.
+
+Given up:
+
+- A draft control under an approved exception still reads *accepted
+  risk*, and a requirement resting on it reads the same. The exception is
+  a reviewed decision about a failure; the control's wording is not part
+  of it.
+- Signing a control changes what the pages show for history already
+  recorded, since state is derived on read.

@@ -88,17 +88,21 @@ func TrackingFor(organization, framework, requirement string) (Tracking, bool) {
 type RequirementState string
 
 // The requirement states. The only positive one, partly evidenced, needs
-// every mapped control to be supported by current evidence, and no mapping
-// in this release is strong enough to say more than "partly".
+// every mapped control to be reviewed and supported by current evidence,
+// and no mapping in this release is strong enough to say more than
+// "partly".
 const (
 	ReqPartlyEvidenced RequirementState = "partly_evidenced"
-	ReqAcceptedRisk    RequirementState = "accepted_risk"
-	ReqNotEvaluated    RequirementState = "not_evaluated"
-	ReqStale           RequirementState = "stale"
-	ReqNeedsAttention  RequirementState = "needs_attention"
-	ReqManual          RequirementState = "tracked_manually"
-	ReqNotImplemented  RequirementState = "not_implemented"
-	ReqOutOfScope      RequirementState = "out_of_scope"
+	// ReqPassingNotReviewed marks a requirement whose controls all pass
+	// while at least one of them is still a draft.
+	ReqPassingNotReviewed RequirementState = "passing_not_reviewed"
+	ReqAcceptedRisk       RequirementState = "accepted_risk"
+	ReqNotEvaluated       RequirementState = "not_evaluated"
+	ReqStale              RequirementState = "stale"
+	ReqNeedsAttention     RequirementState = "needs_attention"
+	ReqManual             RequirementState = "tracked_manually"
+	ReqNotImplemented     RequirementState = "not_implemented"
+	ReqOutOfScope         RequirementState = "out_of_scope"
 	// ReqNotAssessed marks a requirement nobody has looked at yet.
 	ReqNotAssessed RequirementState = "not_assessed"
 	// ReqNotApplicable marks a requirement whose every mapped control is
@@ -110,7 +114,7 @@ const (
 )
 
 // severity orders control states from best to worst for a requirement.
-var severity = map[State]int{Supported: 0, AcceptedRisk: 1, NotEvaluated: 2, Stale: 3, NeedsAttention: 4}
+var severity = map[State]int{Supported: 0, PassingNotReviewed: 1, AcceptedRisk: 2, NotEvaluated: 3, Stale: 4, NeedsAttention: 5}
 
 // DeriveRequirement returns a requirement's state from the states of the
 // controls mapped to it, or from its tracking entry when there is none.
@@ -159,6 +163,8 @@ func DeriveRequirement(states []State, tracking *Tracking) RequirementState {
 		return ReqNotEvaluated
 	case AcceptedRisk:
 		return ReqAcceptedRisk
+	case PassingNotReviewed:
+		return ReqPassingNotReviewed
 	default:
 		return ReqPartlyEvidenced
 	}

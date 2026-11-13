@@ -45,6 +45,17 @@ func (h *harness) wantState(key string, want control.State) {
 
 // failing puts GH-01 and GH-02 into a failing state and returns the open
 // GH-01 finding.
+// wantBest asserts the control reads the best state it can: supported once
+// the maintainer has reviewed it, passing but not reviewed while a draft.
+func (h *harness) wantBest(key string) {
+	h.t.Helper()
+	c, ok := control.Lookup(key)
+	if !ok {
+		h.t.Fatalf("no control %s", key)
+	}
+	h.wantState(key, c.BestState())
+}
+
 func (h *harness) failing() store.FindingRow {
 	h.t.Helper()
 	h.fake.SetRules(false)
@@ -437,7 +448,7 @@ func TestManualEvidenceReview(t *testing.T) {
 	if err := h.svc.ReviewEvidence(ctx, h.reviewer, id, true, "Dated record, restore verified."); err != nil {
 		t.Fatalf("ReviewEvidence: %v", err)
 	}
-	h.wantState("backup-recovery", control.Supported)
+	h.wantBest("backup-recovery")
 
 	// A review happens once.
 	if err := h.svc.ReviewEvidence(ctx, h.reviewer, id, false, "Changed my mind."); !errors.Is(err, assurance.ErrInvalid) {
@@ -551,7 +562,7 @@ func TestFullLoopKeepsEveryStep(t *testing.T) {
 	h.fake.SetRules(true, githubtest.PullRequestRule(1), githubtest.StatusChecksRule("ci"))
 	h.collect()
 	h.evaluate()
-	h.wantState("change-management", control.Supported) // 1. passing
+	h.wantBest("change-management") // 1. passing
 
 	h.fake.SetRules(true, githubtest.StatusChecksRule("ci")) // 2. the review rule is removed
 	h.collect()
@@ -576,7 +587,7 @@ func TestFullLoopKeepsEveryStep(t *testing.T) {
 	h.fake.SetRules(true, githubtest.PullRequestRule(1), githubtest.StatusChecksRule("ci")) // 8. fix
 	h.collect()
 	h.evaluate() // 9. verified pass closes the finding
-	h.wantState("change-management", control.Supported)
+	h.wantBest("change-management")
 
 	// 10. Every earlier step is still there.
 	views, err := h.svc.Findings(ctx, h.auditor)

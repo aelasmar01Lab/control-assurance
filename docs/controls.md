@@ -23,7 +23,8 @@ The state is worked out on read and never stored. The first match wins:
 | Stale | The newest evidence is older than the control's window, or accepted manual evidence is past its validity date |
 | Accepted risk | Every current failure is covered by an approved, unexpired exception |
 | Not evaluated | A check's current result could not be determined |
-| Supported | Every check passes on current evidence and manual evidence is accepted and valid |
+| Supported | Every check passes on current evidence and manual evidence is accepted and valid, and the control has been reviewed |
+| Passing, not reviewed | The same, for a control that is still a draft. A draft control never reads supported |
 
 A collection failure is not an input. It adds no evidence, so the previous results stand and age toward stale.
 

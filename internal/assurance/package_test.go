@@ -153,8 +153,8 @@ func TestReviewPackageHoldsTheFailTheExceptionAndThePass(t *testing.T) {
 			t.Errorf("decision log lacks %q (has %v)", want, actions)
 		}
 	}
-	if got := controlState(t, p, "change-management"); got != control.Supported {
-		t.Errorf("state at period end = %s, want supported", got)
+	if c, _ := control.Lookup("change-management"); controlState(t, p, "change-management") != c.BestState() {
+		t.Errorf("state at period end = %s, want %s", controlState(t, p, "change-management"), c.BestState())
 	}
 
 	// The evidence for both evaluations is in the package, under its hash.

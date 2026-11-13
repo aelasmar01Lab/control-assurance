@@ -213,8 +213,22 @@ const (
 	NeedsAttention State = "needs_attention"
 	Stale          State = "stale"
 	AcceptedRisk   State = "accepted_risk"
-	Supported      State = "supported"
+	// PassingNotReviewed is the best a draft control can read: everything
+	// that tests it passes, but nobody has reviewed what the control says.
+	PassingNotReviewed State = "passing_not_reviewed"
+	// Supported is the best a reviewed control can read. A draft control
+	// never reads it.
+	Supported State = "supported"
 )
+
+// BestState is the best state the control can read: supported once the
+// maintainer has reviewed it, passing but not reviewed while it is a draft.
+func (c Control) BestState() State {
+	if c.Review.IsReviewed() {
+		return Supported
+	}
+	return PassingNotReviewed
+}
 
 // Cover says whether a current failure is covered by an exception.
 type Cover int
@@ -317,7 +331,9 @@ type Input struct {
 //     unexpired exception.
 //  5. Not evaluated: a check's current result is not_evaluated.
 //  6. Supported: every check passes on current evidence and manual evidence
-//     is accepted and valid.
+//     is accepted and valid. A control that is still a draft reads passing,
+//     not reviewed instead: its evidence passes, but what it says has not
+//     been reviewed, so it is not shown as established.
 //
 // A collection failure is not an input: it adds no observation, so it leaves
 // the results alone and lets freshness age.
@@ -420,6 +436,10 @@ func Derive(c Control, in Input) (State, []string) {
 	}
 	if hasManual && in.ManualValidUntil != nil {
 		rests = append(rests, fmt.Sprintf("%s: accepted evidence is valid until %s.", c.ManualCheck, in.ManualValidUntil.Format("2006-01-02")))
+	}
+	if !c.Review.IsReviewed() {
+		rests = append(rests, "The control is a draft: nobody has reviewed what it says, so it does not read supported.")
+		return PassingNotReviewed, rests
 	}
 	return Supported, rests
 }
