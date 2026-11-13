@@ -29,6 +29,11 @@ and win.
   permits redistribution, checked at the source. When unsure, identifiers
   only. (Standing rule 6.)
 
+- The maintainer's research register, kept outside the repository, wins
+  over the plan's licence tiers where they disagree. The agent still opens
+  and records each source itself (decision 42). (Added by the maintainer
+  on 2026-11-12.)
+
 ### Steps for each framework, in order
 
 1. **Find the official source and its licence.** Open the publisher's page.

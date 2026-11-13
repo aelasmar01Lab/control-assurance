@@ -522,3 +522,45 @@ Given up:
   of it.
 - Signing a control changes what the pages show for history already
   recorded, since state is derived on read.
+
+## 42. The research register overrides the plan's licence tiers
+
+The maintainer keeps a research register of the 38 frameworks outside the
+repository: publisher, current version, how the source is obtained, the
+licence terms and whether text may be republished here. The plan sorted
+the frameworks into tiers from memory and said so. Where the two
+disagree, the register wins. It does not replace the sourcing steps: for
+each framework, in its own unit, the agent still opens the publisher's
+source itself and records the licence statement, URL, date and hash in
+the drafting log. If what it finds disagrees with the register, the
+stricter reading is used and the difference is recorded.
+
+Where the register changes what the plan assumed:
+
+| Framework | The plan assumed | The register found | Consequence |
+| --- | --- | --- | --- |
+| FedRAMP | Full text; a profile over NIST 800-53 from GSA's OSCAL baselines | The current source is the 2026 consolidated rules, published as JSON; the baselines are legacy. No redistribution licence found | Import from the consolidated JSON, not as a profile of 800-53. Identifiers only unless a licence is found at the source |
+| FedRAMP 20x | Full text | Part of the same 2026 consolidated rules. No licence found | Identifiers only unless a licence is found |
+| CMMC 2.0 | Full text; a profile over NIST 800-171 | Regulation text in the eCFR; no reuse statement found. Level 2 cites 800-171 revision 2, not the current revision | Identifiers only unless a licence is found; keep the revision it cites |
+| HIPAA | Full text | No reuse statement found; the publisher's combined PDF is an unofficial 2013 copy | Use the current CFR. Identifiers only unless a licence is found |
+| Cyber Essentials | Full text under the Open Government Licence | Crown copyright notice; no reuse grant found | Identifiers only unless the grant is found |
+| CJIS | Full text | No republication terms found | Identifiers only unless found |
+| 23 NYCRR 500 | Full text | Reuse is non-commercial and unaltered only | Identifiers only |
+| CIS Controls v8.1 | Identifiers only; non-commercial share-alike | Non-commercial, no derivatives | Identifiers only, as planned; the licence named in the plan was wrong |
+| CRI Profile | Unknown | Non-commercial, no derivatives | Identifiers only |
+| OFDSS | Unknown | The consortium's site could not be opened | Identifiers only if a source can be opened; otherwise `BLOCKED.md` |
+| BSI C5 | Identifiers only | The publisher's page could not be opened | `BLOCKED.md` if the agent cannot open it either |
+| Agentic Trust Controls | Own composition, written fresh | The publisher calls it open source; no licence was verified and the catalogue could not be opened | Check the licence at the source first. Own composition only if the catalogue cannot be used under its licence |
+| SOX ITGC | Own composition | No canonical catalogue exists | Own composition, as planned |
+| ISO standards | Identifiers only | Confirmed; several have newer editions than the plan named | Identifiers only; use the edition current at the source |
+
+The NIST catalogues, the EU acts, Essential Eight, CPS 234 and MVSP are
+confirmed as redistributable, each under its own licence, which the pack
+records and keeps.
+
+None of this starts Wave 1. Nothing further is drafted until the pilot is
+reviewed (Gate 1).
+
+Given up: where a licence is unclear the pack is identifiers only, so
+several frameworks the plan expected to show with full text will show
+labels instead.
