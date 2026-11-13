@@ -98,6 +98,7 @@ To run it against a real lab instead, see
 | [BLOCKED.md](BLOCKED.md) | Frameworks the agent could not source, and what is needed for each |
 | [docs/checks.md](docs/checks.md) | Each check: its assertion, source, and what a pass does and does not establish (generated) |
 | [docs/permissions.md](docs/permissions.md) | Who may do what (generated) |
+| [docs/verification.md](docs/verification.md) | The eleven verification scenarios and the tests that assert each |
 | [docs/faults.md](docs/faults.md) | Every injected fault, its error class and how it is retried (generated) |
 | [docs/dedup-study.md](docs/dedup-study.md) | The deduplication case study (generated) |
 | [docs/self-assessment.md](docs/self-assessment.md) | This project against MVSP, including what it does not meet (generated) |

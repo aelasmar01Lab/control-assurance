@@ -156,7 +156,10 @@ func actions(body, suffix string) []string {
 func TestSignInIsRequired(t *testing.T) {
 	s := newSite(t)
 	b := s.browser()
-	for _, path := range []string{"/", "/findings", "/evidence", "/log", "/export.json", "/evidence/1/file"} {
+	for _, path := range []string{
+		"/", "/requirements", "/frameworks/mvsp", "/review-queue", "/findings", "/evidence", "/evidence/1/file",
+		"/integrations", "/log", "/export.json", "/package", "/package.zip?from=2026-11-01&to=2026-11-02",
+	} {
 		status, body := b.get(path)
 		if status != http.StatusOK || !strings.Contains(body, `action="/login"`) {
 			t.Errorf("GET %s signed out: status %d, want the sign-in page", path, status)
