@@ -1,0 +1,487 @@
+# Mappings from controls to SOC 2 trust services criteria.
+# Pilot: only the CC6 series has been considered, and only the access
+# controls. CC6.1, CC6.2, CC6.3 and CC6.6 are mapped here; the rest of CC6
+# is in the tracking files. What a criterion covers is described here in
+# this project's own words; read the criterion itself in AICPA's document.
+# Edit freely; sign what you have reviewed with "cca review sign".
+framework: soc2
+version: 2017-tsc-2022-pof
+mappings:
+
+  - control: human-access
+    requirement: CC6.1
+    strength: partial
+    rationale: >-
+      Requiring a second factor at console sign-in is one of the ways the
+      organization authenticates people before they reach its cloud assets.
+    limitation: >-
+      CC6.1 is broad. It also covers asset inventory, network segmentation,
+      encryption, key protection and the identification of systems and software,
+      none of which this control shows. It covers the cloud console only.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-code-host-two-factor
+    requirement: CC6.1
+    strength: partial
+    rationale: >-
+      Two-factor authentication for every member of the code hosting
+      organization authenticates the people who can reach the source code.
+    limitation: >-
+      It covers one system. The rest of CC6.1, including inventory,
+      segmentation, encryption and the authentication of software, is not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-unique-identities
+    requirement: CC6.1
+    strength: partial
+    rationale: >-
+      An account assigned to one named person is what lets a system identify who
+      is signing in, which authentication depends on.
+    limitation: >-
+      It covers human accounts on three systems. It does not show how those
+      people are authenticated, or any of the other protections CC6.1 covers.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-single-sign-on
+    requirement: CC6.1
+    strength: partial
+    rationale: >-
+      Sign-in through one identity provider puts identification and
+      authentication for every in-scope system under one set of rules.
+    limitation: >-
+      It shows where sign-in happens, not how strong it is, and nothing of the
+      inventory, segmentation or encryption that CC6.1 also covers.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-password-length
+    requirement: CC6.1
+    strength: partial
+    rationale: >-
+      A minimum password length in the cloud account's policy is one of the
+      authentication requirements the organization sets and manages.
+    limitation: >-
+      It is one setting for IAM passwords in one account. Other authentication
+      requirements and the rest of CC6.1 are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-key-age
+    requirement: CC6.1
+    strength: partial
+    rationale: >-
+      Keeping access keys under 90 days old is part of managing the credentials
+      that software and people use to reach the cloud account.
+    limitation: >-
+      It covers the age of IAM access keys only. How keys are issued, stored and
+      removed, and the rest of CC6.1, are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-workload-roles
+    requirement: CC6.1
+    strength: partial
+    rationale: >-
+      Automation that assumes a role is identified and authenticated with short-
+      lived credentials before it reaches cloud assets.
+    limitation: >-
+      It covers workloads in one cloud account. Human authentication and the
+      other protections CC6.1 covers are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-root-not-used
+    requirement: CC6.1
+    strength: supporting
+    rationale: >-
+      A root user that is not used is evidence that everyday access goes through
+      identities whose access can be restricted.
+    limitation: >-
+      It does not show that access is restricted, only that the one unrestricted
+      identity has been idle. It establishes no part of CC6.1 by itself.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-request-approval
+    requirement: CC6.2
+    strength: partial
+    rationale: >-
+      A recorded approval by the system's owner before access is granted is the
+      authorization step that comes before credentials are issued.
+    limitation: >-
+      It covers authorization. Registering the user, and removing credentials
+      when access is no longer authorized, are covered by other controls or not
+      at all.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-identity-proofing
+    requirement: CC6.2
+    strength: partial
+    rationale: >-
+      Confirming who a person is before an account is issued is part of
+      registering a new user.
+    limitation: >-
+      It covers confirming identity only. Authorization and the removal of
+      credentials are not shown, and it speaks of people, not of other kinds of
+      user.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-offboarding-removal
+    requirement: CC6.2
+    strength: partial
+    rationale: >-
+      Disabling a leaver's accounts within one business day removes credentials
+      once the person is no longer authorized.
+    limitation: >-
+      It covers people who leave. Credentials that stop being authorized for
+      other reasons, and the registering of new users, are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-review-periodic
+    requirement: CC6.2
+    strength: partial
+    rationale: >-
+      A quarterly decision to keep or remove each account is how credentials
+      that are no longer valid get found.
+    limitation: >-
+      It finds credentials to remove; it does not show that new users are
+      registered and authorized before credentials are issued.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: credential-lifecycle
+    requirement: CC6.2
+    strength: partial
+    rationale: >-
+      Passwords and keys unused for 90 days are a sign of credentials nobody
+      needs, and the control keeps none in the cloud account.
+    limitation: >-
+      Unused is not the same as unauthorized: a credential in daily use by
+      someone who should have lost it passes. It covers one cloud account, and
+      nothing about new users.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-request-approval
+    requirement: CC6.3
+    strength: partial
+    rationale: >-
+      Access granted only on the owner's written approval is how access to a
+      system is authorized.
+    limitation: >-
+      It covers granting. Changing and removing access, least privilege and the
+      separation of duties are not shown by this control.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-role-change
+    requirement: CC6.3
+    strength: partial
+    rationale: >-
+      Removing permissions a new role does not need is the modification of
+      access when a person's responsibilities change.
+    limitation: >-
+      It covers changes of role. First grants, removal on leaving, and whether
+      the roles themselves follow least privilege are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-offboarding-removal
+    requirement: CC6.3
+    strength: partial
+    rationale: >-
+      Disabling a leaver's accounts removes their access to the data and
+      functions behind those accounts.
+    limitation: >-
+      It covers removal on leaving only.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-application-roles
+    requirement: CC6.3
+    strength: partial
+    rationale: >-
+      An explicit rule for every action, allowed to named roles and refused to
+      the rest, is a role-based access structure.
+    limitation: >-
+      It covers this application only, and shows that roles are enforced, not
+      that each role holds no more than it needs.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-permissions-through-roles
+    requirement: CC6.3
+    strength: partial
+    rationale: >-
+      Permissions that reach people only through groups or roles keep access
+      tied to a role and not to an individual.
+    limitation: >-
+      It covers IAM users in one cloud account, and shows how permissions are
+      attached, not whether they are the least needed.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-no-unrestricted-policy
+    requirement: CC6.3
+    strength: partial
+    rationale: >-
+      The absence of any customer-managed policy that allows everything is a
+      floor under least privilege in the cloud account.
+    limitation: >-
+      A policy can be far too broad without allowing every action on every
+      resource. AWS-managed policies are not examined.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-collector-read-only
+    requirement: CC6.3
+    strength: partial
+    rationale: >-
+      A collector role limited to read actions holds no more than its job needs.
+    limitation: >-
+      It covers one role. Least privilege for every other identity is not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-separation-of-duties
+    requirement: CC6.3
+    strength: partial
+    rationale: >-
+      Refusing to let the requester of an exception, or the submitter of
+      evidence, approve it separates two duties that should not sit with one
+      person.
+    limitation: >-
+      It covers two pairs of duties in this application. Separation of duties in
+      the cloud account and the code host is not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-privileged-inventory
+    requirement: CC6.3
+    strength: supporting
+    rationale: >-
+      A list of every administrative identity, with the person answerable and
+      the reason, is what a review of privileged access would start from.
+    limitation: >-
+      A list does not authorize, change or remove anything. It establishes no
+      part of CC6.3 by itself.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-review-periodic
+    requirement: CC6.3
+    strength: supporting
+    rationale: >-
+      A quarterly review of accounts is related to the periodic review of who
+      holds access.
+    limitation: >-
+      The control reviews whether each account should exist, not the roles and
+      rules that decide what an account can do.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: human-access
+    requirement: CC6.6
+    strength: supporting
+    rationale: >-
+      The cloud console is reached from the internet, so a second factor there
+      is added authentication for access from outside.
+    limitation: >-
+      CC6.6 is mostly about boundary protection: restricting channels,
+      protecting credentials in transit and running boundary systems. None of
+      that is shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - control: access-code-host-two-factor
+    requirement: CC6.6
+    strength: supporting
+    rationale: >-
+      The code host is reached from the internet, so two-factor authentication
+      there is added authentication for access from outside.
+    limitation: >-
+      Restricted channels, credentials protected in transit and boundary
+      protection systems are not shown.
+    basis: own_analysis
+    basis_source: ""
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""

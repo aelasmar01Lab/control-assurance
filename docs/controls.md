@@ -10,7 +10,7 @@ A control is something a small company does to reduce a risk. It is written for 
 - **partial**: the control covers part of what the requirement asks for.
 - **supporting**: the control is related evidence, and does not establish the requirement.
 
-Reviewed so far: 0 of 27 controls and 0 of 32 mappings.
+Reviewed so far: 0 of 27 controls and 0 of 57 mappings.
 
 ## How a control's state is derived
 
@@ -42,6 +42,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Evidence expected | The generated permission matrix and the output of the tests that try each action as each role. |
 | Rests on | manual evidence (manual evidence, valid 12 months) |
 | Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. An explicit allow rule per role, refused to all others, is authorization that is defined and enforced in this application. **Limitation:** It covers this application only. It shows the rules are enforced as written, not that the rules themselves are least privilege, and it involves no review. |
+| Maps to soc2 CC6.3 | **partial**, draft, not reviewed. An explicit rule for every action, allowed to named roles and refused to the rest, is a role-based access structure. **Limitation:** It covers this application only, and shows that roles are enforced, not that each role holds no more than it needs. |
 
 ### Two-factor required on the code host (`access-code-host-two-factor`)
 
@@ -56,6 +57,8 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on |  |
 | Evidence window | 48 hours |
 | Maps to nist-csf PR.AA-03 | **partial**, draft, not reviewed. Requiring two-factor authentication of every member is authentication of the code host's users. **Limitation:** It covers people signing in to the code host. Tokens, deploy keys and other services that authenticate to it, and hardware, are not shown. |
+| Maps to soc2 CC6.1 | **partial**, draft, not reviewed. Two-factor authentication for every member of the code hosting organization authenticates the people who can reach the source code. **Limitation:** It covers one system. The rest of CC6.1, including inventory, segmentation, encryption and the authentication of software, is not shown. |
+| Maps to soc2 CC6.6 | **supporting**, draft, not reviewed. The code host is reached from the internet, so two-factor authentication there is added authentication for access from outside. **Limitation:** Restricted channels, credentials protected in transit and boundary protection systems are not shown. |
 
 ### Collector role is read-only (`access-collector-read-only`)
 
@@ -70,6 +73,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on |  |
 | Evidence window | 48 hours |
 | Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. A collector role limited to read actions is least privilege applied to one service identity. **Limitation:** It covers one role. It says nothing about the permissions of any other identity. |
+| Maps to soc2 CC6.3 | **partial**, draft, not reviewed. A collector role limited to read actions holds no more than its job needs. **Limitation:** It covers one role. Least privilege for every other identity is not shown. |
 
 ### Emergency access recorded (`access-emergency-use-recorded`)
 
@@ -96,6 +100,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Evidence expected | For each account issued in the period, a dated record of who confirmed the person's identity and how. |
 | Rests on | manual evidence (manual evidence, valid 12 months) |
 | Maps to nist-csf PR.AA-02 | **partial**, draft, not reviewed. Confirming who a person is before issuing their account is identity proofing. **Limitation:** PR.AA-02 also asks that the proofed identity be bound to its credentials, and that proofing fit the context of the interaction. Neither is shown. |
+| Maps to soc2 CC6.2 | **partial**, draft, not reviewed. Confirming who a person is before an account is issued is part of registering a new user. **Limitation:** It covers confirming identity only. Authorization and the removal of credentials are not shown, and it speaks of people, not of other kinds of user. |
 
 ### Access keys rotated within 90 days (`access-key-age`)
 
@@ -110,6 +115,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on |  |
 | Evidence window | 48 hours |
 | Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. Keeping access keys under 90 days old is credential management for the cloud account's IAM users. **Limitation:** It covers the age of one kind of credential in one system. Issuing, revoking, and service and hardware identities are not shown. |
+| Maps to soc2 CC6.1 | **partial**, draft, not reviewed. Keeping access keys under 90 days old is part of managing the credentials that software and people use to reach the cloud account. **Limitation:** It covers the age of IAM access keys only. How keys are issued, stored and removed, and the rest of CC6.1, are not shown. |
 
 ### No policy allowing everything (`access-no-unrestricted-policy`)
 
@@ -124,6 +130,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on |  |
 | Evidence window | 48 hours |
 | Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. The absence of a policy that allows everything is a floor under least privilege in the cloud account. **Limitation:** It rules out only the widest possible policy. A policy can be far too broad without allowing everything, and AWS-managed policies are not read. |
+| Maps to soc2 CC6.3 | **partial**, draft, not reviewed. The absence of any customer-managed policy that allows everything is a floor under least privilege in the cloud account. **Limitation:** A policy can be far too broad without allowing every action on every resource. AWS-managed policies are not examined. |
 
 ### Access removed when a person leaves (`access-offboarding-removal`)
 
@@ -137,6 +144,8 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Evidence expected | For each departure in the period, the leaving date and the date each of the person's accounts was disabled or deleted. |
 | Rests on | manual evidence (manual evidence, valid 12 months) |
 | Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. Disabling a leaver's accounts is the revoking step of managing identities and credentials. **Limitation:** It covers people who leave. Credentials that should be revoked for other reasons, and service and hardware identities, are not shown. |
+| Maps to soc2 CC6.2 | **partial**, draft, not reviewed. Disabling a leaver's accounts within one business day removes credentials once the person is no longer authorized. **Limitation:** It covers people who leave. Credentials that stop being authorized for other reasons, and the registering of new users, are not shown. |
+| Maps to soc2 CC6.3 | **partial**, draft, not reviewed. Disabling a leaver's accounts removes their access to the data and functions behind those accounts. **Limitation:** It covers removal on leaving only. |
 
 ### Minimum password length of 14 (`access-password-length`)
 
@@ -151,6 +160,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on |  |
 | Evidence window | 48 hours |
 | Maps to nist-csf PR.AA-03 | **supporting**, draft, not reviewed. A minimum password length makes the password factor of console authentication harder to guess. **Limitation:** Password length is one property of one factor. It does not show that users, services or hardware are authenticated. |
+| Maps to soc2 CC6.1 | **partial**, draft, not reviewed. A minimum password length in the cloud account's policy is one of the authentication requirements the organization sets and manages. **Limitation:** It is one setting for IAM passwords in one account. Other authentication requirements and the rest of CC6.1 are not shown. |
 
 ### Permissions granted through groups or roles (`access-permissions-through-roles`)
 
@@ -165,6 +175,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on |  |
 | Evidence window | 48 hours |
 | Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. Granting permissions through groups and roles is how permissions in the cloud account are managed by job function. **Limitation:** It shows how permissions are attached, not what they allow. A written policy, review, least privilege and separation of duties are not shown. |
+| Maps to soc2 CC6.3 | **partial**, draft, not reviewed. Permissions that reach people only through groups or roles keep access tied to a role and not to an individual. **Limitation:** It covers IAM users in one cloud account, and shows how permissions are attached, not whether they are the least needed. |
 
 ### Named list of administrators (`access-privileged-inventory`)
 
@@ -179,6 +190,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on | manual evidence (manual evidence, valid 3 months) |
 | Maps to nist-csf PR.AA-01 | **supporting**, draft, not reviewed. A list of administrative identities with their owners is a record the organization needs in order to manage them. **Limitation:** A list shows that the identities are known, not that they are issued, changed or revoked under any process. |
 | Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. Naming an owner and a purpose for every administrative identity is managing the highest entitlements. **Limitation:** It covers administrative rights only, and a list does not show that the rights are the least the purpose needs. |
+| Maps to soc2 CC6.3 | **supporting**, draft, not reviewed. A list of every administrative identity, with the person answerable and the reason, is what a review of privileged access would start from. **Limitation:** A list does not authorize, change or remove anything. It establishes no part of CC6.3 by itself. |
 
 ### Access granted on recorded approval (`access-request-approval`)
 
@@ -192,6 +204,8 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Evidence expected | For each grant of access in the period, a dated request and the owner's dated approval. |
 | Rests on | manual evidence (manual evidence, valid 12 months) |
 | Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. A recorded approval before access is granted is the issuing step of managing an identity. **Limitation:** It covers issuing only. Changing and revoking identities, and service and hardware identities, are not shown. |
+| Maps to soc2 CC6.2 | **partial**, draft, not reviewed. A recorded approval by the system's owner before access is granted is the authorization step that comes before credentials are issued. **Limitation:** It covers authorization. Registering the user, and removing credentials when access is no longer authorized, are covered by other controls or not at all. |
+| Maps to soc2 CC6.3 | **partial**, draft, not reviewed. Access granted only on the owner's written approval is how access to a system is authorized. **Limitation:** It covers granting. Changing and removing access, least privilege and the separation of duties are not shown by this control. |
 
 ### Quarterly access review (`access-review-periodic`)
 
@@ -205,6 +219,8 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Evidence expected | A dated review record for each in-scope system, listing every account and the decision made about it. |
 | Rests on | manual evidence (manual evidence, valid 3 months) |
 | Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. A quarterly review of every account with a recorded decision is the 'reviewed' part of PR.AA-05. **Limitation:** It reviews accounts, not each permission an account holds, and it does not show that permissions are defined in a policy or enforced. |
+| Maps to soc2 CC6.2 | **partial**, draft, not reviewed. A quarterly decision to keep or remove each account is how credentials that are no longer valid get found. **Limitation:** It finds credentials to remove; it does not show that new users are registered and authorized before credentials are issued. |
+| Maps to soc2 CC6.3 | **supporting**, draft, not reviewed. A quarterly review of accounts is related to the periodic review of who holds access. **Limitation:** The control reviews whether each account should exist, not the roles and rules that decide what an account can do. |
 
 ### Access adjusted when a role changes (`access-role-change`)
 
@@ -218,6 +234,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Evidence expected | For each role change in the period, the date of the change and the date the permissions were adjusted. |
 | Rests on | manual evidence (manual evidence, valid 12 months) |
 | Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. Removing permissions a new role does not need keeps entitlements matched to the job, which is managing them. **Limitation:** It covers role changes only. Permissions that were too broad from the start are not found by it. |
+| Maps to soc2 CC6.3 | **partial**, draft, not reviewed. Removing permissions a new role does not need is the modification of access when a person's responsibilities change. **Limitation:** It covers changes of role. First grants, removal on leaving, and whether the roles themselves follow least privilege are not shown. |
 
 ### Root user not used (`access-root-not-used`)
 
@@ -232,6 +249,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on |  |
 | Evidence window | 48 hours |
 | Maps to nist-csf PR.AA-05 | **supporting**, draft, not reviewed. Not using the root user keeps everyday work on identities whose permissions can be limited. **Limitation:** It shows the unrestricted identity is idle, not that the identities used instead hold least privilege. |
+| Maps to soc2 CC6.1 | **supporting**, draft, not reviewed. A root user that is not used is evidence that everyday access goes through identities whose access can be restricted. **Limitation:** It does not show that access is restricted, only that the one unrestricted identity has been idle. It establishes no part of CC6.1 by itself. |
 
 ### Requester cannot approve their own request (`access-separation-of-duties`)
 
@@ -245,6 +263,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Evidence expected | The decision log, showing a different person as requester and approver on every decision. |
 | Rests on | manual evidence (manual evidence, valid 12 months) |
 | Maps to nist-csf PR.AA-05 | **partial**, draft, not reviewed. Stopping a requester from approving their own request is separation of duties, which PR.AA-05 names. **Limitation:** It covers two decisions in this application. Separation of duties in the cloud account and the code host is not shown. |
+| Maps to soc2 CC6.3 | **partial**, draft, not reviewed. Refusing to let the requester of an exception, or the submitter of evidence, approve it separates two duties that should not sit with one person. **Limitation:** It covers two pairs of duties in this application. Separation of duties in the cloud account and the code host is not shown. |
 
 ### Sign-in through one identity provider (`access-single-sign-on`)
 
@@ -258,6 +277,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Evidence expected | The sign-in configuration of each in-scope system, showing the identity provider it trusts. |
 | Rests on | manual evidence (manual evidence, valid 12 months) |
 | Maps to nist-csf PR.AA-03 | **partial**, draft, not reviewed. Signing in through one identity provider is how users of every in-scope system are authenticated. **Limitation:** It shows where users authenticate, not how strongly. Services and hardware are not covered. |
+| Maps to soc2 CC6.1 | **partial**, draft, not reviewed. Sign-in through one identity provider puts identification and authentication for every in-scope system under one set of rules. **Limitation:** It shows where sign-in happens, not how strong it is, and nothing of the inventory, segmentation or encryption that CC6.1 also covers. |
 
 ### One identity per person (`access-unique-identities`)
 
@@ -272,6 +292,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on | manual evidence (manual evidence, valid 3 months) |
 | Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. Assigning each account to one named person is how the organization knows whose identity it is managing. **Limitation:** PR.AA-01 also covers the identities of services and hardware, and the issuing, changing and revoking of credentials. This control covers human accounts only and says nothing of their lifecycle. |
 | Maps to nist-csf PR.AA-02 | **supporting**, draft, not reviewed. An account that belongs to exactly one person is a precondition for binding a proofed identity to a credential. **Limitation:** It shows that each account has one named person, not that the person was proofed or how the credential was bound to them. |
+| Maps to soc2 CC6.1 | **partial**, draft, not reviewed. An account assigned to one named person is what lets a system identify who is signing in, which authentication depends on. **Limitation:** It covers human accounts on three systems. It does not show how those people are authenticated, or any of the other protections CC6.1 covers. |
 
 ### Automation uses roles, not user keys (`access-workload-roles`)
 
@@ -286,6 +307,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Rests on | manual evidence (manual evidence, valid 12 months) |
 | Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. Giving automation a role to assume is how the organization manages the identities of its services. **Limitation:** It covers services that call the cloud account. Human and hardware identities, and services elsewhere, are not shown. |
 | Maps to nist-csf PR.AA-03 | **partial**, draft, not reviewed. A workload that assumes a role authenticates with short-lived credentials each time it calls the cloud account. **Limitation:** It covers services calling the cloud account. Users, hardware, and services that call other systems are not shown. |
+| Maps to soc2 CC6.1 | **partial**, draft, not reviewed. Automation that assumes a role is identified and authenticated with short- lived credentials before it reaches cloud assets. **Limitation:** It covers workloads in one cloud account. Human authentication and the other protections CC6.1 covers are not shown. |
 
 ### Credential lifecycle (`credential-lifecycle`)
 
@@ -301,6 +323,7 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Evidence window | 48 hours |
 | Maps to mvsp 4.2 | **partial**, draft, not reviewed. Finding passwords and keys that have gone unused supports removing access that is no longer needed. **Limitation:** It shows last use, not whether access is still needed, and it does not see roles or federated sessions. |
 | Maps to nist-csf PR.AA-01 | **partial**, draft, not reviewed. Finding console passwords and access keys nobody uses is part of managing credentials in the cloud account. **Limitation:** It reads IAM users in one cloud account. It does not see roles, federated sessions, the code host or hardware, and it shows last use, not whether the credential is still needed. |
+| Maps to soc2 CC6.2 | **partial**, draft, not reviewed. Passwords and keys unused for 90 days are a sign of credentials nobody needs, and the control keeps none in the cloud account. **Limitation:** Unused is not the same as unauthorized: a credential in daily use by someone who should have lost it passes. It covers one cloud account, and nothing about new users. |
 
 ### Human access (`human-access`)
 
@@ -316,6 +339,8 @@ A collection failure is not an input. It adds no evidence, so the previous resul
 | Evidence window | 48 hours |
 | Maps to mvsp 4.2 | **partial**, draft, not reviewed. MFA on every console password limits what a stolen password allows. **Limitation:** MVSP 4.2 covers logical access more widely: least privilege, access review and removal of unused accounts. Federated users are not seen. |
 | Maps to nist-csf PR.AA-03 | **partial**, draft, not reviewed. Multi-factor authentication on every console password, and on the root user, is authentication of the cloud account's users. **Limitation:** It covers console sign-in by IAM users and root in one cloud account. Federated users, services and hardware are not seen. |
+| Maps to soc2 CC6.1 | **partial**, draft, not reviewed. Requiring a second factor at console sign-in is one of the ways the organization authenticates people before they reach its cloud assets. **Limitation:** CC6.1 is broad. It also covers asset inventory, network segmentation, encryption, key protection and the identification of systems and software, none of which this control shows. It covers the cloud console only. |
+| Maps to soc2 CC6.6 | **supporting**, draft, not reviewed. The cloud console is reached from the internet, so a second factor there is added authentication for access from outside. **Limitation:** CC6.6 is mostly about boundary protection: restricting channels, protecting credentials in transit and running boundary systems. None of that is shown. |
 
 ### Change management (`change-management`)
 
@@ -588,3 +613,82 @@ None of the 102 requirements that no control covers has been assessed for this o
 | RC.RP-06 The end of incident recovery is declared based on criteria, and incident-related documentation is completed | not assessed | | | | | |
 | RC.CO-03 Recovery activities and progress in restoring operational capabilities are communicated to designated internal and external stakeholders | not assessed | | | | | |
 | RC.CO-04 Public updates on incident recovery are shared using approved methods and messaging | not assessed | | | | | |
+
+## Every SOC 2 (AICPA Trust Services Criteria) requirement (2017-tsc-2022-pof)
+
+Each requirement is either covered in part by a control, or tracked with a reason by each organization. "Tracked manually" means the work is done or judged outside this system, with no evidence held here. None of the tracking statuses is a positive state. "Not assessed" means nobody has looked at the requirement for that organization yet; such an entry says nothing else and is not reviewed.
+
+### Covered by a control
+
+| Requirement | Covered by | Owner |
+| --- | --- | --- |
+| CC6.1 Logical access protections for information assets | Two-factor required on the code host (partial; draft, not reviewed), Access keys rotated within 90 days (partial; draft, not reviewed), Minimum password length of 14 (partial; draft, not reviewed), Root user not used (supporting; draft, not reviewed), Sign-in through one identity provider (partial; draft, not reviewed), One identity per person (partial; draft, not reviewed), Automation uses roles, not user keys (partial; draft, not reviewed), Human access (partial; draft, not reviewed) | control-owner |
+| CC6.2 Registering users, issuing and removing credentials | Identity confirmed before an account is issued (partial; draft, not reviewed), Access removed when a person leaves (partial; draft, not reviewed), Access granted on recorded approval (partial; draft, not reviewed), Quarterly access review (partial; draft, not reviewed), Credential lifecycle (partial; draft, not reviewed) | control-owner |
+| CC6.3 Access by role, least privilege, separated duties | Every application action checked against a role (partial; draft, not reviewed), Collector role is read-only (partial; draft, not reviewed), No policy allowing everything (partial; draft, not reviewed), Access removed when a person leaves (partial; draft, not reviewed), Permissions granted through groups or roles (partial; draft, not reviewed), Named list of administrators (supporting; draft, not reviewed), Access granted on recorded approval (partial; draft, not reviewed), Quarterly access review (supporting; draft, not reviewed), Access adjusted when a role changes (partial; draft, not reviewed), Requester cannot approve their own request (partial; draft, not reviewed) | control-owner |
+| CC6.6 Protection against threats from outside the boundary | Two-factor required on the code host (supporting; draft, not reviewed), Human access (supporting; draft, not reviewed) | control-owner |
+
+### No control: how Pellwick (`demo`) tracks it
+
+None of the 57 requirements that no control covers has been assessed for this organization yet. Nothing is claimed about them.
+
+### No control: how Control assurance lab (`lab`) tracks it
+
+| Requirement | Tracking | Review | Owner | Applicability | Evidence expected | Rationale |
+| --- | --- | --- | --- | --- | --- | --- |
+| CC1.1 Integrity and ethical conduct | not assessed | | | | | |
+| CC1.2 Independent oversight by the board | not assessed | | | | | |
+| CC1.3 Structure, reporting lines and authority | not assessed | | | | | |
+| CC1.4 Hiring and keeping capable people | not assessed | | | | | |
+| CC1.5 Holding people to their control duties | not assessed | | | | | |
+| CC2.1 Good information for running controls | not assessed | | | | | |
+| CC2.2 Telling staff what controls expect of them | not assessed | | | | | |
+| CC2.3 Telling outside parties what affects controls | not assessed | | | | | |
+| CC3.1 Objectives clear enough to assess risk against | not assessed | | | | | |
+| CC3.2 Finding and analysing risks to objectives | not assessed | | | | | |
+| CC3.3 Fraud considered in risk assessment | not assessed | | | | | |
+| CC3.4 Changes that could affect internal control | not assessed | | | | | |
+| CC4.1 Evaluations of whether controls are working | not assessed | | | | | |
+| CC4.2 Reporting control weaknesses to those who fix them | not assessed | | | | | |
+| CC5.1 Controls chosen to bring risk down | not assessed | | | | | |
+| CC5.2 General controls over technology | not assessed | | | | | |
+| CC5.3 Written rules and the steps that apply them | not assessed | | | | | |
+| CC6.4 Who may enter premises and reach equipment | out of scope | draft, not reviewed | control-owner | Not applicable. | None. | The lab has no office, data centre or other premises. Its systems run in a cloud provider's facilities and on a code host, whose physical security is theirs. |
+| CC6.5 Wiping assets before they are let go | not implemented | draft, not reviewed | control-owner | Applicable to the one laptop the lab is run from. | A dated record that the disk was erased, or was encrypted and its key destroyed, before the laptop left the maintainer's hands. | No procedure covers erasing the maintainer's laptop before disposal. Storage in the cloud account is the provider's hardware. |
+| CC6.7 Moving and transmitting information safely | not implemented | draft, not reviewed | control-owner | Applicable. | Configuration showing that evidence and credentials move only over encrypted channels, and what protects the laptop they are handled on. | No control addresses how information is moved or transmitted. Collection uses the providers' HTTPS APIs, but nothing here checks or records that. |
+| CC6.8 Unauthorized and malicious software | not implemented | draft, not reviewed | control-owner | Applicable. | Evidence of how unwanted or harmful software is kept out of the laptop and out of the build. | No control in the pilot addresses malicious software. The dependency and change controls are related and have not been mapped to SOC 2 yet. |
+| CC7.1 Detecting new vulnerabilities and risky configuration changes | not assessed | | | | | |
+| CC7.2 Monitoring for anomalies that may be security events | not assessed | | | | | |
+| CC7.3 Judging whether an event is an incident | not assessed | | | | | |
+| CC7.4 Handling an incident once it is declared | not assessed | | | | | |
+| CC7.5 Recovering from security incidents | not assessed | | | | | |
+| CC8.1 Authorized, tested and approved changes | not assessed | | | | | |
+| CC9.1 Mitigating the risk of business disruption | not assessed | | | | | |
+| CC9.2 Risk from suppliers and partners | not assessed | | | | | |
+| A1.1 Capacity monitored and added when needed | not assessed | | | | | |
+| A1.2 Backups, environmental protections and recovery infrastructure | not assessed | | | | | |
+| A1.3 Recovery plans tested | not assessed | | | | | |
+| C1.1 Identifying and keeping confidential information | not assessed | | | | | |
+| C1.2 Disposing of confidential information | not assessed | | | | | |
+| PI1.1 Definitions and specifications of what is processed | not assessed | | | | | |
+| PI1.2 Inputs complete and accurate | not assessed | | | | | |
+| PI1.3 Processing done as specified | not assessed | | | | | |
+| PI1.4 Outputs complete, accurate and on time | not assessed | | | | | |
+| PI1.5 Stored inputs, work in progress and outputs | not assessed | | | | | |
+| P1.1 Telling people about privacy practices | not assessed | | | | | |
+| P2.1 Offering choices and obtaining consent | not assessed | | | | | |
+| P3.1 Collecting only in line with privacy objectives | not assessed | | | | | |
+| P3.2 Explicit consent obtained before collection | not assessed | | | | | |
+| P4.1 Use limited to stated purposes | not assessed | | | | | |
+| P4.2 Retention in line with privacy objectives | not assessed | | | | | |
+| P4.3 Deleting personal information safely | not assessed | | | | | |
+| P5.1 Letting people see their own information | not assessed | | | | | |
+| P5.2 Correcting personal information on request | not assessed | | | | | |
+| P6.1 Sharing with others only with consent | not assessed | | | | | |
+| P6.2 Log of permitted sharing | not assessed | | | | | |
+| P6.3 Log of breaches and unpermitted sharing | not assessed | | | | | |
+| P6.4 Suppliers' privacy promises, and checking them | not assessed | | | | | |
+| P6.5 Vendors report suspected unauthorized disclosures | not assessed | | | | | |
+| P6.6 Notifying people and regulators of breaches | not assessed | | | | | |
+| P6.7 Accounting for what is held and disclosed | not assessed | | | | | |
+| P7.1 Personal information kept accurate and current | not assessed | | | | | |
+| P8.1 Handling privacy complaints and monitoring compliance | not assessed | | | | | |

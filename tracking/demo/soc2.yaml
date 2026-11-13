@@ -1,0 +1,179 @@
+# Pellwick, the fictional demo company: SOC 2 criteria that no control
+# covers.
+#
+# Every entry is not_assessed. The demo's tracking is not copied from the
+# lab's; each entry is written with its framework's wave.
+framework: soc2
+version: 2017-tsc-2022-pof
+entries:
+
+  - requirement: CC1.1
+    status: not_assessed
+
+  - requirement: CC1.2
+    status: not_assessed
+
+  - requirement: CC1.3
+    status: not_assessed
+
+  - requirement: CC1.4
+    status: not_assessed
+
+  - requirement: CC1.5
+    status: not_assessed
+
+  - requirement: CC2.1
+    status: not_assessed
+
+  - requirement: CC2.2
+    status: not_assessed
+
+  - requirement: CC2.3
+    status: not_assessed
+
+  - requirement: CC3.1
+    status: not_assessed
+
+  - requirement: CC3.2
+    status: not_assessed
+
+  - requirement: CC3.3
+    status: not_assessed
+
+  - requirement: CC3.4
+    status: not_assessed
+
+  - requirement: CC4.1
+    status: not_assessed
+
+  - requirement: CC4.2
+    status: not_assessed
+
+  - requirement: CC5.1
+    status: not_assessed
+
+  - requirement: CC5.2
+    status: not_assessed
+
+  - requirement: CC5.3
+    status: not_assessed
+
+  - requirement: CC6.4
+    status: not_assessed
+
+  - requirement: CC6.5
+    status: not_assessed
+
+  - requirement: CC6.7
+    status: not_assessed
+
+  - requirement: CC6.8
+    status: not_assessed
+
+  - requirement: CC7.1
+    status: not_assessed
+
+  - requirement: CC7.2
+    status: not_assessed
+
+  - requirement: CC7.3
+    status: not_assessed
+
+  - requirement: CC7.4
+    status: not_assessed
+
+  - requirement: CC7.5
+    status: not_assessed
+
+  - requirement: CC8.1
+    status: not_assessed
+
+  - requirement: CC9.1
+    status: not_assessed
+
+  - requirement: CC9.2
+    status: not_assessed
+
+  - requirement: A1.1
+    status: not_assessed
+
+  - requirement: A1.2
+    status: not_assessed
+
+  - requirement: A1.3
+    status: not_assessed
+
+  - requirement: C1.1
+    status: not_assessed
+
+  - requirement: C1.2
+    status: not_assessed
+
+  - requirement: PI1.1
+    status: not_assessed
+
+  - requirement: PI1.2
+    status: not_assessed
+
+  - requirement: PI1.3
+    status: not_assessed
+
+  - requirement: PI1.4
+    status: not_assessed
+
+  - requirement: PI1.5
+    status: not_assessed
+
+  - requirement: P1.1
+    status: not_assessed
+
+  - requirement: P2.1
+    status: not_assessed
+
+  - requirement: P3.1
+    status: not_assessed
+
+  - requirement: P3.2
+    status: not_assessed
+
+  - requirement: P4.1
+    status: not_assessed
+
+  - requirement: P4.2
+    status: not_assessed
+
+  - requirement: P4.3
+    status: not_assessed
+
+  - requirement: P5.1
+    status: not_assessed
+
+  - requirement: P5.2
+    status: not_assessed
+
+  - requirement: P6.1
+    status: not_assessed
+
+  - requirement: P6.2
+    status: not_assessed
+
+  - requirement: P6.3
+    status: not_assessed
+
+  - requirement: P6.4
+    status: not_assessed
+
+  - requirement: P6.5
+    status: not_assessed
+
+  - requirement: P6.6
+    status: not_assessed
+
+  - requirement: P6.7
+    status: not_assessed
+
+  - requirement: P7.1
+    status: not_assessed
+
+  - requirement: P8.1
+    status: not_assessed

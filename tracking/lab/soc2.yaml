@@ -1,0 +1,240 @@
+# The lab: SOC 2 criteria that no control covers, and how each is tracked.
+#
+# PILOT: only the CC6 series has been assessed. Every other criterion is
+# marked not_assessed: nobody has looked at it yet, nothing is claimed about
+# it, and there is nothing to review. Wave 1 replaces each with controls and
+# mappings, or with a tracking entry that says how it is tracked.
+framework: soc2
+version: 2017-tsc-2022-pof
+entries:
+
+  - requirement: CC1.1
+    status: not_assessed
+
+  - requirement: CC1.2
+    status: not_assessed
+
+  - requirement: CC1.3
+    status: not_assessed
+
+  - requirement: CC1.4
+    status: not_assessed
+
+  - requirement: CC1.5
+    status: not_assessed
+
+  - requirement: CC2.1
+    status: not_assessed
+
+  - requirement: CC2.2
+    status: not_assessed
+
+  - requirement: CC2.3
+    status: not_assessed
+
+  - requirement: CC3.1
+    status: not_assessed
+
+  - requirement: CC3.2
+    status: not_assessed
+
+  - requirement: CC3.3
+    status: not_assessed
+
+  - requirement: CC3.4
+    status: not_assessed
+
+  - requirement: CC4.1
+    status: not_assessed
+
+  - requirement: CC4.2
+    status: not_assessed
+
+  - requirement: CC5.1
+    status: not_assessed
+
+  - requirement: CC5.2
+    status: not_assessed
+
+  - requirement: CC5.3
+    status: not_assessed
+
+  - requirement: CC6.4
+    status: out_of_scope
+    owner_role: control-owner
+    applicability: Not applicable.
+    evidence_expectation: >-
+      None.
+    rationale: >-
+      The lab has no office, data centre or other premises. Its systems run in a
+      cloud provider's facilities and on a code host, whose physical security is
+      theirs.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: CC6.5
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable to the one laptop the lab is run from.
+    evidence_expectation: >-
+      A dated record that the disk was erased, or was encrypted and its key
+      destroyed, before the laptop left the maintainer's hands.
+    rationale: >-
+      No procedure covers erasing the maintainer's laptop before disposal.
+      Storage in the cloud account is the provider's hardware.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: CC6.7
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: >-
+      Configuration showing that evidence and credentials move only over
+      encrypted channels, and what protects the laptop they are handled on.
+    rationale: >-
+      No control addresses how information is moved or transmitted. Collection
+      uses the providers' HTTPS APIs, but nothing here checks or records that.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: CC6.8
+    status: not_implemented
+    owner_role: control-owner
+    applicability: Applicable.
+    evidence_expectation: >-
+      Evidence of how unwanted or harmful software is kept out of the
+      laptop and out of the build.
+    rationale: >-
+      No control in the pilot addresses malicious software. The dependency and
+      change controls are related and have not been mapped to SOC 2 yet.
+    reviewer_note: ""
+    review:
+      status: draft
+      drafted_by: agent
+      reviewed_by: ""
+      reviewed_on: ""
+      content_sha256: ""
+
+  - requirement: CC7.1
+    status: not_assessed
+
+  - requirement: CC7.2
+    status: not_assessed
+
+  - requirement: CC7.3
+    status: not_assessed
+
+  - requirement: CC7.4
+    status: not_assessed
+
+  - requirement: CC7.5
+    status: not_assessed
+
+  - requirement: CC8.1
+    status: not_assessed
+
+  - requirement: CC9.1
+    status: not_assessed
+
+  - requirement: CC9.2
+    status: not_assessed
+
+  - requirement: A1.1
+    status: not_assessed
+
+  - requirement: A1.2
+    status: not_assessed
+
+  - requirement: A1.3
+    status: not_assessed
+
+  - requirement: C1.1
+    status: not_assessed
+
+  - requirement: C1.2
+    status: not_assessed
+
+  - requirement: PI1.1
+    status: not_assessed
+
+  - requirement: PI1.2
+    status: not_assessed
+
+  - requirement: PI1.3
+    status: not_assessed
+
+  - requirement: PI1.4
+    status: not_assessed
+
+  - requirement: PI1.5
+    status: not_assessed
+
+  - requirement: P1.1
+    status: not_assessed
+
+  - requirement: P2.1
+    status: not_assessed
+
+  - requirement: P3.1
+    status: not_assessed
+
+  - requirement: P3.2
+    status: not_assessed
+
+  - requirement: P4.1
+    status: not_assessed
+
+  - requirement: P4.2
+    status: not_assessed
+
+  - requirement: P4.3
+    status: not_assessed
+
+  - requirement: P5.1
+    status: not_assessed
+
+  - requirement: P5.2
+    status: not_assessed
+
+  - requirement: P6.1
+    status: not_assessed
+
+  - requirement: P6.2
+    status: not_assessed
+
+  - requirement: P6.3
+    status: not_assessed
+
+  - requirement: P6.4
+    status: not_assessed
+
+  - requirement: P6.5
+    status: not_assessed
+
+  - requirement: P6.6
+    status: not_assessed
+
+  - requirement: P6.7
+    status: not_assessed
+
+  - requirement: P7.1
+    status: not_assessed
+
+  - requirement: P8.1
+    status: not_assessed

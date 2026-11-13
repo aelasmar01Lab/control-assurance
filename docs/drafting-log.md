@@ -189,3 +189,54 @@ every organization.
 **Least sure of.** Whether Pellwick should exclude nothing. The agent
 found no control so far that a 25-person software company would not
 operate, so `scope/demo.yaml` lists none.
+
+## 2026-11-12: SOC 2 pack and the CC6 mappings (pilot)
+
+**What.** `packs/soc2/2017-tsc-2022-pof.yaml`, identifiers only;
+`mappings/soc2.yaml`; `tracking/lab/soc2.yaml` and
+`tracking/demo/soc2.yaml`. This completes the pilot's content.
+
+**Source opened.** The maintainer's copy of the publisher's PDF, TSP
+Section 100, "2017 Trust Services Criteria ... (With Revised Points of
+Focus - 2022)", 75 pages, SHA-256
+`23a099dd1dc273b7a45fda2351f376344c33fcb2911d586036c0e0d631b8ad69`. Its
+size, 554.3 KB, is the size the publisher's download page lists. The file
+is kept outside the repository and its text was read only in the agent's
+scratch directory. Publisher's page:
+<https://www.aicpa-cima.com/resources/download/2017-trust-services-criteria-with-revised-points-of-focus-2022>.
+
+**Licence.** The PDF's footer reads copyright 2024 AICPA, all rights
+reserved. The publisher's website terms, as recorded in the maintainer's
+research register, do not allow redistribution. Tier: identifiers only.
+
+**Counts.** The document states no total number of criteria. Counted from
+it: 61 criteria (33 common, 3 availability, 2 confidentiality, 5
+processing integrity, 18 privacy). The pack has 61 requirements and 22
+headings, and `tools/import/soc2/verify.py`, run against the PDF, reports
+61 and 61 with no difference. Mappings: 25. Lab tracking: 4 written, 53
+not assessed. Demo tracking: 57 not assessed.
+
+**What is and is not from the document.** The criterion identifiers, the
+series identifiers CC1 to CC5 ("CC1 series" and so on are the document's
+words), the category letters and the privacy section numbers P1.0 to P8.0
+are the document's. The series identifiers CC6 to CC9 are not written in
+the document as such; they follow its own pattern from the criterion
+numbers and are used only as headings. Every label is the agent's. The
+points of focus are not in the pack. Mapping rationales and limitations
+describe what a criterion covers in the agent's words.
+
+**Least sure of.**
+
+1. The labels. Several topics have only one natural name ("vendor risk",
+   "physical access"), so some labels are close to what anyone would
+   write, including the publisher. None was copied.
+2. CC6.6 mapped only by two `supporting` mappings (the two second-factor
+   controls). A requirement with nothing stronger than supporting may be
+   better tracked as not implemented.
+3. `credential-lifecycle` to CC6.2: unused is a proxy for unauthorized.
+4. `access-emergency-use-recorded` is mapped to nothing in SOC 2. It is
+   a record of use and belongs with monitoring (CC7), which the pilot does
+   not cover.
+5. CC6.5 for the lab is written as not implemented, about the one laptop.
+   It could as well be out of scope.
+6. CC6.3 has ten mappings and CC6.1 eight, the same pattern as PR.AA-05.

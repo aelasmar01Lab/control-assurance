@@ -51,7 +51,7 @@ To run it against a real lab instead, see
 | Repository layout, Go module, `cca` binary | Implemented |
 | CI: tests with Postgres, lint, vulnerability scan, pack and content validation, review verification, migrations | Implemented |
 | MVSP framework pack (25 requirements, pinned source), schema validation, database import | Implemented |
-| Pack format that records text rights (full text, identifiers only, or written by this project), hierarchy, and profiles of another pack | Implemented; MVSP is the only pack |
+| Pack format that records text rights (full text, identifiers only, or written by this project), hierarchy, and profiles of another pack | Implemented. MVSP and NIST CSF carry full text; SOC 2 is identifiers only |
 | GitHub collector: branch rules, Dependabot alerts, security policy file; classified errors, pagination completeness | Implemented |
 | AWS collector: IAM credential report, CloudTrail trails, Bedrock invocation logging; read-only assumed role | Implemented |
 | Evidence store, content-addressed by SHA-256: local directory, or an S3 bucket with create-only writes under its own role | Implemented |
@@ -82,7 +82,8 @@ To run it against a real lab instead, see
 | This project's own MVSP self-assessment, generated | Implemented |
 | Content reviewed by anyone other than the maintainer | Not started |
 | Hosted demo, and a check of its own HTTPS and headers | Not started |
-| SOC 2 pack | Blocked: see [BLOCKED.md](BLOCKED.md) |
+| SOC 2 pack: 61 criteria as identifiers with this project's own labels, and no AICPA text | Implemented, from the maintainer's copy of the publisher's PDF, which is not in the repository. `tools/import/soc2/verify.py` checks the identifiers against a copy |
+| SOC 2 mappings | Pilot only: the CC6 series (8 criteria). Four are mapped by draft access controls and four are tracked for the lab. The other 53 criteria are marked *not assessed* |
 | Every other framework | Not started |
 
 ## Documents
@@ -226,6 +227,13 @@ and access control) have been assessed: four are mapped by draft controls,
 and two are tracked with a reason. The other 100 read *not assessed*:
 nobody has looked at them yet, so nothing is said about the lab and there
 is nothing to review.
+
+SOC 2 is partway in too. Its 61 criteria are listed by identifier with a
+short label written by this project; the criteria's own wording is
+AICPA's copyright and is not here. Only the eight in the CC6 series have
+been assessed: CC6.1, CC6.2, CC6.3 and CC6.6 are mapped by draft access
+controls, each mapping partial or supporting, and the other four are
+tracked with a reason for the lab. The remaining 53 read *not assessed*.
 
 One thing in the catalog is wrong at the source: the pinned upstream file
 gives requirement 2.1 (Single sign-on) the statement text of requirement
