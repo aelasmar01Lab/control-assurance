@@ -22,8 +22,8 @@ github.com/aws/aws-sdk-go-v2/service/bedrock v1.74.7 h1:2Qkt4OqBjmupfs8PUCyZPlk1
 github.com/aws/aws-sdk-go-v2/service/bedrock v1.74.7/go.mod h1:dk+o2rBMzsdvjFUFXyqWVSqR+B/PNSiT4rCJjprU9D8=
 github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.65.12 h1:2yBz7HCWfWtClZWfAGQ/mgg/Og4E7eANGSyztVPEOZA=
 github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.65.12/go.mod h1:COhJ8ZNL5xyfDjuhZ1gaG55xjbQ2v4RGL6/Vnff/Fq0=
-github.com/aws/aws-sdk-go-v2/service/iam v1.65.0 h1:Xcpcm1NLM93YeDWEuZIItwiCwVWgZxawFHXjsfKTk7M=
-github.com/aws/aws-sdk-go-v2/service/iam v1.65.0/go.mod h1:mD7Udn/gwt5GfYA31g6LQRdwCRp0M33vQ11b4sVCc38=
+github.com/aws/aws-sdk-go-v2/service/iam v1.68.0 h1:GV2y0HXKY2opPRUvj3qEBahq0YlsAVjcaGqWBnTohDo=
+github.com/aws/aws-sdk-go-v2/service/iam v1.68.0/go.mod h1:mD7Udn/gwt5GfYA31g6LQRdwCRp0M33vQ11b4sVCc38=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.25 h1:rKwkY3Z+fvt2W0msjdNs6uNewPmXzPayQ961oyuWhes=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.25/go.mod h1:dBuAadQKd1F4Q4ZOg8gnFmuSHMRE40Pe3IfFwbtC4lE=
 github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.13 h1:U5HZ8FpTr6tyvulf1nT11Nw4KG1CAsXkuQGdUrIjZ/E=
